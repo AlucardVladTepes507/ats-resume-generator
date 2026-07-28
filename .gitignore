@@ -1,0 +1,17 @@
+# Secrets & Environment Variables
+.env
+.env.local
+*.env
+backend/.env
+
+# Dependencies & Virtual Environments
+node_modules/
+backend/venv/
+venv/
+__pycache__/
+*.pyc
+
+# Build Outputs
+frontend/dist/
+dist/
+.DS_Store
