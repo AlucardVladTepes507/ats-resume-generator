@@ -11,16 +11,25 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 
-load_dotenv()
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ENV_PATH = os.path.join(BASE_DIR, ".env")
+load_dotenv(dotenv_path=ENV_PATH, override=True)
 
 def get_gemini_client():
-    load_dotenv(override=True)
+    load_dotenv(dotenv_path=ENV_PATH, override=True)
     api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        # Also try default load_dotenv
+        load_dotenv(override=True)
+        api_key = os.environ.get("GEMINI_API_KEY")
+        
     if api_key:
         try:
             return genai.Client(api_key=api_key)
         except Exception as err:
             print("Error initializing Gemini client:", err)
+    else:
+        print("GEMINI_API_KEY not found in environment or .env path:", ENV_PATH)
     return None
 
 app = FastAPI(title="ATS Resume Generator API")
