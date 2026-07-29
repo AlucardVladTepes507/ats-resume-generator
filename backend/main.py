@@ -402,11 +402,18 @@ async def upload_file(file: UploadFile = File(...)):
         
     try:
         content = await file.read()
-        is_image_file = ext in ['.png', '.jpg', '.jpeg', '.webp']
+        
+        is_pdf_file = (
+            content.startswith(b'%PDF-') or 
+            filename.endswith('.pdf') or 
+            (file.content_type and 'pdf' in file.content_type.lower())
+        )
+
+        is_image_file = not is_pdf_file
         extracted_text = ""
         contents_payload = []
 
-        if ext == '.pdf':
+        if is_pdf_file:
             try:
                 with pdfplumber.open(io.BytesIO(content)) as pdf:
                     for page in pdf.pages:
