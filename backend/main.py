@@ -107,11 +107,23 @@ def clean_json_response(text: str) -> str:
     return cleaned
 
 @app.get("/")
+@app.get("/health")
 def read_root():
-    return {"message": "Bienvenido a la API del Generador de Currículums ATS"}
+    return {
+        "status": "online",
+        "message": "Bienvenido a la API del Generador de Currículums ATS",
+        "endpoints": [
+            "/upload-file", "/analyze-job-match", "/enhance-bullet",
+            "/generate-cover-letter", "/translate-resume", "/generate-outreach-message",
+            "/generate-interview-questions", "/generate-linkedin-profile", "/estimate-salary",
+            "/recommend-certifications", "/check-grammar", "/get-industry-keywords"
+        ]
+    }
 
 @app.post("/upload-pdf")
+@app.post("/upload-pdf/")
 @app.post("/upload-file")
+@app.post("/upload-file/")
 async def upload_file(file: UploadFile = File(...)):
     filename = file.filename.lower()
     allowed_extensions = ['.pdf', '.png', '.jpg', '.jpeg', '.webp']
@@ -189,6 +201,7 @@ async def upload_file(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Error procesando el archivo: {str(e)}")
 
 @app.post("/analyze-job-match")
+@app.post("/analyze-job-match/")
 async def analyze_job_match(payload: JobMatchRequest):
     client = get_gemini_client()
     if not client:
@@ -202,15 +215,16 @@ Compara el siguiente currículum con la oferta de empleo provista.
 CV del candidato:
 {json.dumps(payload.resume_data, ensure_ascii=False)}
 
-Oferta de empleo / Requisitos:
+Oferta de Empleo:
 {payload.job_description}
 
-Devuelve únicamente un objeto JSON estricto con el siguiente formato (sin markdown ni explicaciones fuera del json):
+Devuelve un JSON estricto:
 {{
-    "score": 85,
-    "matching_keywords": ["palabra o competencia 1", "palabra 2"],
-    "missing_keywords": ["palabra relevante faltante 1", "palabra 2"],
-    "recommendations": ["Recomendación específica 1 para adaptar el CV", "Recomendación 2"]
+    "match_score": 85,
+    "matching_keywords": ["habilidad 1", "habilidad 2"],
+    "missing_keywords": ["habilidad faltante 1", "habilidad faltante 2"],
+    "summary_feedback": "Resumen ejecutivo del ajuste del candidato",
+    "recommendations": ["Recomendación 1", "Recomendación 2"]
 }}
         """
 
@@ -221,9 +235,10 @@ Devuelve únicamente un objeto JSON estricto con el siguiente formato (sin markd
         cleaned = clean_json_response(response.text)
         return json.loads(cleaned)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al analizar compatibilidad: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al analizar vacante: {str(e)}")
 
 @app.post("/enhance-bullet")
+@app.post("/enhance-bullet/")
 async def enhance_bullet(payload: EnhanceBulletRequest):
     client = get_gemini_client()
     if not client:
@@ -231,16 +246,17 @@ async def enhance_bullet(payload: EnhanceBulletRequest):
     
     try:
         prompt = f"""
-Eres un redactor experto en currículums ATS de alto impacto.
-Mejora la siguiente viñeta de experiencia laboral para la posición "{payload.position}":
-"{payload.bullet}"
+Eres un experto redactor de CVs ejecutivos para sistemas ATS.
+Mejora y optimiza la siguiente viñeta o logro laboral utilizando verbos de acción fuertes y cuantificación de resultados.
+Puesto del usuario: {payload.position or "Profesional"}
+Viñeta original: "{payload.bullet}"
 
-Devuelve un JSON estricto con 3 alternativas mejoradas usando métricas y lenguaje potente:
+Devuelve un JSON estricto con 3 opciones mejoradas (Corta/Directa, Basada en Logros Cuantificables, Redacción Ejecutiva):
 {{
     "suggestions": [
-        "Alternativa 1 cuantificable y orientada a logros",
-        "Alternativa 2 enfocada en competencias técnicas",
-        "Alternativa 3 clara y directa para ATS"
+        "Opción mejorada 1 con verbos de acción",
+        "Opción mejorada 2 con énfasis en logros e impacto",
+        "Opción mejorada 3 de estilo ejecutivo superior"
     ]
 }}
         """
@@ -255,6 +271,7 @@ Devuelve un JSON estricto con 3 alternativas mejoradas usando métricas y lengua
         raise HTTPException(status_code=500, detail=f"Error al mejorar la viñeta: {str(e)}")
 
 @app.post("/generate-cover-letter")
+@app.post("/generate-cover-letter/")
 async def generate_cover_letter(payload: CoverLetterRequest):
     client = get_gemini_client()
     if not client:
@@ -262,20 +279,19 @@ async def generate_cover_letter(payload: CoverLetterRequest):
     
     try:
         prompt = f"""
-Eres un redactor profesional de cartas de presentación para puestos ejecutivos y técnicos.
-Genera una Carta de Presentación (Cover Letter) perspicaz y adaptada a la empresa y empleo especificados.
+Eres un redactor profesional de cartas de presentación ejecutivas en español.
+Genera una carta de presentación altamente persuasiva, profesional y personalizada basada en el CV del candidato.
 
-Datos del candidato:
+Empresa objetivo: {payload.company_name or "Empresa Reclutadora"}
+Puesto objetivo: {payload.position_name or "la posición vacante"}
+Descripción del empleo (si aplica): {payload.job_description or "General"}
+
+CV del candidato:
 {json.dumps(payload.resume_data, ensure_ascii=False)}
-
-Empresa: {payload.company_name or "la empresa"}
-Puesto: {payload.position_name or "la vacante de interés"}
-Descripción/Requisitos del Empleo: {payload.job_description or "Postulación general"}
 
 Devuelve un JSON estricto:
 {{
-    "subject": "Asunto sugerido para la candidatura",
-    "cover_letter": "Texto completo de la carta de presentación con párrafos bien estructurados (saludo formal, introducción motivadora, resaltado de logros relevantes del candidato y cierre invitando a una entrevista)."
+    "cover_letter": "Texto completo de la carta de presentación profesional organizada en párrafos de Introducción, Valor Aportado, Logros Relevantes y Cierre con llamada a la acción para entrevista."
 }}
         """
 
@@ -289,21 +305,29 @@ Devuelve un JSON estricto:
         raise HTTPException(status_code=500, detail=f"Error al generar la carta de presentación: {str(e)}")
 
 @app.post("/translate-resume")
+@app.post("/translate-resume/")
 async def translate_resume(payload: TranslateResumeRequest):
     client = get_gemini_client()
     if not client:
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
     
-    target_lang = "inglés" if payload.target_language == "en" else "español"
+    target_lang_name = "Inglés (English)" if payload.target_language == "en" else "Español"
+
     try:
         prompt = f"""
-Traduce profesionalmente la información del siguiente currículum al idioma {target_lang}.
-Mantén la terminología técnica correcta, nombres de empresas y fechas sin alterar la estructura JSON.
+Eres un traductor profesional de currículums ejecutivos y perfil ATS.
+Traduce el siguiente objeto JSON de CV al idioma: {target_lang_name}.
 
-Estructura JSON a traducir:
+Requisitos:
+- Traduce los cargos (position), descripciones (description/bullets), resumen (summary), grados académicos (degree) e instituciones si corresponde.
+- Conserva exactamente los nombres propios de las empresas y las fechas.
+- Conserva exactamente las claves del JSON (personal_info, experience, education, skills, name, email, etc.).
+- Devuelve el JSON marcado explícitamente con `"language": "{payload.target_language}"`.
+
+CV a traducir:
 {json.dumps(payload.resume_data, ensure_ascii=False)}
 
-Devuelve únicamente el objeto JSON traducido estricto.
+Devuelve ÚNICAMENTE el JSON traducido estricto.
         """
 
         response = client.models.generate_content(
@@ -311,47 +335,42 @@ Devuelve únicamente el objeto JSON traducido estricto.
             contents=[prompt]
         )
         cleaned = clean_json_response(response.text)
-        translated_data = json.loads(cleaned)
-        translated_data["language"] = payload.target_lang
-        return translated_data
+        return json.loads(cleaned)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al traducir el CV: {str(e)}")
 
-class OutreachRequest(BaseModel):
+class OutreachMessageRequest(BaseModel):
     resume_data: Dict[str, Any]
-    job_description: Optional[str] = ""
-    company_name: Optional[str] = ""
-    position_name: Optional[str] = ""
-    recruiter_name: Optional[str] = ""
+    target_company: Optional[str] = ""
+    contact_role: Optional[str] = "Reclutador / Gerente de Selección"
 
 class InterviewPrepRequest(BaseModel):
     resume_data: Dict[str, Any]
-    job_description: str
+    target_position: Optional[str] = ""
 
 @app.post("/generate-outreach-message")
-async def generate_outreach_message(payload: OutreachRequest):
+@app.post("/generate-outreach-message/")
+async def generate_outreach_message(payload: OutreachMessageRequest):
     client = get_gemini_client()
     if not client:
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
     
     try:
         prompt = f"""
-Eres un estratega de reclutamiento y marcas personales en LinkedIn.
-Genera mensajes directos de contacto (Outreach Messages) para que el candidato le escriba al reclutador o líder del área.
+Eres un especialista en Networking Ejecutivo y Reclutamiento Directo.
+Genera 2 mensajes de contacto directo ultra-efectivos para el candidato:
 
-Datos del candidato:
+CV del candidato:
 {json.dumps(payload.resume_data, ensure_ascii=False)}
 
-Empresa: {payload.company_name or "la empresa"}
-Puesto: {payload.position_name or "la vacante de interés"}
-Nombre del Reclutador/Contacto: {payload.recruiter_name or "Responsable de Selección"}
-Descripción del Empleo: {payload.job_description or ""}
+Empresa objetivo: {payload.target_company or "Empresa Destacada"}
+Contacto: {payload.contact_role}
 
-Devuelve un JSON estricto:
+Devuelve un JSON estricto con un mensaje para LinkedIn InMail/DM (corto y directo, máx 300 caract.) y un correo electrónico frío (Cold Email profesional con Asunto atractivo):
 {{
-    "linkedin_dm": "Mensaje ultra-efectivo para mensaje privado de LinkedIn (menos de 280 caracteres, directo, profesional y con gancho).",
-    "cold_email_subject": "Asunto atractivo para correo directo",
-    "cold_email_body": "Cuerpo del correo formal de 2 párrafos destacando las coincidencias clave del candidato."
+    "linkedin_dm": "Hola [Nombre], vi tu perfil en LinkedIn...",
+    "email_subject": "Propuesta de Valor / Candidatura - [Puesto/Área]",
+    "email_body": "Estimado/a [Nombre],\n\nLe escribo con entusiasmo..."
 }}
         """
 
@@ -365,6 +384,7 @@ Devuelve un JSON estricto:
         raise HTTPException(status_code=500, detail=f"Error al generar mensajes de contacto: {str(e)}")
 
 @app.post("/generate-interview-questions")
+@app.post("/generate-interview-questions/")
 async def generate_interview_questions(payload: InterviewPrepRequest):
     client = get_gemini_client()
     if not client:
@@ -372,23 +392,20 @@ async def generate_interview_questions(payload: InterviewPrepRequest):
     
     try:
         prompt = f"""
-Eres un reclutador sénior realizando una preparación de entrevista laboral.
-Analiza la trayectoria del candidato y la vacante para generar las 5 preguntas más probables y difíciles de la entrevista.
+Eres un entrevistador de talento senior y coach de entrevista laboral.
+Analiza el CV del candidato para el puesto de: {payload.target_position or "su área profesional"}.
 
 CV del candidato:
 {json.dumps(payload.resume_data, ensure_ascii=False)}
 
-Descripción del Empleo:
-{payload.job_description}
-
-Devuelve un JSON estricto con 5 preguntas estructuradas:
+Devuelve un JSON estricto con 5 preguntas clave de entrevista (conductuales, técnicas y situacionales) con la mejor estrategia de respuesta (Método STAR: Situación, Tarea, Acción, Resultado):
 {{
     "questions": [
         {{
-            "question": "Pregunta de entrevista clave 1",
-            "why_they_ask": "Explicación de qué busca evaluar el reclutador",
-            "star_strategy": "Estrategia para responder usando el método STAR (Situación, Tarea, Acción, Resultado) basada en la experiencia del candidato",
-            "key_points": ["Punto clave a mencionar 1", "Punto clave 2"]
+            "question": "¿Pregunta de entrevista 1?",
+            "why_asked": "Por qué el reclutador hace esta pregunta",
+            "star_strategy": "Estrategia de respuesta con método STAR basada en el CV del candidato",
+            "key_points_to_mention": ["Punto clave 1", "Punto clave 2"]
         }}
     ]
 }}
@@ -416,6 +433,7 @@ class CertificationsRequest(BaseModel):
     target_position: Optional[str] = ""
 
 @app.post("/generate-linkedin-profile")
+@app.post("/generate-linkedin-profile/")
 async def generate_linkedin_profile(payload: LinkedInProfileRequest):
     client = get_gemini_client()
     if not client:
@@ -449,6 +467,7 @@ Devuelve un JSON estricto:
         raise HTTPException(status_code=500, detail=f"Error al generar perfil de LinkedIn: {str(e)}")
 
 @app.post("/estimate-salary")
+@app.post("/estimate-salary/")
 async def estimate_salary(payload: SalaryEstimateRequest):
     client = get_gemini_client()
     if not client:
@@ -462,16 +481,15 @@ Estima el rango salarial mensual aproximado (en USD o moneda local según corres
 CV del candidato:
 {json.dumps(payload.resume_data, ensure_ascii=False)}
 
-País objetivo: {payload.target_country}
-
 Devuelve un JSON estricto:
 {{
-    "min_salary": "$1,200 / mes",
-    "avg_salary": "$1,800 / mes",
-    "max_salary": "$2,500 / mes",
-    "market_insights": "Análisis del mercado laboral en {payload.target_country} para este perfil",
-    "negotiation_tips": ["Consejo práctico de negociación 1", "Consejo 2"],
-    "salary_boosters": ["Factor que aumenta tu valor en la negociación 1", "Factor 2"]
+    "country": "{payload.target_country}",
+    "min_salary": "$1,200",
+    "avg_salary": "$1,800",
+    "max_salary": "$2,500",
+    "currency": "USD",
+    "market_insights": "Resumen ejecutivo de la demanda laboral de este perfil en {payload.target_country}",
+    "negotiation_tips": ["Consejo de negociación 1", "Consejo 2"]
 }}
         """
 
@@ -485,6 +503,7 @@ Devuelve un JSON estricto:
         raise HTTPException(status_code=500, detail=f"Error al estimar salario: {str(e)}")
 
 @app.post("/recommend-certifications")
+@app.post("/recommend-certifications/")
 async def recommend_certifications(payload: CertificationsRequest):
     client = get_gemini_client()
     if not client:
@@ -531,6 +550,7 @@ class IndustryKeywordsRequest(BaseModel):
     target_role: Optional[str] = ""
 
 @app.post("/check-grammar")
+@app.post("/check-grammar/")
 async def check_grammar(payload: GrammarCheckRequest):
     client = get_gemini_client()
     if not client:
@@ -569,6 +589,7 @@ Devuelve un JSON estricto:
         raise HTTPException(status_code=500, detail=f"Error al verificar ortografía: {str(e)}")
 
 @app.post("/get-industry-keywords")
+@app.post("/get-industry-keywords/")
 async def get_industry_keywords(payload: IndustryKeywordsRequest):
     client = get_gemini_client()
     if not client:
@@ -602,7 +623,3 @@ Devuelve un JSON estricto:
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-
-
-
-
