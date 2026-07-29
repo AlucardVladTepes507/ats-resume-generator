@@ -606,10 +606,10 @@ body {
   border-radius: 2px;
 }
 
-/* RESPONSIVE MOBILE SHEET PREVIEW SCALER */
+/* RESPONSIVE MOBILE SHEET PREVIEW (100% FLUID & UNCROPPED) */
 @media screen and (max-width: 850px) {
   .workspace-preview {
-    padding: 0.5rem;
+    padding: 0.5rem 0.25rem;
     max-height: none;
   }
 
@@ -625,21 +625,38 @@ body {
   }
 
   .preview-sheet-wrapper {
-    padding: 1rem 0;
+    padding: 0.5rem 0.25rem;
     overflow-x: hidden;
-    overflow-y: hidden;
+    width: 100%;
+    box-sizing: border-box;
     display: flex;
     justify-content: center;
   }
 
   .mobile-sheet-scaler {
-    width: 816px;
-    flex-shrink: 0;
-    transform-origin: top center;
-    transform: scale(calc((100vw - 32px) / 816));
-    margin-left: calc(-1 * (816px - (100vw - 32px)) / 2);
-    margin-right: calc(-1 * (816px - (100vw - 32px)) / 2);
-    margin-bottom: calc(-1 * (1050px * (1 - ((100vw - 32px) / 816))));
+    width: 100%;
+    transform: none !important;
+    margin: 0 !important;
+    display: block;
+  }
+
+  .preview-sheet {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    padding: 1.25rem 0.85rem !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .harvard-item-header, .modern-item-header {
+    flex-wrap: wrap;
+    gap: 0.2rem;
+  }
+
+  .harvard-dates, .modern-dates {
+    margin-left: 0;
   }
 }
 
