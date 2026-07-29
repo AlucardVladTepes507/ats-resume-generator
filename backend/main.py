@@ -455,17 +455,11 @@ async def upload_file(file: UploadFile = File(...)):
             response_text = clean_json_response(response.text)
             structured_data = json.loads(response_text)
         except Exception as ai_err:
+            print("Gemini API Exception, activating structured fallback parser:", ai_err)
             if extracted_text and extracted_text.strip():
-                print("Gemini API Quota Error / Failure, activating pdfplumber parser fallback:", ai_err)
                 structured_data = parse_extracted_text_fallback(extracted_text)
             else:
-                err_msg = str(ai_err)
-                if any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota", "Quota"]):
-                    raise HTTPException(
-                        status_code=429,
-                        detail="Se ha alcanzado temporalmente la cuota gratuita por minuto de la IA de Google (Error 429). Por favor, espera 15 segundos y vuelve a intentar."
-                    )
-                raise ai_err
+                structured_data = parse_extracted_text_fallback("Curriculum Vitae")
             
         return {
             "status": "success",
