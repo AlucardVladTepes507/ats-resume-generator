@@ -586,6 +586,13 @@ body {
   width: 100%;
 }
 
+.mobile-sheet-scaler {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
 /* LETTER SIZE SHEET STYLING (8.5in x 11in) - CENTERING & ATS MARGINS */
 .preview-sheet {
   background-color: #ffffff;
@@ -597,6 +604,40 @@ body {
   box-sizing: border-box;
   margin: 0 auto;
   border-radius: 2px;
+}
+
+/* RESPONSIVE MOBILE SHEET PREVIEW SCALER */
+@media screen and (max-width: 850px) {
+  .workspace-preview {
+    padding: 0.5rem;
+    max-height: none;
+  }
+
+  .preview-toolbar {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  .template-selector {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .preview-sheet-wrapper {
+    padding: 1rem 0;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    display: flex;
+    justify-content: center;
+  }
+
+  .mobile-sheet-scaler {
+    width: 8.5in;
+    transform-origin: top center;
+    transform: scale(calc((100vw - 36px) / 816));
+    margin-bottom: calc(-1 * (11in * (1 - ((100vw - 36px) / 816))));
+  }
 }
 
 .harvard-item, .modern-item, .harvard-section, .modern-section {

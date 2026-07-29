@@ -97,11 +97,13 @@ export default function ResumePreview({ data }) {
 
       {/* Printable Sheet Wrapper */}
       <div className="preview-sheet-wrapper">
-        <div className="preview-sheet" ref={resumeRef} id="printable-resume">
-          {template === 'harvard' && <HarvardTemplate data={data} />}
-          {template === 'modern' && <ModernTemplate data={data} />}
-          {template === 'executive-photo' && <ExecutivePhotoTemplate data={data} />}
-          {template === 'modern-photo' && <ModernPhotoTemplate data={data} />}
+        <div className="mobile-sheet-scaler">
+          <div className="preview-sheet" ref={resumeRef} id="printable-resume">
+            {template === 'harvard' && <HarvardTemplate data={data} />}
+            {template === 'modern' && <ModernTemplate data={data} />}
+            {template === 'executive-photo' && <ExecutivePhotoTemplate data={data} />}
+            {template === 'modern-photo' && <ModernPhotoTemplate data={data} />}
+          </div>
         </div>
       </div>
     </div>
