@@ -85,10 +85,10 @@ export default function ResumePreview({ data }) {
             value={template}
             onChange={(e) => setTemplate(e.target.value)}
           >
-            <option value="harvard">Harvard Classic</option>
-            <option value="modern">Modern Clean</option>
-            <option value="executive-photo">Executive Photo 🖼️</option>
-            <option value="modern-photo">Modern Photo 🖼️</option>
+            <option value="harvard">🇺🇸 🇨🇦 EE.UU. & Canadá (Harvard Classic)</option>
+            <option value="modern">🌎 América Latina (Modern Clean)</option>
+            <option value="executive-photo">💼 Internacional (Executive Photo 🖼️)</option>
+            <option value="modern-photo">🇪🇺 Europa (Modern Photo 🖼️)</option>
           </select>
         </div>
 

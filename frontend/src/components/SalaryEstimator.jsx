@@ -3,7 +3,7 @@ import { DollarSign, Sparkles, TrendingUp, Lightbulb, ShieldCheck } from 'lucide
 import { getApiUrl, sanitizeResumeData } from '../config'
 
 export default function SalaryEstimator({ resumeData }) {
-  const [targetCountry, setTargetCountry] = useState('Panamá')
+  const [targetCountry, setTargetCountry] = useState('EE.UU. & Canadá')
   const [isEstimating, setIsEstimating] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
@@ -46,17 +46,42 @@ export default function SalaryEstimator({ resumeData }) {
       <div className="analyzer-header">
         <DollarSign size={22} className="analyzer-icon" />
         <div>
-          <h3>Estimador de Salario & Poder de Negociación por País</h3>
-          <p>Conoce el rango salarial promedio de tu perfil en el mercado laboral objetivo antes de tu entrevista.</p>
+          <h3>Estimador de Salario & Mercado Internacional</h3>
+          <p>Conoce el rango salarial de tu perfil profesional en el mercado internacional objetivo.</p>
         </div>
       </div>
 
       <div className="analyzer-input-group">
-        <label>Selecciona o escribe el país objetivo:</label>
+        <label>Selecciona una región o escribe tu país objetivo:</label>
+        
+        <div className="region-preset-pills" style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className={`kw-add-pill ${targetCountry === 'EE.UU. & Canadá' ? 'added' : ''}`}
+            onClick={() => setTargetCountry('EE.UU. & Canadá')}
+          >
+            🇺🇸 🇨🇦 EE.UU. & Canadá
+          </button>
+          <button
+            type="button"
+            className={`kw-add-pill ${targetCountry === 'América Latina (LATAM)' ? 'added' : ''}`}
+            onClick={() => setTargetCountry('América Latina (LATAM)')}
+          >
+            🌎 América Latina (LATAM)
+          </button>
+          <button
+            type="button"
+            className={`kw-add-pill ${targetCountry === 'Europa' ? 'added' : ''}`}
+            onClick={() => setTargetCountry('Europa')}
+          >
+            🇪🇺 Europa
+          </button>
+        </div>
+
         <div className="salary-input-row">
           <input
             type="text"
-            placeholder="Ej. Panamá, Estados Unidos, Canadá, México, Colombia..."
+            placeholder="Ej. EE.UU. & Canadá, América Latina, Europa, México, España..."
             value={targetCountry}
             onChange={(e) => setTargetCountry(e.target.value)}
           />

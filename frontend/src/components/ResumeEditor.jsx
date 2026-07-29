@@ -282,7 +282,7 @@ export default function ResumeEditor({ data, onChange }) {
             {/* Photo Upload & AI Studio Enhancer */}
             {targetMarket !== 'us-canada' && (
               <div className="photo-section-box">
-                <label>Foto de Perfil Profesional (Opcional para Panamá / LATAM):</label>
+                <label>Foto de Perfil Profesional (EE.UU. & Canadá no usan foto | Opcional en LATAM / Europa):</label>
                 <div className="photo-controls">
                   <div className="photo-preview-box">
                     {data.personal_info?.photo ? (

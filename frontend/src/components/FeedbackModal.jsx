@@ -3,7 +3,7 @@ import { Lightbulb, X, Send, CheckCircle2, Globe, MessageSquare } from 'lucide-r
 
 export default function FeedbackModal({ isOpen, onClose }) {
   const [requestType, setRequestType] = useState('template') // 'template' | 'feature'
-  const [marketCountry, setMarketCountry] = useState('Panamá')
+  const [marketCountry, setMarketCountry] = useState('EE.UU. & Canadá')
   const [details, setDetails] = useState('')
   const [contactEmail, setContactEmail] = useState('')
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -46,8 +46,8 @@ export default function FeedbackModal({ isOpen, onClose }) {
             <div className="modal-header">
               <Lightbulb size={24} className="modal-icon" />
               <div>
-                <h3>Sugerir Plantilla o Función</h3>
-                <p>¿Necesitas una plantilla para un mercado o país específico? ¡Dinos cómo la quieres y la agregaremos!</p>
+                <h3>Sugerir Plantilla o Función Internacional</h3>
+                <p>¿Necesitas una plantilla para un mercado internacional o región específica? ¡Dinos cuál y la agregaremos!</p>
               </div>
             </div>
 
@@ -57,16 +57,16 @@ export default function FeedbackModal({ isOpen, onClose }) {
                 value={requestType}
                 onChange={(e) => setRequestType(e.target.value)}
               >
-                <option value="template">🖼️ Solicitar nueva plantilla para un mercado/país</option>
+                <option value="template">🖼️ Solicitar nueva plantilla para una región/país</option>
                 <option value="feature">✨ Sugerir una nueva función o herramienta IA</option>
               </select>
             </div>
 
             <div className="form-group">
-              <label>País / Mercado laboral objetivo:</label>
+              <label>Región / Mercado laboral objetivo:</label>
               <input
                 type="text"
-                placeholder="Ej. Panamá, Colombia, México, EE.UU., España, Minería, Banca..."
+                placeholder="Ej. EE.UU. & Canadá, América Latina (LATAM), Europa, México, España..."
                 value={marketCountry}
                 onChange={(e) => setMarketCountry(e.target.value)}
               />
