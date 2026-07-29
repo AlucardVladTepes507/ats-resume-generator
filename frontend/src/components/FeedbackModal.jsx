@@ -24,7 +24,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
     )
 
     // Trigger mailto fallback for administrator email or server log
-    window.open(`mailto:cesar@smart507.com?subject=${subject}&body=${body}`, '_blank')
+    window.open(`mailto:smart507ltd@gmail.com?subject=${subject}&body=${body}`, '_blank')
 
     setIsSubmitted(true)
     setTimeout(() => {

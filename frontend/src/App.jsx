@@ -307,12 +307,28 @@ function App() {
 
       {/* Footer */}
       <footer className="footer">
-        <p>Desarrollado con Inteligencia Artificial para potenciar tu currículum.</p>
+        <p>
+          Desarrollado con Inteligencia Artificial por{' '}
+          <a href="https://smart507.com" target="_blank" rel="noopener noreferrer" className="footer-brand-link">
+            smart507.com
+          </a>
+        </p>
+
         <div className="footer-links-group">
           <button className="footer-link-btn" onClick={() => setIsFeedbackOpen(true)}>
             <Lightbulb size={16} />
             <span>Sugerir Plantilla / Mercado</span>
           </button>
+          
+          <a
+            href="mailto:smart507ltd@gmail.com"
+            className="footer-link-btn"
+            title="Enviar un correo de soporte o consulta"
+          >
+            <Mail size={16} />
+            <span>Contacto: smart507ltd@gmail.com</span>
+          </a>
+
           <a
             href="https://ko-fi.com/smart507"
             target="_blank"
@@ -320,7 +336,7 @@ function App() {
             className="footer-kofi-link"
           >
             <Coffee size={16} />
-            <span>¿Te fue útil? Invítame un café en Ko-fi</span>
+            <span>¿Te fue útil? Invítame un café</span>
           </a>
         </div>
       </footer>

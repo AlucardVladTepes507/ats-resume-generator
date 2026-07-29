@@ -1721,6 +1721,18 @@ body {
   }
 }
 
+.footer-brand-link {
+  color: var(--accent-primary);
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #60a5fa;
+    text-decoration: underline;
+  }
+}
+
 .footer-links-group {
   display: flex;
   align-items: center;
