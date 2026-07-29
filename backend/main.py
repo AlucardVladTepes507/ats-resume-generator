@@ -13,8 +13,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-api_key = os.environ.get("GEMINI_API_KEY")
-client = genai.Client(api_key=api_key) if api_key else None
+def get_gemini_client():
+    load_dotenv(override=True)
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if api_key:
+        try:
+            return genai.Client(api_key=api_key)
+        except Exception as err:
+            print("Error initializing Gemini client:", err)
+    return None
 
 app = FastAPI(title="ATS Resume Generator API")
 
@@ -107,6 +114,7 @@ async def upload_file(file: UploadFile = File(...)):
             detail="Formato no soportado. Por favor sube un PDF o una foto en formato JPG, PNG o WEBP."
         )
     
+    client = get_gemini_client()
     if not client:
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY no está configurada en el servidor.")
         
@@ -173,6 +181,7 @@ async def upload_file(file: UploadFile = File(...)):
 
 @app.post("/analyze-job-match")
 async def analyze_job_match(payload: JobMatchRequest):
+    client = get_gemini_client()
     if not client:
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
     
@@ -207,6 +216,7 @@ Devuelve únicamente un objeto JSON estricto con el siguiente formato (sin markd
 
 @app.post("/enhance-bullet")
 async def enhance_bullet(payload: EnhanceBulletRequest):
+    client = get_gemini_client()
     if not client:
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
     
@@ -237,6 +247,7 @@ Devuelve un JSON estricto con 3 alternativas mejoradas usando métricas y lengua
 
 @app.post("/generate-cover-letter")
 async def generate_cover_letter(payload: CoverLetterRequest):
+    client = get_gemini_client()
     if not client:
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
     
@@ -270,6 +281,7 @@ Devuelve un JSON estricto:
 
 @app.post("/translate-resume")
 async def translate_resume(payload: TranslateResumeRequest):
+    client = get_gemini_client()
     if not client:
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
     
