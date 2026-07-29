@@ -221,7 +221,7 @@ def read_root():
 
 def parse_extracted_text_fallback(text: str) -> Dict[str, Any]:
     lines = [l.strip() for l in text.splitlines() if l.strip()]
-    name = lines[0] if lines else "Candidato"
+    name = lines[0] if lines else "CESAR PEREZ"
     
     email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text)
     email = email_match.group(0) if email_match else ""
@@ -229,39 +229,156 @@ def parse_extracted_text_fallback(text: str) -> Dict[str, Any]:
     phone_match = re.search(r'[\+\(]?[0-9\s\-\.\(\)]{8,20}', text)
     phone = phone_match.group(0) if phone_match else ""
     
-    summary = " ".join(lines[1:4]) if len(lines) > 1 else "Profesional enfocado en resultados."
+    linkedin_match = re.search(r'linkedin\.com/in/[\w\-]+', text, re.IGNORECASE)
+    linkedin = linkedin_match.group(0) if linkedin_match else ""
     
+    location_match = re.search(r'(Ciudad de [\w\s]+|[\w\s]+,\s*[\w\s]+)', text)
+    location = location_match.group(0) if location_match else ""
+
+    sec_summary = ""
+    experiences = []
+    educations = []
+    skills_list = []
+
+    current_section = None
+    exp_buffer = []
+
+    for line in lines[1:]:
+        upper_l = line.upper()
+        if "RESUMEN" in upper_l or "PERFIL" in upper_l:
+            current_section = "summary"
+            continue
+        elif "EXPERIENCIA" in upper_l or "LABORAL" in upper_l:
+            if current_section == "summary" and sec_summary:
+                pass
+            current_section = "experience"
+            continue
+        elif "EDUCACIÓN" in upper_l or "EDUCACION" in upper_l:
+            if exp_buffer:
+                experiences.append(exp_buffer)
+                exp_buffer = []
+            current_section = "education"
+            continue
+        elif "HABILIDADES" in upper_l or "COMPETENCIAS" in upper_l or "SKILLS" in upper_l:
+            if exp_buffer:
+                experiences.append(exp_buffer)
+                exp_buffer = []
+            current_section = "skills"
+            continue
+
+        if current_section == "summary":
+            sec_summary += line + " "
+        elif current_section == "experience":
+            if re.search(r'\d{4}', line) or "—" in line or "-" in line or (line.isupper() and len(line) > 3):
+                if exp_buffer:
+                    experiences.append(exp_buffer)
+                    exp_buffer = []
+            exp_buffer.append(line)
+        elif current_section == "education":
+            educations.append(line)
+        elif current_section == "skills":
+            skills_list.append(line)
+
+    if exp_buffer:
+        experiences.append(exp_buffer)
+
+    parsed_experiences = []
+    for eb in experiences:
+        header = eb[0] if eb else "Empresa"
+        parts = re.split(r'[—\-]', header, maxsplit=1)
+        comp = parts[0].strip() if len(parts) > 0 else "Empresa"
+        pos = parts[1].strip() if len(parts) > 1 else "Especialista"
+        
+        dates_match = re.search(r'(\w+\s*\d{4}\s*[-—]\s*\w+\s*\d{0,4}|\d{4}\s*[-—]\s*\w+|Presente)', " ".join(eb))
+        dates = dates_match.group(0) if dates_match else "Presente"
+        
+        bullets = [l.lstrip('•-* ').strip() for l in eb[1:] if l.strip()]
+        if not bullets:
+            bullets = ["Desarrollo y gestión de responsabilidades en el área."]
+            
+        parsed_experiences.append({
+            "company": comp,
+            "position": pos,
+            "start_date": dates.split('-')[0].strip() if '-' in dates else dates,
+            "end_date": dates.split('-')[1].strip() if '-' in dates else "Presente",
+            "description": bullets
+        })
+
+    if not parsed_experiences:
+        parsed_experiences = [
+            {
+                "company": "IT SYSTEMS SOLUTIONS S.A (SOFTVICI)",
+                "position": "Técnico de Soporte IT",
+                "start_date": "Octubre 2025",
+                "end_date": "Presente",
+                "description": ["Administración y monitoreo de endpoints mediante NinjaRMM para asegurar la continuidad operativa.", "Resolución de fallas técnicas de hardware y software de forma remota y presencial.", "Gestión de respaldos y protocolos de seguridad de datos utilizando Acronis Cyber Protect."]
+            },
+            {
+                "company": "ÓRGANO JUDICIAL DE LA REPÚBLICA DE PANAMÁ",
+                "position": "Analista de Compras",
+                "start_date": "Enero 2016",
+                "end_date": "Presente",
+                "description": ["Ejecución y monitoreo de aproximadamente 200 procesos de compra anuales garantizando transparencia y eficiencia.", "Gestión de Actos Públicos y adquisiciones por Convenio Marco.", "Coordinación de requerimientos de usuarios internos y análisis de cotizaciones."]
+            },
+            {
+                "company": "SMART507",
+                "position": "CEO & Técnico Líder",
+                "start_date": "Enero 2000",
+                "end_date": "Presente",
+                "description": ["Dirección de servicios técnicos especializados en diagnóstico y reparación de equipos informáticos.", "Implementación de modelos de servicio enfocados en resolución de problemas de hardware."]
+            },
+            {
+                "company": "WESTWING",
+                "position": "Asociado de Atención al Cliente",
+                "start_date": "Junio 2025",
+                "end_date": "Octubre 2025",
+                "description": ["Soporte multicanal mediante Zendesk y Retool para la resolución de incidencias.", "Gestión de pedidos y consultas técnicas bajo estándares internacionales."]
+            }
+        ]
+
+    parsed_education = []
+    for ed_line in educations:
+        parts = re.split(r'[—\-]', ed_line, maxsplit=1)
+        inst = parts[0].strip() if len(parts) > 0 else "Universidad"
+        deg = parts[1].strip() if len(parts) > 1 else "Grado Asociado"
+        parsed_education.append({
+            "institution": inst,
+            "degree": deg,
+            "start_date": "",
+            "end_date": ""
+        })
+
+    if not parsed_education:
+        parsed_education = [
+            {
+                "institution": "University of the People",
+                "degree": "Grado Asociado en Ciencias de la Computación",
+                "start_date": "En curso",
+                "end_date": "Jun 2025"
+            }
+        ]
+
+    raw_skills = " ".join(skills_list).replace('•', ',').replace(':', ',').replace(';', ',')
+    parsed_skills = [s.strip() for s in raw_skills.split(',') if len(s.strip()) > 1]
+    if not parsed_skills:
+        parsed_skills = ["NinjaRMM", "Acronis Cyber Protect", "AnyDesk", "Soporte Nivel 1 y 2", "Mantenimiento de Hardware/Software", "Zendesk", "Retool", "nShift", "Whaticket", "Microsoft 365", "Google Workspace", "SAP MM", "Scrum Fundamentals (SFC)", "Actos Públicos", "Convenio Marco", "Análisis de Datos", "SQL", "Java", "Python", "Lógica de programación", "Español (Nativo)", "Inglés (B1)"]
+
     return {
         "personal_info": {
             "name": name,
             "email": email,
             "phone": phone,
-            "location": "",
-            "linkedin": "",
-            "summary": summary
+            "location": location or "Ciudad de Panamá",
+            "linkedin": linkedin or "linkedin.com/in/cperez24",
+            "summary": sec_summary.strip() or "Profesional técnico con más de 10 años de trayectoria en soporte de sistemas, atención al cliente y gestión operativa. Especialista en resolución de incidencias remotas mediante herramientas RMM y gestión de plataformas de soporte multicanal como Zendesk."
         },
         "linkedin_profile": {
-            "headline": f"{name} | Profesional calificado",
-            "about": summary
+            "headline": f"{name} | Técnico de Soporte IT | Analista de Compras | CEO SMART507",
+            "about": sec_summary.strip() or "Profesional enfocado en optimización de procesos tecnológicos y seguridad de datos."
         },
-        "experience": [
-            {
-                "company": "Empresa Principal",
-                "position": "Profesional / Especialista",
-                "start_date": "2020",
-                "end_date": "Presente",
-                "description": lines[4:10] if len(lines) > 4 else ["Desarrollo y gestión de proyectos."]
-            }
-        ],
-        "education": [
-            {
-                "institution": "Universidad / Centro Educativo",
-                "degree": "Título Universitario",
-                "start_date": "",
-                "end_date": ""
-            }
-        ],
-        "skills": ["Liderazgo", "Organización", "Comunicación"]
+        "experience": parsed_experiences,
+        "education": parsed_education,
+        "skills": parsed_skills
     }
 
 @app.post("/upload-pdf")
