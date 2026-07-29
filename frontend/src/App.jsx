@@ -90,8 +90,11 @@ function App() {
   }
 
   const handleFile = async (selectedFile) => {
-    const validExtensions = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
-    if (!validExtensions.includes(selectedFile.type)) {
+    const fileName = (selectedFile.name || '').toLowerCase()
+    const isPdf = fileName.endsWith('.pdf') || (selectedFile.type || '').includes('pdf')
+    const isImage = (selectedFile.type || '').startsWith('image/') || ['.jpg', '.jpeg', '.png', '.webp'].some(ext => fileName.endsWith(ext))
+
+    if (!isPdf && !isImage) {
       setError('Por favor, selecciona un PDF o una imagen (JPG, PNG, WEBP).')
       return
     }

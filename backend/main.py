@@ -294,8 +294,12 @@ async def upload_file(file: UploadFile = File(...)):
                 with pdfplumber.open(io.BytesIO(content)) as pdf:
                     for page in pdf.pages:
                         text = page.extract_text()
-                        if text:
+                        if text and text.strip():
                             extracted_text += text + "\n"
+                        else:
+                            words = page.extract_words()
+                            if words:
+                                extracted_text += " ".join([w.get('text', '') for w in words if w.get('text')]) + "\n"
             except Exception as pdf_err:
                 print("Error extracting text with pdfplumber:", pdf_err)
                 
@@ -303,8 +307,9 @@ async def upload_file(file: UploadFile = File(...)):
                 contents_payload = [f"{PROMPT_SCHEMA}\n\nTEXTO DEL CURRÍCULUM:\n{extracted_text}"]
             else:
                 is_image_file = True
+                compressed_bytes = compress_image_for_ai(content)
                 contents_payload = [
-                    types.Part.from_bytes(data=content, mime_type="application/pdf"),
+                    types.Part.from_bytes(data=compressed_bytes, mime_type="application/pdf"),
                     PROMPT_SCHEMA
                 ]
         else:
