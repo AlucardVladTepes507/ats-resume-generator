@@ -606,7 +606,7 @@ body {
   border-radius: 2px;
 }
 
-/* RESPONSIVE MOBILE SHEET PREVIEW (100% FLUID & UNCROPPED) */
+/* RESPONSIVE MOBILE SHEET PREVIEW (EXACT A4 PAPER FIT TO SCREEN WITHOUT CROPPING) */
 @media screen and (max-width: 850px) {
   .workspace-preview {
     padding: 0.5rem 0.25rem;
@@ -625,38 +625,33 @@ body {
   }
 
   .preview-sheet-wrapper {
-    padding: 0.5rem 0.25rem;
+    padding: 1rem 0;
     overflow-x: hidden;
     width: 100%;
     box-sizing: border-box;
     display: flex;
     justify-content: center;
+    align-items: flex-start;
   }
 
   .mobile-sheet-scaler {
-    width: 100%;
-    transform: none !important;
-    margin: 0 !important;
+    position: relative;
+    width: calc(100vw - 32px);
+    /* Exact scaled paper height based on aspect ratio 816x1050 */
+    height: calc(1080px * ((100vw - 32px) / 816));
+    margin: 0 auto !important;
     display: block;
   }
 
   .preview-sheet {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-height: auto !important;
-    padding: 1.25rem 0.85rem !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
-    margin: 0 auto !important;
+    width: 816px !important;
+    min-height: 1050px !important;
+    padding: 0.5in 0.6in !important;
+    transform-origin: top left !important;
+    transform: scale(calc((100vw - 32px) / 816)) !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
+    margin: 0 !important;
     box-sizing: border-box !important;
-  }
-
-  .harvard-item-header, .modern-item-header {
-    flex-wrap: wrap;
-    gap: 0.2rem;
-  }
-
-  .harvard-dates, .modern-dates {
-    margin-left: 0;
   }
 }
 
