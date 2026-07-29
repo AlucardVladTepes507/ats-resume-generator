@@ -177,49 +177,7 @@ export default function ResumeEditor({ data, onChange }) {
     reader.readAsDataURL(file)
   }
 
-  const handleAutoEnhancePhoto = () => {
-    if (!data.personal_info?.photo) return
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.src = data.personal_info.photo
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = img.width
-      canvas.height = img.height
-      const ctx = canvas.getContext('2d')
-      ctx.drawImage(img, 0, 0)
 
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      const d = imageData.data
-
-      let totalLum = 0
-      for (let i = 0; i < d.length; i += 4) {
-        totalLum += (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2])
-      }
-      const avgLum = totalLum / (d.length / 4)
-      const brightnessBoost = avgLum < 130 ? Math.min(45, 130 - avgLum) : 10
-      const contrastFactor = 1.15
-
-      for (let i = 0; i < d.length; i += 4) {
-        let r = d[i] + brightnessBoost
-        let g = d[i + 1] + brightnessBoost
-        let b = d[i + 2] + brightnessBoost
-
-        r = ((r - 128) * contrastFactor) + 128
-        g = ((g - 128) * contrastFactor) + 128
-        b = ((b - 128) * contrastFactor) + 128
-
-        d[i] = Math.min(255, Math.max(0, r))
-        d[i + 1] = Math.min(255, Math.max(0, g))
-        d[i + 2] = Math.min(255, Math.max(0, b))
-      }
-
-      ctx.putImageData(imageData, 0, 0)
-      const enhancedDataUrl = canvas.toDataURL('image/jpeg', 0.95)
-      handlePersonalInfoChange('photo', enhancedDataUrl)
-      alert('✨ ¡Iluminación y contraste mejorados con éxito!')
-    }
-  }
 
   const [targetMarket, setTargetMarket] = useState('latam') // 'latam' | 'us-canada'
 
@@ -348,22 +306,12 @@ export default function ResumeEditor({ data, onChange }) {
                       Subir Foto
                     </label>
                     {data.personal_info?.photo && (
-                      <>
-                        <button
-                          className="btn-ai-sparkle"
-                          onClick={handleAutoEnhancePhoto}
-                          title="Mejorar iluminación, contraste y sombras con IA"
-                        >
-                          <Sparkles size={14} />
-                          <span>✨ Auto-Corregir Luz IA</span>
-                        </button>
-                        <button
-                          className="btn-text danger sm"
-                          onClick={() => handlePersonalInfoChange('photo', '')}
-                        >
-                          Quitar
-                        </button>
-                      </>
+                      <button
+                        className="btn-text danger sm"
+                        onClick={() => handlePersonalInfoChange('photo', '')}
+                      >
+                        Quitar
+                      </button>
                     )}
                   </div>
                 </div>
