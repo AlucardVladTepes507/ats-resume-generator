@@ -79,32 +79,17 @@ export default function ResumePreview({ data }) {
       {/* Control Bar */}
       <div className="preview-toolbar">
         <div className="template-selector">
-          <Layout size={18} />
-          <span>Plantilla:</span>
-          <button
-            className={`template-btn ${template === 'harvard' ? 'active' : ''}`}
-            onClick={() => setTemplate('harvard')}
+          <Layout size={18} className="template-icon" />
+          <select
+            className="template-dropdown"
+            value={template}
+            onChange={(e) => setTemplate(e.target.value)}
           >
-            Harvard
-          </button>
-          <button
-            className={`template-btn ${template === 'modern' ? 'active' : ''}`}
-            onClick={() => setTemplate('modern')}
-          >
-            Modern
-          </button>
-          <button
-            className={`template-btn ${template === 'executive-photo' ? 'active' : ''}`}
-            onClick={() => setTemplate('executive-photo')}
-          >
-            Executive 🖼️
-          </button>
-          <button
-            className={`template-btn ${template === 'modern-photo' ? 'active' : ''}`}
-            onClick={() => setTemplate('modern-photo')}
-          >
-            Modern 🖼️
-          </button>
+            <option value="harvard">Harvard Classic</option>
+            <option value="modern">Modern Clean</option>
+            <option value="executive-photo">Executive Photo 🖼️</option>
+            <option value="modern-photo">Modern Photo 🖼️</option>
+          </select>
         </div>
 
         <div className="zoom-controls-bar">
