@@ -2049,6 +2049,147 @@ body {
   }
 }
 
+/* GRAMMAR CHECKER STYLES */
+.grammar-results-box {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.grammar-results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+}
+
+.issues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.issue-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.issue-section-badge {
+  align-self: flex-start;
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  padding: 0.15rem 0.5rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.issue-diff {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.issue-orig {
+  color: #f87171;
+  text-decoration: line-through;
+}
+
+.issue-arrow {
+  color: var(--text-secondary);
+}
+
+.issue-sug {
+  color: #34d399;
+  font-weight: 700;
+}
+
+.issue-explanation {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* INDUSTRY KEYWORDS STYLES */
+.industry-selector-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  width: 100%;
+}
+
+.industry-keywords-results {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.kw-category-box {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  h4 {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+}
+
+.kw-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.kw-add-pill {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.35rem 0.65rem;
+  border-radius: 2rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: var(--accent-primary);
+    color: #60a5fa;
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+
+  &.added {
+    background-color: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: #34d399;
+    cursor: default;
+  }
+}
+
+
 /* SALARY ESTIMATOR STYLES */
 .salary-input-row {
   display: flex;

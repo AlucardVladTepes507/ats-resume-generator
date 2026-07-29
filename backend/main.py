@@ -523,8 +523,86 @@ Devuelve un JSON estricto con 3 certificaciones reconocidas mundialmente:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al recomendar certificaciones: {str(e)}")
 
+class GrammarCheckRequest(BaseModel):
+    resume_data: Dict[str, Any]
+
+class IndustryKeywordsRequest(BaseModel):
+    industry: str
+    target_role: Optional[str] = ""
+
+@app.post("/check-grammar")
+async def check_grammar(payload: GrammarCheckRequest):
+    client = get_gemini_client()
+    if not client:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
+    
+    try:
+        prompt = f"""
+Eres un editor ortográfico y gramatical profesional en español e inglés.
+Revisa exhaustivamente la redacción, ortografía, tildes y sintaxis del siguiente currículum:
+
+CV a revisar:
+{json.dumps(payload.resume_data, ensure_ascii=False)}
+
+Devuelve un JSON estricto:
+{{
+    "total_errors": 2,
+    "issues": [
+        {{
+            "section": "Experiencia - Empresa X",
+            "original": "Texto original con error",
+            "suggestion": "Texto corregido profesionalmente",
+            "explanation": "Explicación breve del error (ej. Falta de tilde o concordancia)"
+        }}
+    ],
+    "corrected_resume_data": {{ ...objeto resume_data completo con todos los textos ya corregidos... }}
+}}
+        """
+
+        response = client.models.generate_content(
+            model='gemini-flash-latest',
+            contents=[prompt]
+        )
+        cleaned = clean_json_response(response.text)
+        return json.loads(cleaned)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al verificar ortografía: {str(e)}")
+
+@app.post("/get-industry-keywords")
+async def get_industry_keywords(payload: IndustryKeywordsRequest):
+    client = get_gemini_client()
+    if not client:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
+    
+    try:
+        prompt = f"""
+Eres un reclutador experto en optimización ATS para la industria: {payload.industry}.
+Genera un paquete de las 20 palabras clave y competencias técnicas/blandas de mayor demanda para este sector:
+
+Industria: {payload.industry}
+Puesto objetivo (opcional): {payload.target_role or "General"}
+
+Devuelve un JSON estricto:
+{{
+    "industry": "{payload.industry}",
+    "technical_keywords": ["Habilidad Técnica 1", "Habilidad Técnica 2", "Habilidad Técnica 3", "Habilidad Técnica 4", "Habilidad Técnica 5", "Habilidad 6", "Habilidad 7", "Habilidad 8"],
+    "soft_keywords": ["Competencia Blanda 1", "Competencia 2", "Competencia 3", "Competencia 4"],
+    "tools_and_certifications": ["Herramienta/Cert 1", "Herramienta 2", "Herramienta 3", "Herramienta 4"]
+}}
+        """
+
+        response = client.models.generate_content(
+            model='gemini-flash-latest',
+            contents=[prompt]
+        )
+        cleaned = clean_json_response(response.text)
+        return json.loads(cleaned)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener palabras clave de industria: {str(e)}")
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
 
 
 

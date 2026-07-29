@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle, Share2, DollarSign, Award } from 'lucide-react'
+import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle, Share2, DollarSign, Award, SpellCheck, Tag } from 'lucide-react'
 import ResumeEditor from './components/ResumeEditor'
 import ResumePreview from './components/ResumePreview'
 import AtsMatchAnalyzer from './components/AtsMatchAnalyzer'
@@ -9,6 +9,8 @@ import InterviewPrepGenerator from './components/InterviewPrepGenerator'
 import LinkedInBioOptimizer from './components/LinkedInBioOptimizer'
 import SalaryEstimator from './components/SalaryEstimator'
 import CertificationsRoadmap from './components/CertificationsRoadmap'
+import GrammarChecker from './components/GrammarChecker'
+import IndustryKeywords from './components/IndustryKeywords'
 import FeedbackModal from './components/FeedbackModal'
 import ContactModal from './components/ContactModal'
 import './index.css'
@@ -21,7 +23,7 @@ function App() {
   const [resumeData, setResumeData] = useState(null)
   const [isImageUpload, setIsImageUpload] = useState(false)
   const [mobileTab, setMobileTab] = useState('editor') // 'editor' | 'preview'
-  const [viewMode, setViewMode] = useState('editor') // 'editor' | 'analyzer' | 'cover-letter' | 'linkedin' | 'salary' | 'certs' | 'outreach' | 'interview'
+  const [viewMode, setViewMode] = useState('editor') // 'editor' | 'analyzer' | 'cover-letter' | 'linkedin' | 'salary' | 'certs' | 'outreach' | 'interview' | 'grammar' | 'keywords'
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
   const [isContactOpen, setIsContactOpen] = useState(false)
   const fileInputRef = useRef(null)
@@ -201,46 +203,60 @@ function App() {
               <span>2. Analizar Vacante (ATS Score)</span>
             </button>
             <button
+              className={`nav-mode-btn ${viewMode === 'grammar' ? 'active' : ''}`}
+              onClick={() => setViewMode('grammar')}
+            >
+              <SpellCheck size={18} />
+              <span>3. Ortografía IA</span>
+            </button>
+            <button
+              className={`nav-mode-btn ${viewMode === 'keywords' ? 'active' : ''}`}
+              onClick={() => setViewMode('keywords')}
+            >
+              <Tag size={18} />
+              <span>4. Palabras Clave Industria</span>
+            </button>
+            <button
               className={`nav-mode-btn ${viewMode === 'cover-letter' ? 'active' : ''}`}
               onClick={() => setViewMode('cover-letter')}
             >
               <Mail size={18} />
-              <span>3. Carta de Presentación</span>
+              <span>5. Carta de Presentación</span>
             </button>
             <button
               className={`nav-mode-btn ${viewMode === 'linkedin' ? 'active' : ''}`}
               onClick={() => setViewMode('linkedin')}
             >
               <Share2 size={18} />
-              <span>4. Perfil LinkedIn</span>
+              <span>6. Perfil LinkedIn</span>
             </button>
             <button
               className={`nav-mode-btn ${viewMode === 'salary' ? 'active' : ''}`}
               onClick={() => setViewMode('salary')}
             >
               <DollarSign size={18} />
-              <span>5. Estimador Salarial</span>
+              <span>7. Estimador Salarial</span>
             </button>
             <button
               className={`nav-mode-btn ${viewMode === 'certs' ? 'active' : ''}`}
               onClick={() => setViewMode('certs')}
             >
               <Award size={18} />
-              <span>6. Certificaciones ROI</span>
+              <span>8. Certificaciones ROI</span>
             </button>
             <button
               className={`nav-mode-btn ${viewMode === 'outreach' ? 'active' : ''}`}
               onClick={() => setViewMode('outreach')}
             >
               <MessageSquare size={18} />
-              <span>7. Mensajes Contacto</span>
+              <span>9. Mensajes Contacto</span>
             </button>
             <button
               className={`nav-mode-btn ${viewMode === 'interview' ? 'active' : ''}`}
               onClick={() => setViewMode('interview')}
             >
               <HelpCircle size={18} />
-              <span>8. Entrevista STAR</span>
+              <span>10. Entrevista STAR</span>
             </button>
           </div>
 
@@ -305,42 +321,56 @@ function App() {
             </div>
           )}
 
-          {/* VIEW MODE 3: COVER LETTER GENERATOR */}
+          {/* VIEW MODE 3: GRAMMAR CHECKER */}
+          {viewMode === 'grammar' && (
+            <div className="feature-view-box">
+              <GrammarChecker resumeData={resumeData} onUpdateResumeData={setResumeData} />
+            </div>
+          )}
+
+          {/* VIEW MODE 4: INDUSTRY KEYWORDS */}
+          {viewMode === 'keywords' && (
+            <div className="feature-view-box">
+              <IndustryKeywords resumeData={resumeData} onUpdateResumeData={setResumeData} />
+            </div>
+          )}
+
+          {/* VIEW MODE 5: COVER LETTER GENERATOR */}
           {viewMode === 'cover-letter' && (
             <div className="feature-view-box">
               <CoverLetterGenerator resumeData={resumeData} />
             </div>
           )}
 
-          {/* VIEW MODE 4: LINKEDIN BIO OPTIMIZER */}
+          {/* VIEW MODE 6: LINKEDIN BIO OPTIMIZER */}
           {viewMode === 'linkedin' && (
             <div className="feature-view-box">
               <LinkedInBioOptimizer resumeData={resumeData} />
             </div>
           )}
 
-          {/* VIEW MODE 5: SALARY ESTIMATOR */}
+          {/* VIEW MODE 7: SALARY ESTIMATOR */}
           {viewMode === 'salary' && (
             <div className="feature-view-box">
               <SalaryEstimator resumeData={resumeData} />
             </div>
           )}
 
-          {/* VIEW MODE 6: CERTIFICATIONS ROADMAP */}
+          {/* VIEW MODE 8: CERTIFICATIONS ROADMAP */}
           {viewMode === 'certs' && (
             <div className="feature-view-box">
               <CertificationsRoadmap resumeData={resumeData} />
             </div>
           )}
 
-          {/* VIEW MODE 7: OUTREACH MESSAGES */}
+          {/* VIEW MODE 9: OUTREACH MESSAGES */}
           {viewMode === 'outreach' && (
             <div className="feature-view-box">
               <OutreachMessageGenerator resumeData={resumeData} />
             </div>
           )}
 
-          {/* VIEW MODE 8: INTERVIEW PREP */}
+          {/* VIEW MODE 10: INTERVIEW PREP */}
           {viewMode === 'interview' && (
             <div className="feature-view-box">
               <InterviewPrepGenerator resumeData={resumeData} />
