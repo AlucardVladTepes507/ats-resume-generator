@@ -401,7 +401,128 @@ Devuelve un JSON estricto con 5 preguntas estructuradas:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al generar preguntas de entrevista: {str(e)}")
 
+class LinkedInProfileRequest(BaseModel):
+    resume_data: Dict[str, Any]
+    target_position: Optional[str] = ""
+
+class SalaryEstimateRequest(BaseModel):
+    resume_data: Dict[str, Any]
+    target_country: Optional[str] = "Panamá"
+
+class CertificationsRequest(BaseModel):
+    resume_data: Dict[str, Any]
+    target_position: Optional[str] = ""
+
+@app.post("/generate-linkedin-profile")
+async def generate_linkedin_profile(payload: LinkedInProfileRequest):
+    client = get_gemini_client()
+    if not client:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
+    
+    try:
+        prompt = f"""
+Eres un experto estratega de posicionamiento en LinkedIn y personal branding.
+Crea un perfil optimizado de LinkedIn para el candidato basado en su CV:
+
+CV del candidato:
+{json.dumps(payload.resume_data, ensure_ascii=False)}
+
+Puesto objetivo: {payload.target_position or "Profesional en su área"}
+
+Devuelve un JSON estricto:
+{{
+    "headline": "Titular de LinkedIn altamente optimizado con palabras clave y propuesta de valor (máx 220 caract.)",
+    "about_summary": "Sección 'Acerca de' (About Bio) narrativa en primera persona, perspicaz y profesional dividida en párrafos atractivos con emojis sutiles.",
+    "featured_skills": ["Palabra clave / Habilidad 1", "Habilidad 2", "Habilidad 3", "Habilidad 4", "Habilidad 5"]
+}}
+        """
+
+        response = client.models.generate_content(
+            model='gemini-flash-latest',
+            contents=[prompt]
+        )
+        cleaned = clean_json_response(response.text)
+        return json.loads(cleaned)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al generar perfil de LinkedIn: {str(e)}")
+
+@app.post("/estimate-salary")
+async def estimate_salary(payload: SalaryEstimateRequest):
+    client = get_gemini_client()
+    if not client:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
+    
+    try:
+        prompt = f"""
+Eres un analista de compensaciones y salarios en RRHH para el mercado laboral internacional.
+Estima el rango salarial mensual aproximado (en USD o moneda local según corresponda) para el perfil del candidato en {payload.target_country}.
+
+CV del candidato:
+{json.dumps(payload.resume_data, ensure_ascii=False)}
+
+País objetivo: {payload.target_country}
+
+Devuelve un JSON estricto:
+{{
+    "min_salary": "$1,200 / mes",
+    "avg_salary": "$1,800 / mes",
+    "max_salary": "$2,500 / mes",
+    "market_insights": "Análisis del mercado laboral en {payload.target_country} para este perfil",
+    "negotiation_tips": ["Consejo práctico de negociación 1", "Consejo 2"],
+    "salary_boosters": ["Factor que aumenta tu valor en la negociación 1", "Factor 2"]
+}}
+        """
+
+        response = client.models.generate_content(
+            model='gemini-flash-latest',
+            contents=[prompt]
+        )
+        cleaned = clean_json_response(response.text)
+        return json.loads(cleaned)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al estimar salario: {str(e)}")
+
+@app.post("/recommend-certifications")
+async def recommend_certifications(payload: CertificationsRequest):
+    client = get_gemini_client()
+    if not client:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
+    
+    try:
+        prompt = f"""
+Eres un mentor de carrera y desarrollo profesional tecnológico/ejecutivo.
+Recomienda las 3 certificaciones de mayor ROI (Retorno de Inversión y aumento salarial) para el perfil del candidato:
+
+CV del candidato:
+{json.dumps(payload.resume_data, ensure_ascii=False)}
+
+Puesto/Área de interés: {payload.target_position or "Su industria actual"}
+
+Devuelve un JSON estricto con 3 certificaciones reconocidas mundialmente:
+{{
+    "certifications": [
+        {{
+            "name": "Nombre de la Certificación 1",
+            "provider": "Institución o Proveedor (ej. AWS, Scrum Alliance, Google, Microsoft, PMP...)",
+            "prep_time": "Tiempo aproximado de preparación (ej. 1 a 2 meses)",
+            "salary_impact": "Impacto salarial estimado (ej. +20% a +35%)",
+            "why_recommended": "Explicación de por qué esta certificación disparará las entrevistas del candidato"
+        }}
+    ]
+}}
+        """
+
+        response = client.models.generate_content(
+            model='gemini-flash-latest',
+            contents=[prompt]
+        )
+        cleaned = clean_json_response(response.text)
+        return json.loads(cleaned)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al recomendar certificaciones: {str(e)}")
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
 
 

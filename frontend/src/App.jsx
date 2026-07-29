@@ -1,15 +1,17 @@
 import { useState, useRef } from 'react'
-import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle } from 'lucide-react'
+import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle, Share2, DollarSign, Award } from 'lucide-react'
 import ResumeEditor from './components/ResumeEditor'
 import ResumePreview from './components/ResumePreview'
 import AtsMatchAnalyzer from './components/AtsMatchAnalyzer'
 import CoverLetterGenerator from './components/CoverLetterGenerator'
 import OutreachMessageGenerator from './components/OutreachMessageGenerator'
 import InterviewPrepGenerator from './components/InterviewPrepGenerator'
+import LinkedInBioOptimizer from './components/LinkedInBioOptimizer'
+import SalaryEstimator from './components/SalaryEstimator'
+import CertificationsRoadmap from './components/CertificationsRoadmap'
 import FeedbackModal from './components/FeedbackModal'
-import './index.css'
-
 import ContactModal from './components/ContactModal'
+import './index.css'
 
 function App() {
   const [file, setFile] = useState(null)
@@ -19,7 +21,7 @@ function App() {
   const [resumeData, setResumeData] = useState(null)
   const [isImageUpload, setIsImageUpload] = useState(false)
   const [mobileTab, setMobileTab] = useState('editor') // 'editor' | 'preview'
-  const [viewMode, setViewMode] = useState('editor') // 'editor' | 'analyzer' | 'cover-letter' | 'outreach' | 'interview'
+  const [viewMode, setViewMode] = useState('editor') // 'editor' | 'analyzer' | 'cover-letter' | 'linkedin' | 'salary' | 'certs' | 'outreach' | 'interview'
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
   const [isContactOpen, setIsContactOpen] = useState(false)
   const fileInputRef = useRef(null)
@@ -206,18 +208,39 @@ function App() {
               <span>3. Carta de Presentación</span>
             </button>
             <button
+              className={`nav-mode-btn ${viewMode === 'linkedin' ? 'active' : ''}`}
+              onClick={() => setViewMode('linkedin')}
+            >
+              <Share2 size={18} />
+              <span>4. Perfil LinkedIn</span>
+            </button>
+            <button
+              className={`nav-mode-btn ${viewMode === 'salary' ? 'active' : ''}`}
+              onClick={() => setViewMode('salary')}
+            >
+              <DollarSign size={18} />
+              <span>5. Estimador Salarial</span>
+            </button>
+            <button
+              className={`nav-mode-btn ${viewMode === 'certs' ? 'active' : ''}`}
+              onClick={() => setViewMode('certs')}
+            >
+              <Award size={18} />
+              <span>6. Certificaciones ROI</span>
+            </button>
+            <button
               className={`nav-mode-btn ${viewMode === 'outreach' ? 'active' : ''}`}
               onClick={() => setViewMode('outreach')}
             >
               <MessageSquare size={18} />
-              <span>4. Mensajes LinkedIn & Email</span>
+              <span>7. Mensajes Contacto</span>
             </button>
             <button
               className={`nav-mode-btn ${viewMode === 'interview' ? 'active' : ''}`}
               onClick={() => setViewMode('interview')}
             >
               <HelpCircle size={18} />
-              <span>5. Preparar Entrevista STAR</span>
+              <span>8. Entrevista STAR</span>
             </button>
           </div>
 
@@ -289,14 +312,35 @@ function App() {
             </div>
           )}
 
-          {/* VIEW MODE 4: OUTREACH MESSAGES */}
+          {/* VIEW MODE 4: LINKEDIN BIO OPTIMIZER */}
+          {viewMode === 'linkedin' && (
+            <div className="feature-view-box">
+              <LinkedInBioOptimizer resumeData={resumeData} />
+            </div>
+          )}
+
+          {/* VIEW MODE 5: SALARY ESTIMATOR */}
+          {viewMode === 'salary' && (
+            <div className="feature-view-box">
+              <SalaryEstimator resumeData={resumeData} />
+            </div>
+          )}
+
+          {/* VIEW MODE 6: CERTIFICATIONS ROADMAP */}
+          {viewMode === 'certs' && (
+            <div className="feature-view-box">
+              <CertificationsRoadmap resumeData={resumeData} />
+            </div>
+          )}
+
+          {/* VIEW MODE 7: OUTREACH MESSAGES */}
           {viewMode === 'outreach' && (
             <div className="feature-view-box">
               <OutreachMessageGenerator resumeData={resumeData} />
             </div>
           )}
 
-          {/* VIEW MODE 5: INTERVIEW PREP */}
+          {/* VIEW MODE 8: INTERVIEW PREP */}
           {viewMode === 'interview' && (
             <div className="feature-view-box">
               <InterviewPrepGenerator resumeData={resumeData} />

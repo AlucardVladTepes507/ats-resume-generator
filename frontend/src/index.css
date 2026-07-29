@@ -1930,6 +1930,140 @@ body {
   }
 }
 
+/* SALARY ESTIMATOR STYLES */
+.salary-input-row {
+  display: flex;
+  gap: 0.75rem;
+
+  input { flex: 1; }
+}
+
+.salary-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.salary-card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+
+  &.min { border-color: rgba(96, 165, 250, 0.4); }
+  &.avg { border-color: rgba(52, 211, 153, 0.4); background-color: rgba(16, 185, 129, 0.08); }
+  &.max { border-color: rgba(251, 191, 36, 0.4); }
+}
+
+.card-lbl {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.salary-val {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+/* CERTIFICATIONS ROADMAP STYLES */
+.cert-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.cert-card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cert-badge-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  .cert-icon { color: #fbbf24; }
+  .cert-rank { font-size: 0.75rem; font-weight: 700; color: #fbbf24; text-transform: uppercase; }
+}
+
+.cert-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.cert-provider {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.cert-metrics-row {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+}
+
+.cert-metric {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  &.prep { background-color: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+  &.boost { background-color: rgba(52, 211, 153, 0.15); color: #34d399; font-weight: 700; }
+}
+
+.cert-reason-box {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  font-size: 0.82rem;
+
+  strong { display: flex; align-items: center; gap: 0.35rem; color: #fbbf24; margin-bottom: 0.25rem; }
+  p { color: var(--text-secondary); line-height: 1.4; }
+}
+
+/* SMART507 VERIFICATION BADGE IN PREVIEW SHEET */
+.badge-toggle-lbl {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  margin-right: 0.5rem;
+
+  input { cursor: pointer; }
+}
+
+.smart507-verification-footer {
+  margin-top: 1.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed #cbd5e1;
+  text-align: center;
+  font-size: 0.72rem;
+  color: #64748b;
+
+  strong {
+    color: #1e3a8a;
+  }
+}
+
 /* PRINT MEDIA QUERY FOR PERFECT ATS PDF PRINTING */
 @media print {
   @page {
@@ -1963,6 +2097,7 @@ body {
     transform: none !important;
   }
 }
+
 
 
 

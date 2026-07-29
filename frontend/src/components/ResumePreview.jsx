@@ -10,6 +10,7 @@ import { saveAs } from 'file-saver'
 export default function ResumePreview({ data }) {
   const [template, setTemplate] = useState('harvard') // 'harvard' | 'modern' | 'executive-photo'
   const [isExporting, setIsExporting] = useState(false)
+  const [showSmart507Badge, setShowSmart507Badge] = useState(true)
   const resumeRef = useRef(null)
 
   const handleDownloadPDF = () => {
@@ -191,6 +192,14 @@ export default function ResumePreview({ data }) {
         </div>
 
         <div className="export-actions">
+          <label className="badge-toggle-lbl" title="Añade un sello discreto de verificación ATS de smart507.com en el PDF">
+            <input
+              type="checkbox"
+              checked={showSmart507Badge}
+              onChange={(e) => setShowSmart507Badge(e.target.checked)}
+            />
+            <span>Sello smart507.com</span>
+          </label>
           <button className="btn-secondary" onClick={handleDownloadDocx} title="Descargar en formato Microsoft Word editable">
             <FileSpreadsheet size={16} />
             <span>Word (.docx)</span>
@@ -208,6 +217,12 @@ export default function ResumePreview({ data }) {
           {template === 'harvard' && <HarvardTemplate data={data} />}
           {template === 'modern' && <ModernTemplate data={data} />}
           {template === 'executive-photo' && <ExecutivePhotoTemplate data={data} />}
+
+          {showSmart507Badge && (
+            <div className="smart507-verification-footer">
+              ✔ Formato verificado y optimizado para sistemas ATS por <strong>smart507.com</strong>
+            </div>
+          )}
         </div>
       </div>
     </div>
