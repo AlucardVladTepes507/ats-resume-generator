@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle, Share2, DollarSign, Award, SpellCheck, Tag } from 'lucide-react'
+import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle, Share2, DollarSign, Award, SpellCheck, Tag, ChevronDown } from 'lucide-react'
 import ResumeEditor from './components/ResumeEditor'
 import ResumePreview from './components/ResumePreview'
 import AtsMatchAnalyzer from './components/AtsMatchAnalyzer'
@@ -22,6 +22,7 @@ function App() {
   const [isDragging, setIsDragging] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   // Initialize from localStorage so refreshing (F5) doesn't lose the active CV
   const [resumeData, setResumeData] = useState(() => {
@@ -222,78 +223,106 @@ function App() {
         </div>
       ) : (
         <div className="workspace-wrapper">
-          {/* Main Navigation Mode Bar */}
-          <div className="main-nav-mode-bar">
+          {/* Main Navigation Bar with Dropdown Menu (No Horizontal Scrollbar) */}
+          <div className="main-nav-mode-bar clean-nav-bar">
             <button
               className={`nav-mode-btn ${viewMode === 'editor' ? 'active' : ''}`}
-              onClick={() => setViewMode('editor')}
+              onClick={() => { setViewMode('editor'); setIsDropdownOpen(false); }}
             >
               <Edit3 size={18} />
               <span>1. Editar & Vista Previa ATS</span>
             </button>
+
             <button
               className={`nav-mode-btn ${viewMode === 'analyzer' ? 'active' : ''}`}
-              onClick={() => setViewMode('analyzer')}
+              onClick={() => { setViewMode('analyzer'); setIsDropdownOpen(false); }}
             >
               <Target size={18} />
-              <span>2. Analizar Vacante (ATS Score)</span>
+              <span>2. Analizar Vacante (ATS)</span>
             </button>
-            <button
-              className={`nav-mode-btn ${viewMode === 'grammar' ? 'active' : ''}`}
-              onClick={() => setViewMode('grammar')}
-            >
-              <SpellCheck size={18} />
-              <span>3. Ortografía IA</span>
-            </button>
-            <button
-              className={`nav-mode-btn ${viewMode === 'keywords' ? 'active' : ''}`}
-              onClick={() => setViewMode('keywords')}
-            >
-              <Tag size={18} />
-              <span>4. Palabras Clave Industria</span>
-            </button>
-            <button
-              className={`nav-mode-btn ${viewMode === 'cover-letter' ? 'active' : ''}`}
-              onClick={() => setViewMode('cover-letter')}
-            >
-              <Mail size={18} />
-              <span>5. Carta de Presentación</span>
-            </button>
-            <button
-              className={`nav-mode-btn ${viewMode === 'linkedin' ? 'active' : ''}`}
-              onClick={() => setViewMode('linkedin')}
-            >
-              <Share2 size={18} />
-              <span>6. Perfil LinkedIn</span>
-            </button>
-            <button
-              className={`nav-mode-btn ${viewMode === 'salary' ? 'active' : ''}`}
-              onClick={() => setViewMode('salary')}
-            >
-              <DollarSign size={18} />
-              <span>7. Estimador Salarial</span>
-            </button>
-            <button
-              className={`nav-mode-btn ${viewMode === 'certs' ? 'active' : ''}`}
-              onClick={() => setViewMode('certs')}
-            >
-              <Award size={18} />
-              <span>8. Certificaciones ROI</span>
-            </button>
-            <button
-              className={`nav-mode-btn ${viewMode === 'outreach' ? 'active' : ''}`}
-              onClick={() => setViewMode('outreach')}
-            >
-              <MessageSquare size={18} />
-              <span>9. Mensajes Contacto</span>
-            </button>
-            <button
-              className={`nav-mode-btn ${viewMode === 'interview' ? 'active' : ''}`}
-              onClick={() => setViewMode('interview')}
-            >
-              <HelpCircle size={18} />
-              <span>10. Entrevista STAR</span>
-            </button>
+
+            {/* AI Tools Dropdown Menu */}
+            <div className="tools-dropdown-wrapper">
+              <button
+                className={`nav-mode-btn dropdown-trigger ${['grammar', 'keywords', 'certs', 'linkedin', 'cover-letter', 'salary', 'outreach', 'interview'].includes(viewMode) ? 'active' : ''}`}
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              >
+                <Sparkles size={18} />
+                <span>
+                  {viewMode === 'grammar' && '✍️ Ortografía IA'}
+                  {viewMode === 'keywords' && '🏷️ Palabras Clave'}
+                  {viewMode === 'certs' && '🎓 Certificaciones Sugeridas'}
+                  {viewMode === 'linkedin' && '💼 Perfil LinkedIn'}
+                  {viewMode === 'cover-letter' && '✉️ Carta Presentación'}
+                  {viewMode === 'salary' && '💵 Estimador Salarial'}
+                  {viewMode === 'outreach' && '💬 Mensajes Contacto'}
+                  {viewMode === 'interview' && '❓ Entrevista STAR'}
+                  {!['grammar', 'keywords', 'certs', 'linkedin', 'cover-letter', 'salary', 'outreach', 'interview'].includes(viewMode) && '✨ Herramientas IA'}
+                </span>
+                <ChevronDown size={16} className={`chevron-icon ${isDropdownOpen ? 'open' : ''}`} />
+              </button>
+
+              {isDropdownOpen && (
+                <div className="tools-dropdown-menu">
+                  <button
+                    className={`dropdown-item ${viewMode === 'grammar' ? 'active' : ''}`}
+                    onClick={() => { setViewMode('grammar'); setIsDropdownOpen(false); }}
+                  >
+                    <SpellCheck size={16} />
+                    <span>✍️ Ortografía & Gramática IA</span>
+                  </button>
+                  <button
+                    className={`dropdown-item ${viewMode === 'keywords' ? 'active' : ''}`}
+                    onClick={() => { setViewMode('keywords'); setIsDropdownOpen(false); }}
+                  >
+                    <Tag size={16} />
+                    <span>🏷️ Palabras Clave de Industria</span>
+                  </button>
+                  <button
+                    className={`dropdown-item ${viewMode === 'certs' ? 'active' : ''}`}
+                    onClick={() => { setViewMode('certs'); setIsDropdownOpen(false); }}
+                  >
+                    <Award size={16} />
+                    <span>🎓 Certificaciones Sugeridas</span>
+                  </button>
+                  <button
+                    className={`dropdown-item ${viewMode === 'linkedin' ? 'active' : ''}`}
+                    onClick={() => { setViewMode('linkedin'); setIsDropdownOpen(false); }}
+                  >
+                    <Share2 size={16} />
+                    <span>💼 Perfil de LinkedIn</span>
+                  </button>
+                  <button
+                    className={`dropdown-item ${viewMode === 'cover-letter' ? 'active' : ''}`}
+                    onClick={() => { setViewMode('cover-letter'); setIsDropdownOpen(false); }}
+                  >
+                    <Mail size={16} />
+                    <span>✉️ Carta de Presentación</span>
+                  </button>
+                  <button
+                    className={`dropdown-item ${viewMode === 'salary' ? 'active' : ''}`}
+                    onClick={() => { setViewMode('salary'); setIsDropdownOpen(false); }}
+                  >
+                    <DollarSign size={16} />
+                    <span>💵 Estimador Salarial</span>
+                  </button>
+                  <button
+                    className={`dropdown-item ${viewMode === 'outreach' ? 'active' : ''}`}
+                    onClick={() => { setViewMode('outreach'); setIsDropdownOpen(false); }}
+                  >
+                    <MessageSquare size={16} />
+                    <span>💬 Mensajes de Contacto</span>
+                  </button>
+                  <button
+                    className={`dropdown-item ${viewMode === 'interview' ? 'active' : ''}`}
+                    onClick={() => { setViewMode('interview'); setIsDropdownOpen(false); }}
+                  >
+                    <HelpCircle size={16} />
+                    <span>❓ Entrevista STAR</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Handwritten / Image Warning Notice */}

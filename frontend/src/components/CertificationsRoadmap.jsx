@@ -46,8 +46,8 @@ export default function CertificationsRoadmap({ resumeData }) {
       <div className="analyzer-header">
         <Award size={22} className="analyzer-icon" />
         <div>
-          <h3>Roadmap de Certificaciones de Alto ROI (Mayor Salario)</h3>
-          <p>Descubre las 3 certificaciones internacionales de mayor valor en tu industria para impulsar tu carrera.</p>
+          <h3>Certificaciones Sugeridas para tu Perfil</h3>
+          <p>Descubre las 3 certificaciones de mayor valor en tu industria para impulsar tu carrera.</p>
         </div>
       </div>
 

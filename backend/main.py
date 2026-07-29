@@ -61,13 +61,15 @@ class TranslateResumeRequest(BaseModel):
     target_language: str = "en"
 
 PROMPT_SCHEMA = """
-Eres un experto analizador y transcriptor de currículums ATS. 
+Eres un experto analizador, corrector ortográfico y transcriptor de currículums ATS de nivel ejecutivo. 
 Analiza la información proporcionada (texto de PDF o foto/imagen de currículum impreso o manuscrito).
-Tu trabajo es leerlo cuidadosamente y extraer la información en el siguiente formato JSON estricto.
-Si el documento contiene texto escrito a mano o fotos de mala calidad, haz tu mejor esfuerzo por transcribir con precisión.
-No devuelvas nada más que el JSON, sin bloques de código Markdown, solo el texto JSON puro.
 
-Estructura JSON deseada:
+Instrucciones de Procesamiento:
+1. CORRECCIÓN AUTOMÁTICA DE ORTOGRAFÍA Y GRAMÁTICA: Revisa y corrige minuciosamente la redacción, tildes y gramática de todos los campos (resumen, cargos, logros, habilidades) en su idioma nativo (Español o Inglés).
+2. GENERACIÓN AUTOMÁTICA DE PERFIL LINKEDIN: Basado en la experiencia laboral detectada, genera automáticamente un Titular optimizado con palabras clave y una sección "Acerca de" narrativa profesional en primera persona en el objeto `linkedin_profile`.
+3. TRANSCRIBIR CON PRECISIÓN: Si el documento es escrito a mano o una foto, extrae con máxima exactitud los nombres, empresas y fechas.
+
+Devuelve ÚNICAMENTE el JSON estricto:
 {
     "personal_info": {
         "name": "",
@@ -77,13 +79,17 @@ Estructura JSON deseada:
         "linkedin": "",
         "summary": ""
     },
+    "linkedin_profile": {
+        "headline": "Titular de LinkedIn optimizado con palabras clave (máx 220 caract.)",
+        "about": "Sección 'Acerca de' narrativa en primera persona, perspicaz y profesional"
+    },
     "experience": [
         {
             "company": "",
             "position": "",
             "start_date": "",
             "end_date": "",
-            "description": ["bullet 1", "bullet 2"]
+            "description": ["bullet 1 mejorado", "bullet 2 mejorado"]
         }
     ],
     "education": [
