@@ -148,7 +148,8 @@ export default function ResumePreview({ data }) {
             height: `${Math.round(sheetHeight * zoomScale)}px`,
             overflow: 'hidden',
             margin: '0 auto',
-            position: 'relative'
+            position: 'relative',
+            display: 'block'
           }}
         >
           <div
@@ -157,8 +158,12 @@ export default function ResumePreview({ data }) {
             id="printable-resume"
             style={{
               width: '816px',
+              minWidth: '816px',
+              maxWidth: '816px',
               minHeight: '1056px',
-              height: 'auto',
+              position: 'absolute',
+              top: 0,
+              left: 0,
               transformOrigin: 'top left',
               transform: `scale(${zoomScale})`
             }}

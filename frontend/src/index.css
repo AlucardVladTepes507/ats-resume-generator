@@ -625,23 +625,29 @@ body {
 }
 
 .mobile-sheet-scaler {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  position: relative;
+  display: block;
+  margin: 0 auto;
+  overflow: hidden;
 }
 
 /* LETTER SIZE SHEET STYLING (8.5in x 11in) - CENTERING & ATS MARGINS */
 .preview-sheet {
   background-color: #ffffff;
   color: #111827;
-  width: 8.5in;
-  min-height: 10.5in;
+  width: 816px !important;
+  min-width: 816px !important;
+  max-width: 816px !important;
+  min-height: 1056px;
   padding: 0.5in 0.6in;
   box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.05);
   box-sizing: border-box;
-  margin: 0 auto;
+  margin: 0;
   border-radius: 2px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  flex-shrink: 0;
 }
 
 /* RESPONSIVE MOBILE SHEET PREVIEW (EXACT A4 PAPER FIT TO SCREEN WITHOUT CROPPING) */
