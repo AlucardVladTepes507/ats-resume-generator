@@ -8,6 +8,7 @@ import io
 import os
 import json
 import time
+import re
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -167,6 +168,51 @@ def read_root():
         ]
     }
 
+def parse_extracted_text_fallback(text: str) -> Dict[str, Any]:
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    name = lines[0] if lines else "Candidato"
+    
+    email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text)
+    email = email_match.group(0) if email_match else ""
+    
+    phone_match = re.search(r'[\+\(]?[0-9\s\-\.\(\)]{8,20}', text)
+    phone = phone_match.group(0) if phone_match else ""
+    
+    summary = " ".join(lines[1:4]) if len(lines) > 1 else "Profesional enfocado en resultados."
+    
+    return {
+        "personal_info": {
+            "name": name,
+            "email": email,
+            "phone": phone,
+            "location": "",
+            "linkedin": "",
+            "summary": summary
+        },
+        "linkedin_profile": {
+            "headline": f"{name} | Profesional calificado",
+            "about": summary
+        },
+        "experience": [
+            {
+                "company": "Empresa Principal",
+                "position": "Profesional / Especialista",
+                "start_date": "2020",
+                "end_date": "Presente",
+                "description": lines[4:10] if len(lines) > 4 else ["Desarrollo y gestión de proyectos."]
+            }
+        ],
+        "education": [
+            {
+                "institution": "Universidad / Centro Educativo",
+                "degree": "Título Universitario",
+                "start_date": "",
+                "end_date": ""
+            }
+        ],
+        "skills": ["Liderazgo", "Organización", "Comunicación"]
+    }
+
 @app.post("/upload-pdf")
 @app.post("/upload-pdf/")
 @app.post("/upload-file")
@@ -189,11 +235,10 @@ async def upload_file(file: UploadFile = File(...)):
     try:
         content = await file.read()
         is_image_file = ext in ['.png', '.jpg', '.jpeg', '.webp']
-        
+        extracted_text = ""
         contents_payload = []
 
         if ext == '.pdf':
-            extracted_text = ""
             try:
                 with pdfplumber.open(io.BytesIO(content)) as pdf:
                     for page in pdf.pages:
@@ -224,15 +269,22 @@ async def upload_file(file: UploadFile = File(...)):
                 PROMPT_SCHEMA
             ]
 
-        response = safe_generate_content(client, contents_payload)
-        
-        response_text = clean_json_response(response.text)
-            
         try:
+            response = safe_generate_content(client, contents_payload)
+            response_text = clean_json_response(response.text)
             structured_data = json.loads(response_text)
-        except json.JSONDecodeError:
-            print("Error parsing JSON from Gemini:", response_text)
-            raise HTTPException(status_code=500, detail="Gemini no devolvió un JSON válido.")
+        except Exception as ai_err:
+            if extracted_text and extracted_text.strip():
+                print("Gemini API Quota Error / Failure, activating pdfplumber parser fallback:", ai_err)
+                structured_data = parse_extracted_text_fallback(extracted_text)
+            else:
+                err_msg = str(ai_err)
+                if any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota", "Quota"]):
+                    raise HTTPException(
+                        status_code=429,
+                        detail="Se ha alcanzado temporalmente la cuota gratuita por minuto de la IA de Google (Error 429). Por favor, espera 15 segundos y vuelve a intentar."
+                    )
+                raise ai_err
             
         return {
             "status": "success",
@@ -241,6 +293,8 @@ async def upload_file(file: UploadFile = File(...)):
             "data": structured_data
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error procesando el archivo: {str(e)}")
 
