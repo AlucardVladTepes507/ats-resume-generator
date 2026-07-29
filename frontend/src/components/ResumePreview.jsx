@@ -11,6 +11,7 @@ export default function ResumePreview({ data }) {
   const [isExporting, setIsExporting] = useState(false)
   const [zoomScale, setZoomScale] = useState(1)
   const [autoFit, setAutoFit] = useState(true)
+  const [sheetHeight, setSheetHeight] = useState(1056)
   const resumeRef = useRef(null)
 
   // Auto-switch to a photo template when a photo is added/uploaded
@@ -38,6 +39,16 @@ export default function ResumePreview({ data }) {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [autoFit])
+
+  // Measure actual rendered DOM height of the sheet whenever data or template changes
+  useEffect(() => {
+    if (resumeRef.current) {
+      const actualHeight = resumeRef.current.scrollHeight
+      if (actualHeight > 0) {
+        setSheetHeight(actualHeight)
+      }
+    }
+  }, [data, template, zoomScale])
 
   const handleDownloadPDF = () => {
     if (!resumeRef.current) return
@@ -134,7 +145,7 @@ export default function ResumePreview({ data }) {
           className="mobile-sheet-scaler"
           style={{
             width: `${Math.round(816 * zoomScale)}px`,
-            height: `${Math.round(1056 * zoomScale)}px`,
+            height: `${Math.round(sheetHeight * zoomScale)}px`,
             overflow: 'hidden',
             margin: '0 auto',
             position: 'relative'
@@ -147,6 +158,7 @@ export default function ResumePreview({ data }) {
             style={{
               width: '816px',
               minHeight: '1056px',
+              height: 'auto',
               transformOrigin: 'top left',
               transform: `scale(${zoomScale})`
             }}
