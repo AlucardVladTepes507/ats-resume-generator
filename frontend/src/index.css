@@ -658,30 +658,39 @@ body {
   }
 
   .preview-toolbar {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
     padding: 0.5rem;
   }
 
+  .template-selector {
+    width: 100%;
+  }
+
   .template-dropdown {
-    max-width: 130px;
-    font-size: 0.75rem;
-    padding: 0.25rem 0.4rem;
+    width: 100%;
+    max-width: 100%;
+    font-size: 0.82rem;
+    padding: 0.35rem 0.5rem;
   }
 
   .zoom-controls-bar {
-    padding: 0.15rem 0.35rem;
+    width: 100%;
+    justify-content: center;
+    padding: 0.25rem 0.5rem;
   }
 
   .zoom-btn span {
-    display: none;
+    display: inline;
   }
 
-  .template-selector {
-    flex-wrap: wrap;
+  .export-actions {
+    width: 100%;
+  }
+
+  .export-actions .btn-primary {
+    width: 100%;
     justify-content: center;
   }
 
