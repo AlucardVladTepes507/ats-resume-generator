@@ -9,6 +9,8 @@ import InterviewPrepGenerator from './components/InterviewPrepGenerator'
 import FeedbackModal from './components/FeedbackModal'
 import './index.css'
 
+import ContactModal from './components/ContactModal'
+
 function App() {
   const [file, setFile] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -19,6 +21,7 @@ function App() {
   const [mobileTab, setMobileTab] = useState('editor') // 'editor' | 'preview'
   const [viewMode, setViewMode] = useState('editor') // 'editor' | 'analyzer' | 'cover-letter' | 'outreach' | 'interview'
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
+  const [isContactOpen, setIsContactOpen] = useState(false)
   const fileInputRef = useRef(null)
 
   const handleDragOver = (e) => {
@@ -302,8 +305,9 @@ function App() {
         </div>
       )}
 
-      {/* Feedback Modal */}
+      {/* Modals */}
       <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
+      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
 
       {/* Footer */}
       <footer className="footer">
@@ -320,14 +324,10 @@ function App() {
             <span>Sugerir Plantilla / Mercado</span>
           </button>
           
-          <a
-            href="mailto:smart507ltd@gmail.com"
-            className="footer-link-btn"
-            title="Enviar un correo de soporte o consulta"
-          >
+          <button className="footer-link-btn" onClick={() => setIsContactOpen(true)}>
             <Mail size={16} />
-            <span>Contacto: smart507ltd@gmail.com</span>
-          </a>
+            <span>Contacto</span>
+          </button>
 
           <a
             href="https://ko-fi.com/smart507"
