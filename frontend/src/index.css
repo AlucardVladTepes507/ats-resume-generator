@@ -575,6 +575,44 @@ body {
   gap: 0.5rem;
 }
 
+.zoom-controls-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: var(--bg-card);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.zoom-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0.25rem 0.4rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  transition: all 0.2s;
+
+  &:hover, &.active {
+    background-color: var(--accent-primary);
+    color: white;
+  }
+}
+
+.zoom-level {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 38px;
+  text-align: center;
+}
+
 .preview-sheet-wrapper {
   display: flex;
   justify-content: center;
