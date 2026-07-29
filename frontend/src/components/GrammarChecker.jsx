@@ -23,7 +23,7 @@ export default function GrammarChecker({ resumeData, onUpdateResumeData }) {
       })
 
       if (response.status === 404) {
-        throw new Error('El servidor backend en la nube se está desplegando con las nuevas funciones. Por favor, espera 30 segundos y vuelve a presionar el botón.')
+        throw new Error(`Error 404 al conectar con ${API_BASE}/check-grammar. La ruta no fue encontrada en el servidor actual.`)
       }
 
       const data = await response.json()
