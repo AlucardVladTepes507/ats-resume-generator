@@ -190,29 +190,13 @@ export default function ResumeEditor({ data, onChange }) {
 
   return (
     <div className="editor-container">
-      {/* Top AI & Target Market Toolbar */}
+      {/* Top Translation Toolbar */}
       <div className="editor-ai-toolbar">
-        <div className="target-market-group">
-          <Globe size={16} />
-          <span>Mercado Objetivo:</span>
-          <button
-            className={`btn-secondary sm ${targetMarket === 'latam' ? 'active-market' : ''}`}
-            onClick={() => handleMarketChange('latam')}
-          >
-            🇵🇦 / 🌍 LATAM (Ejecutivo)
-          </button>
-          <button
-            className={`btn-secondary sm ${targetMarket === 'us-canada' ? 'active-market' : ''}`}
-            onClick={() => handleMarketChange('us-canada')}
-            title="Cumple con las leyes de selección laboral de EE.UU. y Canadá (Sin Foto)"
-          >
-            🇺🇸 / 🇨🇦 EE.UU. & Canadá (ATS Sin Foto)
-          </button>
-        </div>
-
         <div className="translate-group">
+          <Globe size={16} />
           <span>Traducir CV:</span>
           <button
+            type="button"
             className="btn-secondary sm"
             onClick={() => handleTranslate('en')}
             disabled={isTranslating}
@@ -220,6 +204,7 @@ export default function ResumeEditor({ data, onChange }) {
             🇺🇸 Inglés
           </button>
           <button
+            type="button"
             className="btn-secondary sm"
             onClick={() => handleTranslate('es')}
             disabled={isTranslating}
@@ -272,17 +257,9 @@ export default function ResumeEditor({ data, onChange }) {
           <div className="form-section">
             <h3>Información Personal</h3>
 
-            {targetMarket === 'us-canada' && (
-              <div className="market-warning-box">
-                <strong>🇺🇸 / 🇨🇦 Mercado EE.UU. & Canadá Activo:</strong>
-                <p>Por normativas laborales anti-discriminación en Norteamérica, la foto de perfil ha sido ocultada en tu CV descargable.</p>
-              </div>
-            )}
-
-            {/* Photo Upload & AI Studio Enhancer */}
-            {targetMarket !== 'us-canada' && (
-              <div className="photo-section-box">
-                <label>Foto de Perfil Profesional (EE.UU. & Canadá no usan foto | Opcional en LATAM / Europa):</label>
+            {/* Photo Upload Section */}
+            <div className="photo-section-box">
+              <label>Foto de Perfil Profesional (Opcional):</label>
                 <div className="photo-controls">
                   <div className="photo-preview-box">
                     {data.personal_info?.photo ? (
@@ -316,7 +293,6 @@ export default function ResumeEditor({ data, onChange }) {
                   </div>
                 </div>
               </div>
-            )}
 
             <div className="form-grid">
               <div className="form-group">
