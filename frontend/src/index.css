@@ -633,10 +633,13 @@ body {
   }
 
   .mobile-sheet-scaler {
-    width: 8.5in;
+    width: 816px;
+    flex-shrink: 0;
     transform-origin: top center;
-    transform: scale(calc((100vw - 36px) / 816));
-    margin-bottom: calc(-1 * (11in * (1 - ((100vw - 36px) / 816))));
+    transform: scale(calc((100vw - 32px) / 816));
+    margin-left: calc(-1 * (816px - (100vw - 32px)) / 2);
+    margin-right: calc(-1 * (816px - (100vw - 32px)) / 2);
+    margin-bottom: calc(-1 * (1050px * (1 - ((100vw - 32px) / 816))));
   }
 }
 
