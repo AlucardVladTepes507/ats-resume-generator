@@ -2051,17 +2051,27 @@ body {
   input { cursor: pointer; }
 }
 
-.smart507-verification-footer {
-  margin-top: 1.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px dashed #cbd5e1;
-  text-align: center;
-  font-size: 0.72rem;
-  color: #64748b;
+/* STRICT ATS PAGE BREAK & PADDING SAFETY RULES */
+.exec-skill-badge, .skill-tag, .kw-tag {
+  display: inline-block !important;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+  -webkit-column-break-inside: avoid !important;
+}
 
-  strong {
-    color: #1e3a8a;
-  }
+.exec-exp-item, .exec-edu-item, .exec-section, .modern-exp-item, .modern-section, .harvard-item, .harvard-section {
+  page-break-inside: avoid !important;
+  break-inside: avoid-page !important;
+  break-inside: avoid !important;
+  -webkit-column-break-inside: avoid !important;
+  margin-bottom: 0.85rem !important;
+}
+
+.exec-skills-grid, .skills-tag-cloud, .tag-cloud {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: flex-start !important;
+  gap: 0.35rem !important;
 }
 
 /* PRINT MEDIA QUERY FOR PERFECT ATS PDF PRINTING */
@@ -2092,11 +2102,12 @@ body {
   .preview-sheet {
     box-shadow: none !important;
     width: 100% !important;
-    padding: 0 !important;
+    padding: 0.5in !important;
     margin: 0 !important;
     transform: none !important;
   }
 }
+
 
 
 
