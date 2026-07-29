@@ -23,6 +23,10 @@ export default function SalaryEstimator({ resumeData }) {
         })
       })
 
+      if (response.status === 404) {
+        throw new Error('El servidor backend en la nube se está desplegando con las nuevas funciones. Por favor, espera 30 segundos y vuelve a presionar el botón.')
+      }
+
       const data = await response.json()
       if (!response.ok) {
         throw new Error(data.detail || 'Error al estimar el rango salarial')
