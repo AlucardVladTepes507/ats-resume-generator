@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { DollarSign, Sparkles, TrendingUp, Lightbulb, ShieldCheck } from 'lucide-react'
+import { getApiUrl } from '../config'
 
 export default function SalaryEstimator({ resumeData }) {
   const [targetCountry, setTargetCountry] = useState('Panamá')
@@ -11,10 +12,10 @@ export default function SalaryEstimator({ resumeData }) {
     setError(null)
     setIsEstimating(true)
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    const API_BASE = getApiUrl()
 
     try {
-      const response = await fetch(`${API_URL}/estimate-salary`, {
+      const response = await fetch(`${API_BASE}/estimate-salary`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

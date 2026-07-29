@@ -15,6 +15,8 @@ import FeedbackModal from './components/FeedbackModal'
 import ContactModal from './components/ContactModal'
 import './index.css'
 
+import { getApiUrl } from './config'
+
 function App() {
   const [file, setFile] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -68,10 +70,10 @@ function App() {
     const formData = new FormData()
     formData.append('file', uploadedFile)
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    const API_BASE = getApiUrl()
 
     try {
-      const response = await fetch(`${API_URL}/upload-file`, {
+      const response = await fetch(`${API_BASE}/upload-file`, {
         method: 'POST',
         body: formData,
       })

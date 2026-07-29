@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Tag, Sparkles, Plus, Check } from 'lucide-react'
+import { getApiUrl } from '../config'
 
 const INDUSTRIES = [
   { id: 'ti', name: '💻 Tecnología & TI (Soporte, Dev, Cloud, Datos)' },
@@ -23,10 +24,10 @@ export default function IndustryKeywords({ resumeData, onUpdateResumeData }) {
     setError(null)
     setIsLoading(true)
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    const API_BASE = getApiUrl()
 
     try {
-      const response = await fetch(`${API_URL}/get-industry-keywords`, {
+      const response = await fetch(`${API_BASE}/get-industry-keywords`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

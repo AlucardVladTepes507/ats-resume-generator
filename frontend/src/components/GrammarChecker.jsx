@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { CheckCircle2, Sparkles, AlertCircle, SpellCheck, ArrowRight } from 'lucide-react'
+import { getApiUrl } from '../config'
 
 export default function GrammarChecker({ resumeData, onUpdateResumeData }) {
   const [isScanning, setIsScanning] = useState(false)
@@ -12,10 +13,10 @@ export default function GrammarChecker({ resumeData, onUpdateResumeData }) {
     setIsScanning(true)
     setIsApplied(false)
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    const API_BASE = getApiUrl()
 
     try {
-      const response = await fetch(`${API_URL}/check-grammar`, {
+      const response = await fetch(`${API_BASE}/check-grammar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resume_data: resumeData })

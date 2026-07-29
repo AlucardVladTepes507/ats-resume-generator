@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Share2, Sparkles, Copy, Check } from 'lucide-react'
+import { getApiUrl } from '../config'
 
 export default function LinkedInBioOptimizer({ resumeData }) {
   const [targetPosition, setTargetPosition] = useState('')
@@ -12,10 +13,10 @@ export default function LinkedInBioOptimizer({ resumeData }) {
     setError(null)
     setIsGenerating(true)
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    const API_BASE = getApiUrl()
 
     try {
-      const response = await fetch(`${API_URL}/generate-linkedin-profile`, {
+      const response = await fetch(`${API_BASE}/generate-linkedin-profile`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

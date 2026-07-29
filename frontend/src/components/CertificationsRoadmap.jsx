@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Award, Sparkles, Clock, TrendingUp, CheckCircle2 } from 'lucide-react'
+import { getApiUrl } from '../config'
 
 export default function CertificationsRoadmap({ resumeData }) {
   const [targetPosition, setTargetPosition] = useState('')
@@ -11,10 +12,10 @@ export default function CertificationsRoadmap({ resumeData }) {
     setError(null)
     setIsGenerating(true)
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    const API_BASE = getApiUrl()
 
     try {
-      const response = await fetch(`${API_URL}/recommend-certifications`, {
+      const response = await fetch(`${API_BASE}/recommend-certifications`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

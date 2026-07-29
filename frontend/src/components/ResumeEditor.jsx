@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Plus, Trash2, User, Briefcase, GraduationCap, Wrench, Sparkles, Globe, Check, Loader2 } from 'lucide-react'
+import { getApiUrl } from '../config'
 
 export default function ResumeEditor({ data, onChange }) {
   const [activeTab, setActiveTab] = useState('personal')
@@ -11,10 +12,10 @@ export default function ResumeEditor({ data, onChange }) {
   // Translation Handler
   const handleTranslate = async (targetLang) => {
     setIsTranslating(true)
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    const API_BASE = getApiUrl()
 
     try {
-      const response = await fetch(`${API_URL}/translate-resume`, {
+      const response = await fetch(`${API_BASE}/translate-resume`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -43,10 +44,10 @@ export default function ResumeEditor({ data, onChange }) {
     setEnhancingIndex(key)
     setSuggestions([])
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    const API_BASE = getApiUrl()
 
     try {
-      const response = await fetch(`${API_URL}/enhance-bullet`, {
+      const response = await fetch(`${API_BASE}/enhance-bullet`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
