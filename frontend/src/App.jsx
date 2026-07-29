@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle, Share2, DollarSign, Award, SpellCheck, Tag } from 'lucide-react'
 import ResumeEditor from './components/ResumeEditor'
 import ResumePreview from './components/ResumePreview'
@@ -22,13 +22,47 @@ function App() {
   const [isDragging, setIsDragging] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [resumeData, setResumeData] = useState(null)
-  const [isImageUpload, setIsImageUpload] = useState(false)
+
+  // Initialize from localStorage so refreshing (F5) doesn't lose the active CV
+  const [resumeData, setResumeData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ats_resume_current_data')
+      return saved ? JSON.parse(saved) : null
+    } catch (e) {
+      return null
+    }
+  })
+
+  const [isImageUpload, setIsImageUpload] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ats_resume_is_image')
+      return saved ? JSON.parse(saved) : false
+    } catch (e) {
+      return false
+    }
+  })
+
   const [mobileTab, setMobileTab] = useState('editor') // 'editor' | 'preview'
   const [viewMode, setViewMode] = useState('editor') // 'editor' | 'analyzer' | 'cover-letter' | 'linkedin' | 'salary' | 'certs' | 'outreach' | 'interview' | 'grammar' | 'keywords'
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
   const [isContactOpen, setIsContactOpen] = useState(false)
   const fileInputRef = useRef(null)
+
+  // Automatically save current resumeData changes to localStorage
+  useEffect(() => {
+    if (resumeData) {
+      localStorage.setItem('ats_resume_current_data', JSON.stringify(resumeData))
+      localStorage.setItem('ats_resume_is_image', JSON.stringify(isImageUpload))
+    }
+  }, [resumeData, isImageUpload])
+
+  const handleResetCV = () => {
+    localStorage.removeItem('ats_resume_current_data')
+    localStorage.removeItem('ats_resume_is_image')
+    setResumeData(null)
+    setIsImageUpload(false)
+    setFile(null)
+  }
 
   const handleDragOver = (e) => {
     e.preventDefault()
@@ -127,7 +161,7 @@ function App() {
           </a>
 
           {resumeData && (
-            <button className="btn-secondary header-reset-btn" onClick={() => setResumeData(null)}>
+            <button className="btn-secondary header-reset-btn" onClick={handleResetCV}>
               <ArrowLeft size={16} />
               <span>Subir otro CV</span>
             </button>
