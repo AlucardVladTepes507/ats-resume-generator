@@ -13,37 +13,89 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 
+from PIL import Image
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ENV_PATH = os.path.join(BASE_DIR, ".env")
 load_dotenv(dotenv_path=ENV_PATH, override=True)
 
-def safe_generate_content(client, contents):
+def compress_image_for_ai(image_bytes: bytes, max_dim: int = 1400) -> bytes:
+    try:
+        img = Image.open(io.BytesIO(image_bytes))
+        img = img.convert('RGB')
+        
+        w, h = img.size
+        if w > max_dim or h > max_dim:
+            if w > h:
+                new_w = max_dim
+                new_h = int(h * (max_dim / w))
+            else:
+                new_h = max_dim
+                new_w = int(w * (max_dim / h))
+            img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+            
+        output = io.BytesIO()
+        img.save(output, format='JPEG', quality=82, optimize=True)
+        return output.getvalue()
+    except Exception as err:
+        print("Image compression skipped:", err)
+        return image_bytes
+
+def get_all_gemini_clients():
+    load_dotenv(dotenv_path=ENV_PATH, override=True)
+    keys = []
+    for key_name in ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4"]:
+        k = os.environ.get(key_name)
+        if k and k not in keys:
+            keys.append(k)
+            
+    clients = []
+    for k in keys:
+        try:
+            clients.append(genai.Client(api_key=k))
+        except Exception:
+            pass
+    return clients
+
+def safe_generate_content(primary_client, contents):
+    clients = get_all_gemini_clients()
+    if not clients and primary_client:
+        clients = [primary_client]
+    elif not clients:
+        clients = [primary_client] if primary_client else []
+
     models_to_try = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-1.5-flash']
     last_error = None
 
-    for model in models_to_try:
-        for attempt in range(3):
-            try:
-                response = client.models.generate_content(
-                    model=model,
-                    contents=contents
-                )
-                return response
-            except Exception as e:
-                err_str = str(e)
-                last_error = e
-                if any(k in err_str for k in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED"]):
-                    time.sleep(1)
-                    continue
-                else:
-                    break
+    for client_inst in clients:
+        for model in models_to_try:
+            for attempt in range(2):
+                try:
+                    response = client_inst.models.generate_content(
+                        model=model,
+                        contents=contents
+                    )
+                    return response
+                except Exception as e:
+                    err_str = str(e)
+                    last_error = e
+                    if any(k in err_str for k in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "quota"]):
+                        time.sleep(0.5)
+                        continue
+                    else:
+                        break
 
     if last_error:
         err_msg = str(last_error)
-        if any(k in err_msg for k in ["503", "UNAVAILABLE", "429"]):
+        if any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota", "Quota"]):
+            raise HTTPException(
+                status_code=429,
+                detail="Se ha alcanzado temporalmente el límite de velocidad por minuto de la IA de Google (Error 429). Por favor, espera 10 segundos y vuelve a intentar."
+            )
+        elif any(k in err_msg for k in ["503", "UNAVAILABLE"]):
             raise HTTPException(
                 status_code=503,
-                detail="La Inteligencia Artificial de Google está experimentando una alta demanda momentánea. Por favor, vuelve a presionar el botón en unos segundos."
+                detail="La Inteligencia Artificial de Google está experimentando alta demanda. Por favor, reintenta en unos segundos."
             )
         raise HTTPException(status_code=500, detail=f"Error al procesar con IA: {err_msg}")
 
@@ -51,7 +103,6 @@ def get_gemini_client():
     load_dotenv(dotenv_path=ENV_PATH, override=True)
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        # Also try default load_dotenv
         load_dotenv(override=True)
         api_key = os.environ.get("GEMINI_API_KEY")
         
@@ -264,8 +315,9 @@ async def upload_file(file: UploadFile = File(...)):
                 '.webp': 'image/webp'
             }
             mime_type = mime_map.get(ext, 'image/jpeg')
+            compressed_bytes = compress_image_for_ai(content)
             contents_payload = [
-                types.Part.from_bytes(data=content, mime_type=mime_type),
+                types.Part.from_bytes(data=compressed_bytes, mime_type=mime_type),
                 PROMPT_SCHEMA
             ]
 
