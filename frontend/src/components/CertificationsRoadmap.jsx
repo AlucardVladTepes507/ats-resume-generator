@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Award, Sparkles, Clock, TrendingUp, CheckCircle2 } from 'lucide-react'
-import { getApiUrl } from '../config'
+import { getApiUrl, sanitizeResumeData } from '../config'
 
 export default function CertificationsRoadmap({ resumeData }) {
   const [targetPosition, setTargetPosition] = useState('')
@@ -19,7 +19,7 @@ export default function CertificationsRoadmap({ resumeData }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          resume_data: resumeData,
+          resume_data: sanitizeResumeData(resumeData),
           target_position: targetPosition
         })
       })

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { CheckCircle2, Sparkles, AlertCircle, SpellCheck, ArrowRight } from 'lucide-react'
-import { getApiUrl } from '../config'
+import { getApiUrl, sanitizeResumeData } from '../config'
 
 export default function GrammarChecker({ resumeData, onUpdateResumeData }) {
   const [isScanning, setIsScanning] = useState(false)
@@ -19,7 +19,7 @@ export default function GrammarChecker({ resumeData, onUpdateResumeData }) {
       const response = await fetch(`${API_BASE}/check-grammar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resume_data: resumeData })
+        body: JSON.stringify({ resume_data: sanitizeResumeData(resumeData) })
       })
 
       if (response.status === 404) {

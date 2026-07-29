@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Share2, Sparkles, Copy, Check } from 'lucide-react'
-import { getApiUrl } from '../config'
+import { getApiUrl, sanitizeResumeData } from '../config'
 
 export default function LinkedInBioOptimizer({ resumeData }) {
   const [targetPosition, setTargetPosition] = useState('')
@@ -20,7 +20,7 @@ export default function LinkedInBioOptimizer({ resumeData }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          resume_data: resumeData,
+          resume_data: sanitizeResumeData(resumeData),
           target_position: targetPosition
         })
       })

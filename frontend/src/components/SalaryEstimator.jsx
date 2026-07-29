@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { DollarSign, Sparkles, TrendingUp, Lightbulb, ShieldCheck } from 'lucide-react'
-import { getApiUrl } from '../config'
+import { getApiUrl, sanitizeResumeData } from '../config'
 
 export default function SalaryEstimator({ resumeData }) {
   const [targetCountry, setTargetCountry] = useState('Panamá')
@@ -19,7 +19,7 @@ export default function SalaryEstimator({ resumeData }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          resume_data: resumeData,
+          resume_data: sanitizeResumeData(resumeData),
           target_country: targetCountry
         })
       })

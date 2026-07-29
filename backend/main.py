@@ -106,6 +106,16 @@ def clean_json_response(text: str) -> str:
         cleaned = cleaned[3:-3].strip()
     return cleaned
 
+def sanitize_resume_data_for_prompt(resume_data: Dict[str, Any]) -> Dict[str, Any]:
+    try:
+        cleaned = json.loads(json.dumps(resume_data))
+        if isinstance(cleaned, dict) and "personal_info" in cleaned:
+            if isinstance(cleaned["personal_info"], dict):
+                cleaned["personal_info"].pop("photo", None)
+        return cleaned
+    except Exception:
+        return resume_data
+
 @app.get("/")
 @app.get("/health")
 def read_root():
