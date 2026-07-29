@@ -6,6 +6,16 @@ export default function ExecutivePhotoTemplate({ data }) {
 
   const { personal_info = {}, experience = [], education = [], skills = [] } = data
 
+  const isEnglish = (data.language && data.language.toLowerCase() === 'en') ||
+    (personal_info.summary && /\b(experience|skills|support|management|professional|pursuing|focused|degree)\b/i.test(personal_info.summary))
+
+  const labels = {
+    summary: isEnglish ? 'PROFESSIONAL PROFILE' : 'PERFIL PROFESIONAL',
+    experience: isEnglish ? 'WORK EXPERIENCE' : 'EXPERIENCIA LABORAL',
+    education: isEnglish ? 'EDUCATION' : 'EDUCACIÓN',
+    skills: isEnglish ? 'KEY SKILLS' : 'HABILIDADES CLAVE',
+  }
+
   return (
     <div className="executive-template">
       {/* Top Header with Photo */}
@@ -52,7 +62,7 @@ export default function ExecutivePhotoTemplate({ data }) {
       {/* Summary Section */}
       {personal_info.summary && (
         <div className="exec-section">
-          <h3 className="exec-title">PERFIL PROFESIONAL</h3>
+          <h3 className="exec-title">{labels.summary}</h3>
           <p className="exec-summary">{personal_info.summary}</p>
         </div>
       )}
@@ -60,7 +70,7 @@ export default function ExecutivePhotoTemplate({ data }) {
       {/* Experience Section */}
       {experience.length > 0 && (
         <div className="exec-section">
-          <h3 className="exec-title">EXPERIENCIA LABORAL</h3>
+          <h3 className="exec-title">{labels.experience}</h3>
           {experience.map((exp, idx) => (
             <div className="exec-exp-item" key={idx}>
               <div className="exec-exp-header">
@@ -87,7 +97,7 @@ export default function ExecutivePhotoTemplate({ data }) {
       {/* Education Section */}
       {education.length > 0 && (
         <div className="exec-section">
-          <h3 className="exec-title">EDUCACIÓN</h3>
+          <h3 className="exec-title">{labels.education}</h3>
           {education.map((edu, idx) => (
             <div className="exec-edu-item" key={idx}>
               <div className="exec-exp-header">
@@ -105,7 +115,7 @@ export default function ExecutivePhotoTemplate({ data }) {
       {/* Skills Section */}
       {skills.length > 0 && (
         <div className="exec-section">
-          <h3 className="exec-title">HABILIDADES CLAVE</h3>
+          <h3 className="exec-title">{labels.skills}</h3>
           <div className="exec-skills-grid">
             {skills.map((skill, idx) => (
               <span className="exec-skill-badge" key={idx}>

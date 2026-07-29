@@ -5,6 +5,16 @@ export default function ModernTemplate({ data }) {
 
   const { personal_info = {}, experience = [], education = [], skills = [] } = data
 
+  const isEnglish = (data.language && data.language.toLowerCase() === 'en') ||
+    (personal_info.summary && /\b(experience|skills|support|management|professional|pursuing|focused|degree)\b/i.test(personal_info.summary))
+
+  const labels = {
+    summary: isEnglish ? 'PROFESSIONAL PROFILE' : 'PERFIL PROFESIONAL',
+    experience: isEnglish ? 'WORK EXPERIENCE' : 'EXPERIENCIA LABORAL',
+    education: isEnglish ? 'EDUCATION' : 'EDUCACIÓN',
+    skills: isEnglish ? 'SKILLS & TOOLS' : 'HABILIDADES & HERRAMIENTAS',
+  }
+
   return (
     <div className="ats-template modern-template">
       {/* HEADER */}
@@ -21,7 +31,7 @@ export default function ModernTemplate({ data }) {
       {/* SUMMARY */}
       {personal_info.summary && (
         <section className="modern-section">
-          <h2 className="modern-section-title">PERFIL PROFESIONAL</h2>
+          <h2 className="modern-section-title">{labels.summary}</h2>
           <p className="modern-summary">{personal_info.summary}</p>
         </section>
       )}
@@ -29,7 +39,7 @@ export default function ModernTemplate({ data }) {
       {/* EXPERIENCE */}
       {experience.length > 0 && (
         <section className="modern-section">
-          <h2 className="modern-section-title">EXPERIENCIA LABORAL</h2>
+          <h2 className="modern-section-title">{labels.experience}</h2>
           {experience.map((exp, idx) => (
             <div className="modern-item" key={idx}>
               <div className="modern-item-header">
@@ -56,7 +66,7 @@ export default function ModernTemplate({ data }) {
       {/* EDUCATION */}
       {education.length > 0 && (
         <section className="modern-section">
-          <h2 className="modern-section-title">EDUCACIÓN</h2>
+          <h2 className="modern-section-title">{labels.education}</h2>
           {education.map((edu, idx) => (
             <div className="modern-item" key={idx}>
               <div className="modern-item-header">
@@ -76,7 +86,7 @@ export default function ModernTemplate({ data }) {
       {/* SKILLS */}
       {skills.length > 0 && (
         <section className="modern-section">
-          <h2 className="modern-section-title">HABILIDADES & HERRAMIENTAS</h2>
+          <h2 className="modern-section-title">{labels.skills}</h2>
           <div className="modern-skills-grid">
             {skills.map((skill, sIdx) => (
               <span className="modern-skill-pill" key={sIdx}>

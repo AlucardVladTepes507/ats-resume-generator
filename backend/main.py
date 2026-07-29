@@ -311,7 +311,9 @@ Devuelve únicamente el objeto JSON traducido estricto.
             contents=[prompt]
         )
         cleaned = clean_json_response(response.text)
-        return json.loads(cleaned)
+        translated_data = json.loads(cleaned)
+        translated_data["language"] = payload.target_lang
+        return translated_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al traducir el CV: {str(e)}")
 

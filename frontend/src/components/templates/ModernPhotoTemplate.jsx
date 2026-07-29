@@ -6,6 +6,16 @@ export default function ModernPhotoTemplate({ data }) {
 
   const { personal_info = {}, experience = [], education = [], skills = [] } = data
 
+  const isEnglish = (data.language && data.language.toLowerCase() === 'en') ||
+    (personal_info.summary && /\b(experience|skills|support|management|professional|pursuing|focused|degree)\b/i.test(personal_info.summary))
+
+  const labels = {
+    summary: isEnglish ? 'PROFESSIONAL PROFILE' : 'PERFIL PROFESIONAL',
+    experience: isEnglish ? 'WORK EXPERIENCE' : 'EXPERIENCIA LABORAL',
+    education: isEnglish ? 'EDUCATION' : 'EDUCACIÓN',
+    skills: isEnglish ? 'KEY SKILLS' : 'HABILIDADES CLAVE',
+  }
+
   return (
     <div className="modern-photo-template">
       {/* Modern Photo Header Banner */}
@@ -44,7 +54,7 @@ export default function ModernPhotoTemplate({ data }) {
       {/* Summary */}
       {personal_info.summary && (
         <div className="modern-section">
-          <h3 className="mod-sec-heading">PERFIL PROFESIONAL</h3>
+          <h3 className="mod-sec-heading">{labels.summary}</h3>
           <p className="mod-summary-text">{personal_info.summary}</p>
         </div>
       )}
@@ -52,7 +62,7 @@ export default function ModernPhotoTemplate({ data }) {
       {/* Experience */}
       {experience.length > 0 && (
         <div className="modern-section">
-          <h3 className="mod-sec-heading">EXPERIENCIA LABORAL</h3>
+          <h3 className="mod-sec-heading">{labels.experience}</h3>
           {experience.map((exp, idx) => (
             <div className="modern-exp-item" key={idx}>
               <div className="mod-exp-top font-bold">
@@ -77,7 +87,7 @@ export default function ModernPhotoTemplate({ data }) {
       {/* Education */}
       {education.length > 0 && (
         <div className="modern-section">
-          <h3 className="mod-sec-heading">EDUCACIÓN</h3>
+          <h3 className="mod-sec-heading">{labels.education}</h3>
           {education.map((edu, idx) => (
             <div className="modern-edu-item" key={idx}>
               <div className="mod-exp-top">
@@ -95,7 +105,7 @@ export default function ModernPhotoTemplate({ data }) {
       {/* Skills */}
       {skills.length > 0 && (
         <div className="modern-section">
-          <h3 className="mod-sec-heading">HABILIDADES CLAVE</h3>
+          <h3 className="mod-sec-heading">{labels.skills}</h3>
           <div className="mod-skills-flex">
             {skills.map((skill, idx) => (
               <span className="mod-skill-pill" key={idx}>

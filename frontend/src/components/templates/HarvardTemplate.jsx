@@ -5,6 +5,17 @@ export default function HarvardTemplate({ data }) {
 
   const { personal_info = {}, experience = [], education = [], skills = [] } = data
 
+  const isEnglish = (data.language && data.language.toLowerCase() === 'en') ||
+    (personal_info.summary && /\b(experience|skills|support|management|professional|pursuing|focused|degree)\b/i.test(personal_info.summary))
+
+  const labels = {
+    summary: isEnglish ? 'PROFESSIONAL SUMMARY' : 'RESUMEN PROFESIONAL',
+    experience: isEnglish ? 'WORK EXPERIENCE' : 'EXPERIENCIA LABORAL',
+    education: isEnglish ? 'EDUCATION' : 'EDUCACIÓN',
+    skills: isEnglish ? 'KEY SKILLS & COMPETENCIES' : 'HABILIDADES TÉCNICAS Y COMPETENCIAS',
+    skillsPrefix: isEnglish ? 'Skills: ' : 'Habilidades: ',
+  }
+
   return (
     <div className="ats-template harvard-template">
       {/* HEADER */}
@@ -24,7 +35,7 @@ export default function HarvardTemplate({ data }) {
       {/* SUMMARY */}
       {personal_info.summary && (
         <section className="harvard-section">
-          <h2 className="harvard-section-title">RESUMEN PROFESIONAL</h2>
+          <h2 className="harvard-section-title">{labels.summary}</h2>
           <div className="harvard-section-divider"></div>
           <p className="harvard-summary">{personal_info.summary}</p>
         </section>
@@ -33,7 +44,7 @@ export default function HarvardTemplate({ data }) {
       {/* EXPERIENCE */}
       {experience.length > 0 && (
         <section className="harvard-section">
-          <h2 className="harvard-section-title">EXPERIENCIA LABORAL</h2>
+          <h2 className="harvard-section-title">{labels.experience}</h2>
           <div className="harvard-section-divider"></div>
           {experience.map((exp, idx) => (
             <div className="harvard-item" key={idx}>
@@ -61,7 +72,7 @@ export default function HarvardTemplate({ data }) {
       {/* EDUCATION */}
       {education.length > 0 && (
         <section className="harvard-section">
-          <h2 className="harvard-section-title">EDUCACIÓN</h2>
+          <h2 className="harvard-section-title">{labels.education}</h2>
           <div className="harvard-section-divider"></div>
           {education.map((edu, idx) => (
             <div className="harvard-item" key={idx}>
@@ -82,10 +93,10 @@ export default function HarvardTemplate({ data }) {
       {/* SKILLS */}
       {skills.length > 0 && (
         <section className="harvard-section">
-          <h2 className="harvard-section-title">HABILIDADES TÉCNICAS Y COMPETENCIAS</h2>
+          <h2 className="harvard-section-title">{labels.skills}</h2>
           <div className="harvard-section-divider"></div>
           <p className="harvard-skills-list">
-            <strong>Habilidades: </strong>
+            <strong>{labels.skillsPrefix}</strong>
             {skills.join(' • ')}
           </p>
         </section>
