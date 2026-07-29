@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react'
-import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb } from 'lucide-react'
+import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle } from 'lucide-react'
 import ResumeEditor from './components/ResumeEditor'
 import ResumePreview from './components/ResumePreview'
 import AtsMatchAnalyzer from './components/AtsMatchAnalyzer'
 import CoverLetterGenerator from './components/CoverLetterGenerator'
+import OutreachMessageGenerator from './components/OutreachMessageGenerator'
+import InterviewPrepGenerator from './components/InterviewPrepGenerator'
 import FeedbackModal from './components/FeedbackModal'
 import './index.css'
 
@@ -15,7 +17,7 @@ function App() {
   const [resumeData, setResumeData] = useState(null)
   const [isImageUpload, setIsImageUpload] = useState(false)
   const [mobileTab, setMobileTab] = useState('editor') // 'editor' | 'preview'
-  const [viewMode, setViewMode] = useState('editor') // 'editor' | 'analyzer' | 'cover-letter'
+  const [viewMode, setViewMode] = useState('editor') // 'editor' | 'analyzer' | 'cover-letter' | 'outreach' | 'interview'
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
   const fileInputRef = useRef(null)
 
@@ -200,6 +202,20 @@ function App() {
               <Mail size={18} />
               <span>3. Carta de Presentación</span>
             </button>
+            <button
+              className={`nav-mode-btn ${viewMode === 'outreach' ? 'active' : ''}`}
+              onClick={() => setViewMode('outreach')}
+            >
+              <MessageSquare size={18} />
+              <span>4. Mensajes LinkedIn & Email</span>
+            </button>
+            <button
+              className={`nav-mode-btn ${viewMode === 'interview' ? 'active' : ''}`}
+              onClick={() => setViewMode('interview')}
+            >
+              <HelpCircle size={18} />
+              <span>5. Preparar Entrevista STAR</span>
+            </button>
           </div>
 
           {/* Handwritten / Image Warning Notice */}
@@ -267,6 +283,20 @@ function App() {
           {viewMode === 'cover-letter' && (
             <div className="feature-view-box">
               <CoverLetterGenerator resumeData={resumeData} />
+            </div>
+          )}
+
+          {/* VIEW MODE 4: OUTREACH MESSAGES */}
+          {viewMode === 'outreach' && (
+            <div className="feature-view-box">
+              <OutreachMessageGenerator resumeData={resumeData} />
+            </div>
+          )}
+
+          {/* VIEW MODE 5: INTERVIEW PREP */}
+          {viewMode === 'interview' && (
+            <div className="feature-view-box">
+              <InterviewPrepGenerator resumeData={resumeData} />
             </div>
           )}
         </div>

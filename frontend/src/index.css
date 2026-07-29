@@ -1749,6 +1749,175 @@ body {
   }
 }
 
+/* TARGET MARKET SELECTOR & WARNING STYLES */
+.target-market-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.btn-secondary.sm.active-market {
+  background-color: var(--accent-primary);
+  color: white;
+  border-color: var(--accent-primary);
+}
+
+.market-warning-box {
+  background-color: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fef08a;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+
+  strong {
+    color: #fbbf24;
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+}
+
+/* OUTREACH MESSAGES STYLES */
+.outreach-container, .interview-prep-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.outreach-results-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.outreach-box {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  &.linkedin {
+    border-color: rgba(59, 130, 246, 0.4);
+  }
+
+  &.email {
+    border-color: rgba(139, 92, 246, 0.4);
+  }
+}
+
+.box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+  }
+}
+
+.email-subject-line {
+  background-color: var(--bg-card);
+  border: 1px dashed var(--border-color);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.outreach-text-content {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 0.85rem;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+/* INTERVIEW PREP STAR STYLES */
+.interview-questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.question-card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  position: relative;
+}
+
+.question-number-badge {
+  align-self: flex-start;
+  background-color: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  padding: 0.2rem 0.6rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.question-text {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.question-details-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.detail-box {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 0.85rem;
+  font-size: 0.88rem;
+
+  strong {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    margin-bottom: 0.35rem;
+  }
+
+  p {
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  &.why-ask strong { color: #60a5fa; }
+  &.star-strategy strong { color: #fbbf24; }
+  &.key-points strong { color: #34d399; }
+
+  ul {
+    padding-left: 1.25rem;
+    color: var(--text-secondary);
+    li { margin-bottom: 0.25rem; }
+  }
+}
+
 /* PRINT MEDIA QUERY FOR PERFECT ATS PDF PRINTING */
 @media print {
   @page {
@@ -1782,6 +1951,7 @@ body {
     transform: none !important;
   }
 }
+
 
 
 

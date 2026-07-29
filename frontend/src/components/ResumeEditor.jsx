@@ -220,12 +220,38 @@ export default function ResumeEditor({ data, onChange }) {
     }
   }
 
+  const [targetMarket, setTargetMarket] = useState('latam') // 'latam' | 'us-canada'
+
+  const handleMarketChange = (market) => {
+    setTargetMarket(market)
+    if (market === 'us-canada' && data.personal_info?.photo) {
+      alert('⚠️ Normativa Anti-Discriminación de EE.UU./Canadá: La foto se ha desactivado para este mercado.')
+    }
+  }
+
   return (
     <div className="editor-container">
-      {/* Top AI Actions Bar */}
+      {/* Top AI & Target Market Toolbar */}
       <div className="editor-ai-toolbar">
-        <div className="translate-group">
+        <div className="target-market-group">
           <Globe size={16} />
+          <span>Mercado Objetivo:</span>
+          <button
+            className={`btn-secondary sm ${targetMarket === 'latam' ? 'active-market' : ''}`}
+            onClick={() => handleMarketChange('latam')}
+          >
+            🇵🇦 / 🌍 LATAM (Ejecutivo)
+          </button>
+          <button
+            className={`btn-secondary sm ${targetMarket === 'us-canada' ? 'active-market' : ''}`}
+            onClick={() => handleMarketChange('us-canada')}
+            title="Cumple con las leyes de selección laboral de EE.UU. y Canadá (Sin Foto)"
+          >
+            🇺🇸 / 🇨🇦 EE.UU. & Canadá (ATS Sin Foto)
+          </button>
+        </div>
+
+        <div className="translate-group">
           <span>Traducir CV:</span>
           <button
             className="btn-secondary sm"
@@ -287,52 +313,61 @@ export default function ResumeEditor({ data, onChange }) {
           <div className="form-section">
             <h3>Información Personal</h3>
 
+            {targetMarket === 'us-canada' && (
+              <div className="market-warning-box">
+                <strong>🇺🇸 / 🇨🇦 Mercado EE.UU. & Canadá Activo:</strong>
+                <p>Por normativas laborales anti-discriminación en Norteamérica, la foto de perfil ha sido ocultada en tu CV descargable.</p>
+              </div>
+            )}
+
             {/* Photo Upload & AI Studio Enhancer */}
-            <div className="photo-section-box">
-              <label>Foto de Perfil Profesional (Opcional para Panamá / LATAM):</label>
-              <div className="photo-controls">
-                <div className="photo-preview-box">
-                  {data.personal_info?.photo ? (
-                    <img src={data.personal_info.photo} alt="Perfil" className="photo-img-preview" />
-                  ) : (
-                    <div className="photo-placeholder-box">
-                      <User size={32} color="#64748b" />
-                      <span>Sin Foto</span>
-                    </div>
-                  )}
-                </div>
-                <div className="photo-actions">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    id="profile-photo-input"
-                    onChange={handlePhotoUpload}
-                    style={{ display: 'none' }}
-                  />
-                  <label htmlFor="profile-photo-input" className="btn-secondary sm">
-                    Subir Foto
-                  </label>
-                  {data.personal_info?.photo && (
-                    <>
-                      <button
-                        className="btn-ai-sparkle"
-                        onClick={handleAutoEnhancePhoto}
-                        title="Mejorar iluminación, contraste y sombras con IA"
-                      >
-                        <Sparkles size={14} />
-                        <span>✨ Auto-Corregir Luz IA</span>
-                      </button>
-                      <button
-                        className="btn-text danger sm"
-                        onClick={() => handlePersonalInfoChange('photo', '')}
-                      >
-                        Quitar
-                      </button>
-                    </>
-                  )}
+            {targetMarket !== 'us-canada' && (
+              <div className="photo-section-box">
+                <label>Foto de Perfil Profesional (Opcional para Panamá / LATAM):</label>
+                <div className="photo-controls">
+                  <div className="photo-preview-box">
+                    {data.personal_info?.photo ? (
+                      <img src={data.personal_info.photo} alt="Perfil" className="photo-img-preview" />
+                    ) : (
+                      <div className="photo-placeholder-box">
+                        <User size={32} color="#64748b" />
+                        <span>Sin Foto</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="photo-actions">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="profile-photo-input"
+                      onChange={handlePhotoUpload}
+                      style={{ display: 'none' }}
+                    />
+                    <label htmlFor="profile-photo-input" className="btn-secondary sm">
+                      Subir Foto
+                    </label>
+                    {data.personal_info?.photo && (
+                      <>
+                        <button
+                          className="btn-ai-sparkle"
+                          onClick={handleAutoEnhancePhoto}
+                          title="Mejorar iluminación, contraste y sombras con IA"
+                        >
+                          <Sparkles size={14} />
+                          <span>✨ Auto-Corregir Luz IA</span>
+                        </button>
+                        <button
+                          className="btn-text danger sm"
+                          onClick={() => handlePersonalInfoChange('photo', '')}
+                        >
+                          Quitar
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <div className="form-grid">
               <div className="form-group">

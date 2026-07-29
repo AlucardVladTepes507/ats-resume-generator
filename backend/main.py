@@ -315,6 +315,93 @@ Devuelve únicamente el objeto JSON traducido estricto.
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al traducir el CV: {str(e)}")
 
+class OutreachRequest(BaseModel):
+    resume_data: Dict[str, Any]
+    job_description: Optional[str] = ""
+    company_name: Optional[str] = ""
+    position_name: Optional[str] = ""
+    recruiter_name: Optional[str] = ""
+
+class InterviewPrepRequest(BaseModel):
+    resume_data: Dict[str, Any]
+    job_description: str
+
+@app.post("/generate-outreach-message")
+async def generate_outreach_message(payload: OutreachRequest):
+    client = get_gemini_client()
+    if not client:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
+    
+    try:
+        prompt = f"""
+Eres un estratega de reclutamiento y marcas personales en LinkedIn.
+Genera mensajes directos de contacto (Outreach Messages) para que el candidato le escriba al reclutador o líder del área.
+
+Datos del candidato:
+{json.dumps(payload.resume_data, ensure_ascii=False)}
+
+Empresa: {payload.company_name or "la empresa"}
+Puesto: {payload.position_name or "la vacante de interés"}
+Nombre del Reclutador/Contacto: {payload.recruiter_name or "Responsable de Selección"}
+Descripción del Empleo: {payload.job_description or ""}
+
+Devuelve un JSON estricto:
+{{
+    "linkedin_dm": "Mensaje ultra-efectivo para mensaje privado de LinkedIn (menos de 280 caracteres, directo, profesional y con gancho).",
+    "cold_email_subject": "Asunto atractivo para correo directo",
+    "cold_email_body": "Cuerpo del correo formal de 2 párrafos destacando las coincidencias clave del candidato."
+}}
+        """
+
+        response = client.models.generate_content(
+            model='gemini-flash-latest',
+            contents=[prompt]
+        )
+        cleaned = clean_json_response(response.text)
+        return json.loads(cleaned)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al generar mensajes de contacto: {str(e)}")
+
+@app.post("/generate-interview-questions")
+async def generate_interview_questions(payload: InterviewPrepRequest):
+    client = get_gemini_client()
+    if not client:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
+    
+    try:
+        prompt = f"""
+Eres un reclutador sénior realizando una preparación de entrevista laboral.
+Analiza la trayectoria del candidato y la vacante para generar las 5 preguntas más probables y difíciles de la entrevista.
+
+CV del candidato:
+{json.dumps(payload.resume_data, ensure_ascii=False)}
+
+Descripción del Empleo:
+{payload.job_description}
+
+Devuelve un JSON estricto con 5 preguntas estructuradas:
+{{
+    "questions": [
+        {{
+            "question": "Pregunta de entrevista clave 1",
+            "why_they_ask": "Explicación de qué busca evaluar el reclutador",
+            "star_strategy": "Estrategia para responder usando el método STAR (Situación, Tarea, Acción, Resultado) basada en la experiencia del candidato",
+            "key_points": ["Punto clave a mencionar 1", "Punto clave 2"]
+        }}
+    ]
+}}
+        """
+
+        response = client.models.generate_content(
+            model='gemini-flash-latest',
+            contents=[prompt]
+        )
+        cleaned = clean_json_response(response.text)
+        return json.loads(cleaned)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al generar preguntas de entrevista: {str(e)}")
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
 
