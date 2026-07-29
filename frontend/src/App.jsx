@@ -111,6 +111,9 @@ function App() {
     const API_BASE = getApiUrl()
 
     try {
+      localStorage.removeItem('ats_resume_current_data')
+      localStorage.removeItem('ats_resume_is_image')
+
       const response = await fetch(`${API_BASE}/upload-file`, {
         method: 'POST',
         body: formData,
