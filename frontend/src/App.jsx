@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react'
-import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee } from 'lucide-react'
+import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles } from 'lucide-react'
 import ResumeEditor from './components/ResumeEditor'
 import ResumePreview from './components/ResumePreview'
+import AtsMatchAnalyzer from './components/AtsMatchAnalyzer'
+import CoverLetterGenerator from './components/CoverLetterGenerator'
 import './index.css'
 
 function App() {
@@ -12,6 +14,7 @@ function App() {
   const [resumeData, setResumeData] = useState(null)
   const [isImageUpload, setIsImageUpload] = useState(false)
   const [mobileTab, setMobileTab] = useState('editor') // 'editor' | 'preview'
+  const [viewMode, setViewMode] = useState('editor') // 'editor' | 'analyzer' | 'cover-letter'
   const fileInputRef = useRef(null)
 
   const handleDragOver = (e) => {
@@ -163,8 +166,33 @@ function App() {
         </div>
       ) : (
         <div className="workspace-wrapper">
+          {/* Main Navigation Mode Bar */}
+          <div className="main-nav-mode-bar">
+            <button
+              className={`nav-mode-btn ${viewMode === 'editor' ? 'active' : ''}`}
+              onClick={() => setViewMode('editor')}
+            >
+              <Edit3 size={18} />
+              <span>1. Editar & Vista Previa ATS</span>
+            </button>
+            <button
+              className={`nav-mode-btn ${viewMode === 'analyzer' ? 'active' : ''}`}
+              onClick={() => setViewMode('analyzer')}
+            >
+              <Target size={18} />
+              <span>2. Analizar Vacante (ATS Score)</span>
+            </button>
+            <button
+              className={`nav-mode-btn ${viewMode === 'cover-letter' ? 'active' : ''}`}
+              onClick={() => setViewMode('cover-letter')}
+            >
+              <Mail size={18} />
+              <span>3. Carta de Presentación</span>
+            </button>
+          </div>
+
           {/* Handwritten / Image Warning Notice */}
-          {isImageUpload && (
+          {isImageUpload && viewMode === 'editor' && (
             <div className="image-warning-banner">
               <div className="warning-content">
                 <AlertTriangle size={24} className="warning-icon" />
@@ -178,39 +206,58 @@ function App() {
             </div>
           )}
 
-          {/* Mobile Switcher Bar */}
-          <div className="mobile-toggle-bar">
-            <button
-              className={`mobile-toggle-btn ${mobileTab === 'editor' ? 'active' : ''}`}
-              onClick={() => setMobileTab('editor')}
-            >
-              <Edit3 size={18} />
-              <span>1. Editar Datos</span>
-            </button>
-            <button
-              className={`mobile-toggle-btn ${mobileTab === 'preview' ? 'active' : ''}`}
-              onClick={() => setMobileTab('preview')}
-            >
-              <Eye size={18} />
-              <span>2. Vista Previa ATS</span>
-            </button>
-          </div>
-
-          <div className="workspace-grid">
-            {/* Left Column: Form Editor */}
-            <div className={`workspace-editor ${mobileTab === 'editor' ? 'mobile-visible' : 'mobile-hidden'}`}>
-              <div className="workspace-title">
-                <FileCheck size={20} />
-                <h2>Editar Datos del CV</h2>
+          {/* VIEW MODE 1: EDITOR & PREVIEW */}
+          {viewMode === 'editor' && (
+            <>
+              {/* Mobile Switcher Bar */}
+              <div className="mobile-toggle-bar">
+                <button
+                  className={`mobile-toggle-btn ${mobileTab === 'editor' ? 'active' : ''}`}
+                  onClick={() => setMobileTab('editor')}
+                >
+                  <Edit3 size={18} />
+                  <span>1. Editar Datos</span>
+                </button>
+                <button
+                  className={`mobile-toggle-btn ${mobileTab === 'preview' ? 'active' : ''}`}
+                  onClick={() => setMobileTab('preview')}
+                >
+                  <Eye size={18} />
+                  <span>2. Vista Previa ATS</span>
+                </button>
               </div>
-              <ResumeEditor data={resumeData} onChange={setResumeData} />
-            </div>
 
-            {/* Right Column: Live ATS Preview */}
-            <div className={`workspace-preview ${mobileTab === 'preview' ? 'mobile-visible' : 'mobile-hidden'}`}>
-              <ResumePreview data={resumeData} />
+              <div className="workspace-grid">
+                {/* Left Column: Form Editor */}
+                <div className={`workspace-editor ${mobileTab === 'editor' ? 'mobile-visible' : 'mobile-hidden'}`}>
+                  <div className="workspace-title">
+                    <FileCheck size={20} />
+                    <h2>Editar Datos del CV</h2>
+                  </div>
+                  <ResumeEditor data={resumeData} onChange={setResumeData} />
+                </div>
+
+                {/* Right Column: Live ATS Preview */}
+                <div className={`workspace-preview ${mobileTab === 'preview' ? 'mobile-visible' : 'mobile-hidden'}`}>
+                  <ResumePreview data={resumeData} />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* VIEW MODE 2: ATS MATCH ANALYZER */}
+          {viewMode === 'analyzer' && (
+            <div className="feature-view-box">
+              <AtsMatchAnalyzer resumeData={resumeData} />
             </div>
-          </div>
+          )}
+
+          {/* VIEW MODE 3: COVER LETTER GENERATOR */}
+          {viewMode === 'cover-letter' && (
+            <div className="feature-view-box">
+              <CoverLetterGenerator resumeData={resumeData} />
+            </div>
+          )}
         </div>
       )}
 

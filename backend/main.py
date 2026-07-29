@@ -1,5 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Dict, Any, List, Optional
 import uvicorn
 import pdfplumber
 import io
@@ -23,6 +25,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class JobMatchRequest(BaseModel):
+    resume_data: Dict[str, Any]
+    job_description: str
+
+class EnhanceBulletRequest(BaseModel):
+    bullet: str
+    position: Optional[str] = ""
+
+class CoverLetterRequest(BaseModel):
+    resume_data: Dict[str, Any]
+    job_description: Optional[str] = ""
+    company_name: Optional[str] = ""
+    position_name: Optional[str] = ""
+
+class TranslateResumeRequest(BaseModel):
+    resume_data: Dict[str, Any]
+    target_language: str = "en"
 
 PROMPT_SCHEMA = """
 Eres un experto analizador y transcriptor de currículums ATS. 
@@ -61,6 +81,14 @@ Estructura JSON deseada:
     "skills": ["skill 1", "skill 2"]
 }
 """
+
+def clean_json_response(text: str) -> str:
+    cleaned = text.strip()
+    if cleaned.startswith("```json"):
+        cleaned = cleaned[7:-3].strip()
+    elif cleaned.startswith("```"):
+        cleaned = cleaned[3:-3].strip()
+    return cleaned
 
 @app.get("/")
 def read_root():
@@ -102,14 +130,12 @@ async def upload_file(file: UploadFile = File(...)):
             if extracted_text.strip():
                 contents_payload = [f"{PROMPT_SCHEMA}\n\nTEXTO DEL CURRÍCULUM:\n{extracted_text}"]
             else:
-                # If PDF text is empty (scanned PDF image), send PDF bytes to Gemini Vision directly
                 is_image_file = True
                 contents_payload = [
                     types.Part.from_bytes(data=content, mime_type="application/pdf"),
                     PROMPT_SCHEMA
                 ]
         else:
-            # Image file (JPG, PNG, WEBP)
             mime_map = {
                 '.png': 'image/png',
                 '.jpg': 'image/jpeg',
@@ -127,11 +153,7 @@ async def upload_file(file: UploadFile = File(...)):
             contents=contents_payload
         )
         
-        response_text = response.text.strip()
-        if response_text.startswith("```json"):
-            response_text = response_text[7:-3].strip()
-        elif response_text.startswith("```"):
-            response_text = response_text[3:-3].strip()
+        response_text = clean_json_response(response.text)
             
         try:
             structured_data = json.loads(response_text)
@@ -149,5 +171,129 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error procesando el archivo: {str(e)}")
 
+@app.post("/analyze-job-match")
+async def analyze_job_match(payload: JobMatchRequest):
+    if not client:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
+    
+    try:
+        prompt = f"""
+Eres un reclutador experto y sistema de filtrado ATS.
+Compara el siguiente currículum con la oferta de empleo provista.
+
+CV del candidato:
+{json.dumps(payload.resume_data, ensure_ascii=False)}
+
+Oferta de empleo / Requisitos:
+{payload.job_description}
+
+Devuelve únicamente un objeto JSON estricto con el siguiente formato (sin markdown ni explicaciones fuera del json):
+{{
+    "score": 85,
+    "matching_keywords": ["palabra o competencia 1", "palabra 2"],
+    "missing_keywords": ["palabra relevante faltante 1", "palabra 2"],
+    "recommendations": ["Recomendación específica 1 para adaptar el CV", "Recomendación 2"]
+}}
+        """
+
+        response = client.models.generate_content(
+            model='gemini-flash-latest',
+            contents=[prompt]
+        )
+        cleaned = clean_json_response(response.text)
+        return json.loads(cleaned)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al analizar compatibilidad: {str(e)}")
+
+@app.post("/enhance-bullet")
+async def enhance_bullet(payload: EnhanceBulletRequest):
+    if not client:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
+    
+    try:
+        prompt = f"""
+Eres un redactor experto en currículums ATS de alto impacto.
+Mejora la siguiente viñeta de experiencia laboral para la posición "{payload.position}":
+"{payload.bullet}"
+
+Devuelve un JSON estricto con 3 alternativas mejoradas usando métricas y lenguaje potente:
+{{
+    "suggestions": [
+        "Alternativa 1 cuantificable y orientada a logros",
+        "Alternativa 2 enfocada en competencias técnicas",
+        "Alternativa 3 clara y directa para ATS"
+    ]
+}}
+        """
+
+        response = client.models.generate_content(
+            model='gemini-flash-latest',
+            contents=[prompt]
+        )
+        cleaned = clean_json_response(response.text)
+        return json.loads(cleaned)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al mejorar la viñeta: {str(e)}")
+
+@app.post("/generate-cover-letter")
+async def generate_cover_letter(payload: CoverLetterRequest):
+    if not client:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
+    
+    try:
+        prompt = f"""
+Eres un redactor profesional de cartas de presentación para puestos ejecutivos y técnicos.
+Genera una Carta de Presentación (Cover Letter) perspicaz y adaptada a la empresa y empleo especificados.
+
+Datos del candidato:
+{json.dumps(payload.resume_data, ensure_ascii=False)}
+
+Empresa: {payload.company_name or "la empresa"}
+Puesto: {payload.position_name or "la vacante de interés"}
+Descripción/Requisitos del Empleo: {payload.job_description or "Postulación general"}
+
+Devuelve un JSON estricto:
+{{
+    "subject": "Asunto sugerido para la candidatura",
+    "cover_letter": "Texto completo de la carta de presentación con párrafos bien estructurados (saludo formal, introducción motivadora, resaltado de logros relevantes del candidato y cierre invitando a una entrevista)."
+}}
+        """
+
+        response = client.models.generate_content(
+            model='gemini-flash-latest',
+            contents=[prompt]
+        )
+        cleaned = clean_json_response(response.text)
+        return json.loads(cleaned)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al generar la carta de presentación: {str(e)}")
+
+@app.post("/translate-resume")
+async def translate_resume(payload: TranslateResumeRequest):
+    if not client:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
+    
+    target_lang = "inglés" if payload.target_language == "en" else "español"
+    try:
+        prompt = f"""
+Traduce profesionalmente la información del siguiente currículum al idioma {target_lang}.
+Mantén la terminología técnica correcta, nombres de empresas y fechas sin alterar la estructura JSON.
+
+Estructura JSON a traducir:
+{json.dumps(payload.resume_data, ensure_ascii=False)}
+
+Devuelve únicamente el objeto JSON traducido estricto.
+        """
+
+        response = client.models.generate_content(
+            model='gemini-flash-latest',
+            contents=[prompt]
+        )
+        cleaned = clean_json_response(response.text)
+        return json.loads(cleaned)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al traducir el CV: {str(e)}")
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+

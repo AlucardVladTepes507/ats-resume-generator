@@ -1,8 +1,74 @@
 import React, { useState } from 'react'
-import { Plus, Trash2, User, Briefcase, GraduationCap, Wrench, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Trash2, User, Briefcase, GraduationCap, Wrench, Sparkles, Globe, Check, Loader2 } from 'lucide-react'
 
 export default function ResumeEditor({ data, onChange }) {
   const [activeTab, setActiveTab] = useState('personal')
+  const [enhancingIndex, setEnhancingIndex] = useState(null) // `${expIdx}-${bIdx}`
+  const [suggestions, setSuggestions] = useState([])
+  const [isTranslating, setIsTranslating] = useState(false)
+  const [newSkillInput, setNewSkillInput] = useState('')
+
+  // Translation Handler
+  const handleTranslate = async (targetLang) => {
+    setIsTranslating(true)
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+    try {
+      const response = await fetch(`${API_URL}/translate-resume`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resume_data: data,
+          target_language: targetLang
+        })
+      })
+
+      const result = await response.json()
+      if (!response.ok) {
+        throw new Error(result.detail || 'Error al traducir el CV')
+      }
+
+      onChange(result)
+    } catch (err) {
+      alert(`Error traduciendo: ${err.message}`)
+    } finally {
+      setIsTranslating(false)
+    }
+  }
+
+  // AI Bullet Enhancement Handler
+  const handleEnhanceBullet = async (expIdx, bIdx, bulletText, position) => {
+    if (!bulletText.trim()) return
+    const key = `${expIdx}-${bIdx}`
+    setEnhancingIndex(key)
+    setSuggestions([])
+
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+    try {
+      const response = await fetch(`${API_URL}/enhance-bullet`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bullet: bulletText,
+          position: position || 'Profesional'
+        })
+      })
+
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.detail)
+      setSuggestions(result.suggestions || [])
+    } catch (err) {
+      alert(`Error al mejorar la viñeta: ${err.message}`)
+      setEnhancingIndex(null)
+    }
+  }
+
+  const applySuggestion = (expIdx, bIdx, newText) => {
+    handleBulletChange(expIdx, bIdx, newText)
+    setEnhancingIndex(null)
+    setSuggestions([])
+  }
 
   // Personal Info handlers
   const handlePersonalInfoChange = (field, value) => {
@@ -100,10 +166,31 @@ export default function ResumeEditor({ data, onChange }) {
     onChange({ ...data, skills: newSkills })
   }
 
-  const [newSkillInput, setNewSkillInput] = useState('')
-
   return (
     <div className="editor-container">
+      {/* Top AI Actions Bar */}
+      <div className="editor-ai-toolbar">
+        <div className="translate-group">
+          <Globe size={16} />
+          <span>Traducir CV:</span>
+          <button
+            className="btn-secondary sm"
+            onClick={() => handleTranslate('en')}
+            disabled={isTranslating}
+          >
+            🇺🇸 Inglés
+          </button>
+          <button
+            className="btn-secondary sm"
+            onClick={() => handleTranslate('es')}
+            disabled={isTranslating}
+          >
+            🇪🇸 Español
+          </button>
+          {isTranslating && <Loader2 size={16} className="spin-icon" />}
+        </div>
+      </div>
+
       {/* Tab Navigation */}
       <div className="editor-tabs">
         <button
@@ -259,19 +346,60 @@ export default function ResumeEditor({ data, onChange }) {
                 </div>
 
                 <div className="bullets-section">
-                  <label>Logros y Responsabilidades (Viñetas)</label>
-                  {(exp.description || []).map((bullet, bIdx) => (
-                    <div className="bullet-row" key={bIdx}>
-                      <input
-                        type="text"
-                        value={bullet}
-                        onChange={(e) => handleBulletChange(expIdx, bIdx, e.target.value)}
-                      />
-                      <button className="btn-icon danger" onClick={() => handleRemoveBullet(expIdx, bIdx)}>
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
+                  <label>Logros y Responsabilidades (Viñetas ATS)</label>
+                  {(exp.description || []).map((bullet, bIdx) => {
+                    const isCurrentEnhancing = enhancingIndex === `${expIdx}-${bIdx}`
+                    return (
+                      <div className="bullet-container-wrapper" key={bIdx}>
+                        <div className="bullet-row">
+                          <input
+                            type="text"
+                            value={bullet}
+                            onChange={(e) => handleBulletChange(expIdx, bIdx, e.target.value)}
+                          />
+                          <button
+                            className="btn-ai-sparkle"
+                            title="Mejorar esta viñeta con IA"
+                            onClick={() => handleEnhanceBullet(expIdx, bIdx, bullet, exp.position)}
+                          >
+                            <Sparkles size={14} />
+                            <span>Mejorar</span>
+                          </button>
+                          <button className="btn-icon danger" onClick={() => handleRemoveBullet(expIdx, bIdx)}>
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+
+                        {/* Suggestions Modal/Popover */}
+                        {isCurrentEnhancing && (
+                          <div className="ai-suggestions-popover">
+                            <h5>✨ Sugerencias de alto impacto con IA (Elige una para aplicar):</h5>
+                            {suggestions.length === 0 ? (
+                              <div className="loading-inline">
+                                <Loader2 size={16} className="spin-icon" /> Redactando alternativas cuantitativas ATS...
+                              </div>
+                            ) : (
+                              <div className="suggestions-list">
+                                {suggestions.map((sug, sIdx) => (
+                                  <button
+                                    key={sIdx}
+                                    className="suggestion-item-btn"
+                                    onClick={() => applySuggestion(expIdx, bIdx, sug)}
+                                  >
+                                    <span>{sug}</span>
+                                    <Check size={14} className="apply-icon" />
+                                  </button>
+                                ))}
+                                <button className="btn-text cancel" onClick={() => setEnhancingIndex(null)}>
+                                  Cancelar
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                   <button className="btn-text" onClick={() => handleAddBullet(expIdx)}>
                     + Añadir Viñeta
                   </button>
@@ -385,3 +513,4 @@ export default function ResumeEditor({ data, onChange }) {
     </div>
   )
 }
+

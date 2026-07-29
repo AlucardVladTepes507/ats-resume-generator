@@ -1,8 +1,10 @@
 import React, { useRef, useState } from 'react'
 import HarvardTemplate from './templates/HarvardTemplate'
 import ModernTemplate from './templates/ModernTemplate'
-import { Download, Printer, Layout, Sparkles } from 'lucide-react'
+import { Download, Printer, Layout, FileSpreadsheet } from 'lucide-react'
 import html2pdf from 'html2pdf.js'
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx'
+import { saveAs } from 'file-saver'
 
 export default function ResumePreview({ data }) {
   const [template, setTemplate] = useState('harvard') // 'harvard' | 'modern'
@@ -15,7 +17,7 @@ export default function ResumePreview({ data }) {
 
     const element = resumeRef.current
     const opt = {
-      margin: 0, // Mapeo 1:1 en tamaño Carta
+      margin: 0,
       filename: `CV_ATS_${data?.personal_info?.name || 'Resume'}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: {
@@ -38,6 +40,126 @@ export default function ResumePreview({ data }) {
         console.error('Error generating PDF:', err)
         setIsExporting(false)
       })
+  }
+
+  const handleDownloadDocx = async () => {
+    if (!data) return
+    const { personal_info = {}, experience = [], education = [], skills = [] } = data
+
+    const docChildren = [
+      // Name
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [
+          new TextRun({
+            text: (personal_info.name || 'NOMBRE COMPLETO').toUpperCase(),
+            bold: true,
+            size: 32,
+            font: 'Georgia'
+          })
+        ]
+      }),
+      // Contact Info
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [
+          new TextRun({
+            text: [personal_info.location, personal_info.phone, personal_info.email, personal_info.linkedin]
+              .filter(Boolean)
+              .join(' | '),
+            size: 20,
+            font: 'Georgia'
+          })
+        ]
+      }),
+      new Paragraph({ text: '' })
+    ]
+
+    // Summary Section
+    if (personal_info.summary) {
+      docChildren.push(
+        new Paragraph({
+          children: [
+            new TextRun({ text: 'RESUMEN PROFESIONAL', bold: true, size: 22, font: 'Georgia' })
+          ]
+        }),
+        new Paragraph({
+          children: [new TextRun({ text: personal_info.summary, size: 20, font: 'Georgia' })]
+        }),
+        new Paragraph({ text: '' })
+      )
+    }
+
+    // Experience Section
+    if (experience.length > 0) {
+      docChildren.push(
+        new Paragraph({
+          children: [new TextRun({ text: 'EXPERIENCIA LABORAL', bold: true, size: 22, font: 'Georgia' })]
+        })
+      )
+      experience.forEach((exp) => {
+        docChildren.push(
+          new Paragraph({
+            children: [
+              new TextRun({ text: exp.company || '', bold: true, size: 20, font: 'Georgia' }),
+              new TextRun({ text: exp.position ? ` — ${exp.position}` : '', size: 20, font: 'Georgia' }),
+              new TextRun({ text: `   (${exp.start_date || ''} - ${exp.end_date || ''})`, italic: true, size: 18, font: 'Georgia' })
+            ]
+          })
+        )
+        if (Array.isArray(exp.description)) {
+          exp.description.forEach((bullet) => {
+            docChildren.push(
+              new Paragraph({
+                bullet: { level: 0 },
+                children: [new TextRun({ text: bullet, size: 19, font: 'Georgia' })]
+              })
+            )
+          })
+        }
+      })
+      docChildren.push(new Paragraph({ text: '' }))
+    }
+
+    // Education Section
+    if (education.length > 0) {
+      docChildren.push(
+        new Paragraph({
+          children: [new TextRun({ text: 'EDUCACIÓN', bold: true, size: 22, font: 'Georgia' })]
+        })
+      )
+      education.forEach((edu) => {
+        docChildren.push(
+          new Paragraph({
+            children: [
+              new TextRun({ text: edu.institution || '', bold: true, size: 20, font: 'Georgia' }),
+              new TextRun({ text: edu.degree ? ` — ${edu.degree}` : '', size: 20, font: 'Georgia' }),
+              new TextRun({ text: `   (${edu.start_date || ''} - ${edu.end_date || ''})`, italic: true, size: 18, font: 'Georgia' })
+            ]
+          })
+        )
+      })
+      docChildren.push(new Paragraph({ text: '' }))
+    }
+
+    // Skills Section
+    if (skills.length > 0) {
+      docChildren.push(
+        new Paragraph({
+          children: [new TextRun({ text: 'HABILIDADES TÉCNICAS Y COMPETENCIAS', bold: true, size: 22, font: 'Georgia' })]
+        }),
+        new Paragraph({
+          children: [new TextRun({ text: `Habilidades: ${skills.join(' • ')}`, size: 20, font: 'Georgia' })]
+        })
+      )
+    }
+
+    const doc = new Document({
+      sections: [{ properties: {}, children: docChildren }]
+    })
+
+    const blob = await Packer.toBlob(doc)
+    saveAs(blob, `CV_ATS_${personal_info.name || 'Resume'}.docx`)
   }
 
   const handlePrint = () => {
@@ -66,9 +188,9 @@ export default function ResumePreview({ data }) {
         </div>
 
         <div className="export-actions">
-          <button className="btn-secondary" onClick={handlePrint} title="Imprimir / Guardar en PDF con navegador">
-            <Printer size={16} />
-            <span>Imprimir</span>
+          <button className="btn-secondary" onClick={handleDownloadDocx} title="Descargar en formato Microsoft Word editable">
+            <FileSpreadsheet size={16} />
+            <span>Word (.docx)</span>
           </button>
           <button className="btn-primary" onClick={handleDownloadPDF} disabled={isExporting}>
             <Download size={16} />
