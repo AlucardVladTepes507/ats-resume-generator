@@ -22,14 +22,13 @@ export default function ResumePreview({ data }) {
     }
   }, [data?.personal_info?.photo])
 
-  // Automatically fit the entire paper sheet (width AND height) on screen
+  // Automatically fit the exact 816px Letter paper sheet to the mobile screen width
   useEffect(() => {
     const handleResize = () => {
       if (autoFit && window.innerWidth <= 850) {
-        const scaleX = (window.innerWidth - 32) / 816
-        const scaleY = (window.innerHeight - 200) / 1056
-        const calculatedScale = Math.min(scaleX, scaleY)
-        setZoomScale(calculatedScale > 0.15 ? calculatedScale : 0.38)
+        const availableWidth = Math.min(window.innerWidth - 24, 800)
+        const calculatedScale = availableWidth / 816
+        setZoomScale(calculatedScale > 0.15 ? calculatedScale : 0.4)
       } else if (autoFit) {
         setZoomScale(1)
       }

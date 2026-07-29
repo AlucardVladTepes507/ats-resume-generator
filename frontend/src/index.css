@@ -680,7 +680,7 @@ body {
   }
 
   .preview-sheet-wrapper {
-    padding: 1rem 0;
+    padding: 1rem 0.25rem;
     overflow-x: hidden;
     width: 100%;
     box-sizing: border-box;
@@ -691,22 +691,8 @@ body {
 
   .mobile-sheet-scaler {
     position: relative;
-    width: calc(100vw - 32px);
-    /* Exact scaled paper height based on aspect ratio 816x1050 */
-    height: calc(1080px * ((100vw - 32px) / 816));
     margin: 0 auto !important;
     display: block;
-  }
-
-  .preview-sheet {
-    width: 816px !important;
-    min-height: 1050px !important;
-    padding: 0.5in 0.6in !important;
-    transform-origin: top left !important;
-    transform: scale(calc((100vw - 32px) / 816)) !important;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
-    margin: 0 !important;
-    box-sizing: border-box !important;
   }
 }
 
