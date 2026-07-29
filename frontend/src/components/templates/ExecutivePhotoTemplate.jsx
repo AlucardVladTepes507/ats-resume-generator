@@ -84,38 +84,37 @@ export default function ExecutivePhotoTemplate({ data }) {
         </div>
       )}
 
-      {/* Education & Skills 2-Column Grid */}
-      <div className="exec-two-cols">
-        {/* Education */}
-        {education.length > 0 && (
-          <div className="exec-section">
-            <h3 className="exec-title">EDUCACIÓN</h3>
-            {education.map((edu, idx) => (
-              <div className="exec-edu-item" key={idx}>
-                <strong>{edu.degree}</strong>
-                <div className="exec-edu-sub">
-                  <span>{edu.institution}</span>
-                  <span className="exec-dates">{edu.start_date} – {edu.end_date}</span>
+      {/* Education Section */}
+      {education.length > 0 && (
+        <div className="exec-section">
+          <h3 className="exec-title">EDUCACIÓN</h3>
+          {education.map((edu, idx) => (
+            <div className="exec-edu-item" key={idx}>
+              <div className="exec-exp-header">
+                <div>
+                  <strong className="exec-role">{edu.degree}</strong>
+                  <span className="exec-company"> — {edu.institution}</span>
                 </div>
+                <span className="exec-dates">{edu.start_date} – {edu.end_date}</span>
               </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Skills Section */}
+      {skills.length > 0 && (
+        <div className="exec-section">
+          <h3 className="exec-title">HABILIDADES CLAVE</h3>
+          <div className="exec-skills-grid">
+            {skills.map((skill, idx) => (
+              <span className="exec-skill-badge" key={idx}>
+                {skill}
+              </span>
             ))}
           </div>
-        )}
-
-        {/* Skills */}
-        {skills.length > 0 && (
-          <div className="exec-section">
-            <h3 className="exec-title">HABILIDADES CLAVE</h3>
-            <div className="exec-skills-grid">
-              {skills.map((skill, idx) => (
-                <span className="exec-skill-badge" key={idx}>
-                  {skill}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
