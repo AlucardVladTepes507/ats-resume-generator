@@ -1,13 +1,14 @@
 import React, { useRef, useState } from 'react'
 import HarvardTemplate from './templates/HarvardTemplate'
 import ModernTemplate from './templates/ModernTemplate'
-import { Download, Printer, Layout, FileSpreadsheet } from 'lucide-react'
+import ExecutivePhotoTemplate from './templates/ExecutivePhotoTemplate'
+import { Download, Printer, Layout, FileSpreadsheet, User } from 'lucide-react'
 import html2pdf from 'html2pdf.js'
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx'
 import { saveAs } from 'file-saver'
 
 export default function ResumePreview({ data }) {
-  const [template, setTemplate] = useState('harvard') // 'harvard' | 'modern'
+  const [template, setTemplate] = useState('harvard') // 'harvard' | 'modern' | 'executive-photo'
   const [isExporting, setIsExporting] = useState(false)
   const resumeRef = useRef(null)
 
@@ -162,17 +163,13 @@ export default function ResumePreview({ data }) {
     saveAs(blob, `CV_ATS_${personal_info.name || 'Resume'}.docx`)
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
-
   return (
     <div className="preview-container">
       {/* Control Bar */}
       <div className="preview-toolbar">
         <div className="template-selector">
           <Layout size={18} />
-          <span>Plantilla ATS:</span>
+          <span>Plantilla:</span>
           <button
             className={`template-btn ${template === 'harvard' ? 'active' : ''}`}
             onClick={() => setTemplate('harvard')}
@@ -184,6 +181,12 @@ export default function ResumePreview({ data }) {
             onClick={() => setTemplate('modern')}
           >
             Modern Clean
+          </button>
+          <button
+            className={`template-btn ${template === 'executive-photo' ? 'active' : ''}`}
+            onClick={() => setTemplate('executive-photo')}
+          >
+            Executive Photo 🖼️
           </button>
         </div>
 
@@ -204,6 +207,7 @@ export default function ResumePreview({ data }) {
         <div className="preview-sheet" ref={resumeRef} id="printable-resume">
           {template === 'harvard' && <HarvardTemplate data={data} />}
           {template === 'modern' && <ModernTemplate data={data} />}
+          {template === 'executive-photo' && <ExecutivePhotoTemplate data={data} />}
         </div>
       </div>
     </div>

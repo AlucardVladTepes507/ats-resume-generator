@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react'
-import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles } from 'lucide-react'
+import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb } from 'lucide-react'
 import ResumeEditor from './components/ResumeEditor'
 import ResumePreview from './components/ResumePreview'
 import AtsMatchAnalyzer from './components/AtsMatchAnalyzer'
 import CoverLetterGenerator from './components/CoverLetterGenerator'
+import FeedbackModal from './components/FeedbackModal'
 import './index.css'
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
   const [isImageUpload, setIsImageUpload] = useState(false)
   const [mobileTab, setMobileTab] = useState('editor') // 'editor' | 'preview'
   const [viewMode, setViewMode] = useState('editor') // 'editor' | 'analyzer' | 'cover-letter'
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
   const fileInputRef = useRef(null)
 
   const handleDragOver = (e) => {
@@ -93,6 +95,15 @@ function App() {
         </div>
 
         <div className="header-actions">
+          <button
+            className="btn-secondary"
+            onClick={() => setIsFeedbackOpen(true)}
+            title="Solicitar una plantilla para tu país o mercado"
+          >
+            <Lightbulb size={18} />
+            <span>Sugerir Plantilla</span>
+          </button>
+
           <a
             href="https://ko-fi.com/smart507"
             target="_blank"
@@ -261,18 +272,27 @@ function App() {
         </div>
       )}
 
+      {/* Feedback Modal */}
+      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
+
       {/* Footer */}
       <footer className="footer">
         <p>Desarrollado con Inteligencia Artificial para potenciar tu currículum.</p>
-        <a
-          href="https://ko-fi.com/smart507"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="footer-kofi-link"
-        >
-          <Coffee size={16} />
-          <span>¿Te fue útil? Invítame un café en Ko-fi</span>
-        </a>
+        <div className="footer-links-group">
+          <button className="footer-link-btn" onClick={() => setIsFeedbackOpen(true)}>
+            <Lightbulb size={16} />
+            <span>Sugerir Plantilla / Mercado</span>
+          </button>
+          <a
+            href="https://ko-fi.com/smart507"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer-kofi-link"
+          >
+            <Coffee size={16} />
+            <span>¿Te fue útil? Invítame un café en Ko-fi</span>
+          </a>
+        </div>
       </footer>
     </div>
   )

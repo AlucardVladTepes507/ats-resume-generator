@@ -166,6 +166,60 @@ export default function ResumeEditor({ data, onChange }) {
     onChange({ ...data, skills: newSkills })
   }
 
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (uploadEvent) => {
+      handlePersonalInfoChange('photo', uploadEvent.target.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleAutoEnhancePhoto = () => {
+    if (!data.personal_info?.photo) return
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.src = data.personal_info.photo
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0)
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const d = imageData.data
+
+      let totalLum = 0
+      for (let i = 0; i < d.length; i += 4) {
+        totalLum += (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2])
+      }
+      const avgLum = totalLum / (d.length / 4)
+      const brightnessBoost = avgLum < 130 ? Math.min(45, 130 - avgLum) : 10
+      const contrastFactor = 1.15
+
+      for (let i = 0; i < d.length; i += 4) {
+        let r = d[i] + brightnessBoost
+        let g = d[i + 1] + brightnessBoost
+        let b = d[i + 2] + brightnessBoost
+
+        r = ((r - 128) * contrastFactor) + 128
+        g = ((g - 128) * contrastFactor) + 128
+        b = ((b - 128) * contrastFactor) + 128
+
+        d[i] = Math.min(255, Math.max(0, r))
+        d[i + 1] = Math.min(255, Math.max(0, g))
+        d[i + 2] = Math.min(255, Math.max(0, b))
+      }
+
+      ctx.putImageData(imageData, 0, 0)
+      const enhancedDataUrl = canvas.toDataURL('image/jpeg', 0.95)
+      handlePersonalInfoChange('photo', enhancedDataUrl)
+      alert('✨ ¡Iluminación y contraste mejorados con éxito!')
+    }
+  }
+
   return (
     <div className="editor-container">
       {/* Top AI Actions Bar */}
@@ -232,6 +286,54 @@ export default function ResumeEditor({ data, onChange }) {
         {activeTab === 'personal' && (
           <div className="form-section">
             <h3>Información Personal</h3>
+
+            {/* Photo Upload & AI Studio Enhancer */}
+            <div className="photo-section-box">
+              <label>Foto de Perfil Profesional (Opcional para Panamá / LATAM):</label>
+              <div className="photo-controls">
+                <div className="photo-preview-box">
+                  {data.personal_info?.photo ? (
+                    <img src={data.personal_info.photo} alt="Perfil" className="photo-img-preview" />
+                  ) : (
+                    <div className="photo-placeholder-box">
+                      <User size={32} color="#64748b" />
+                      <span>Sin Foto</span>
+                    </div>
+                  )}
+                </div>
+                <div className="photo-actions">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    id="profile-photo-input"
+                    onChange={handlePhotoUpload}
+                    style={{ display: 'none' }}
+                  />
+                  <label htmlFor="profile-photo-input" className="btn-secondary sm">
+                    Subir Foto
+                  </label>
+                  {data.personal_info?.photo && (
+                    <>
+                      <button
+                        className="btn-ai-sparkle"
+                        onClick={handleAutoEnhancePhoto}
+                        title="Mejorar iluminación, contraste y sombras con IA"
+                      >
+                        <Sparkles size={14} />
+                        <span>✨ Auto-Corregir Luz IA</span>
+                      </button>
+                      <button
+                        className="btn-text danger sm"
+                        onClick={() => handlePersonalInfoChange('photo', '')}
+                      >
+                        Quitar
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div className="form-grid">
               <div className="form-group">
                 <label>Nombre Completo</label>
