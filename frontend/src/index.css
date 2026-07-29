@@ -1581,6 +1581,125 @@ body {
   font-weight: 600;
 }
 
+/* MODERN PHOTO TEMPLATE STYLES */
+.modern-photo-template {
+  color: #1e293b;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  line-height: 1.5;
+}
+
+.mod-photo-header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.mod-avatar-wrapper {
+  flex-shrink: 0;
+}
+
+.mod-avatar-img {
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #2563eb;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+}
+
+.mod-avatar-placeholder {
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  background-color: #f1f5f9;
+  border: 2px dashed #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mod-header-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.mod-name-title {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.mod-contact-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+.mod-contact-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+
+  svg { color: #2563eb; }
+}
+
+.mod-blue-accent-bar {
+  height: 4px;
+  background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+  border-radius: 2px;
+  margin-bottom: 1.25rem;
+}
+
+.mod-sec-heading {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #2563eb;
+  letter-spacing: 0.05em;
+  border-bottom: 1.5px solid #e2e8f0;
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.65rem;
+}
+
+.mod-summary-text {
+  font-size: 0.86rem;
+  color: #334155;
+  line-height: 1.55;
+}
+
+.mod-bullet-list {
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  color: #334155;
+  margin-top: 0.25rem;
+
+  li { margin-bottom: 0.2rem; }
+}
+
+.mod-skills-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.mod-skill-pill {
+  background-color: #f0f9ff;
+  color: #0284c7;
+  border: 1px solid #bae6fd;
+  padding: 0.2rem 0.55rem;
+  border-radius: 1rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+
 /* FEEDBACK MODAL STYLES */
 .modal-overlay {
   position: fixed;

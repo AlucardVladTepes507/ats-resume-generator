@@ -1,14 +1,24 @@
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import HarvardTemplate from './templates/HarvardTemplate'
 import ModernTemplate from './templates/ModernTemplate'
 import ExecutivePhotoTemplate from './templates/ExecutivePhotoTemplate'
+import ModernPhotoTemplate from './templates/ModernPhotoTemplate'
 import { Download, Layout } from 'lucide-react'
 import html2pdf from 'html2pdf.js'
 
 export default function ResumePreview({ data }) {
-  const [template, setTemplate] = useState('harvard') // 'harvard' | 'modern' | 'executive-photo'
+  const [template, setTemplate] = useState('harvard') // 'harvard' | 'modern' | 'executive-photo' | 'modern-photo'
   const [isExporting, setIsExporting] = useState(false)
   const resumeRef = useRef(null)
+
+  // Auto-switch to a photo template when a photo is added/uploaded
+  useEffect(() => {
+    if (data?.personal_info?.photo) {
+      if (template === 'harvard' || template === 'modern') {
+        setTemplate('executive-photo')
+      }
+    }
+  }, [data?.personal_info?.photo])
 
   const handleDownloadPDF = () => {
     if (!resumeRef.current) return
@@ -69,6 +79,12 @@ export default function ResumePreview({ data }) {
           >
             Executive Photo 🖼️
           </button>
+          <button
+            className={`template-btn ${template === 'modern-photo' ? 'active' : ''}`}
+            onClick={() => setTemplate('modern-photo')}
+          >
+            Modern Photo 🖼️
+          </button>
         </div>
 
         <div className="export-actions">
@@ -85,6 +101,7 @@ export default function ResumePreview({ data }) {
           {template === 'harvard' && <HarvardTemplate data={data} />}
           {template === 'modern' && <ModernTemplate data={data} />}
           {template === 'executive-photo' && <ExecutivePhotoTemplate data={data} />}
+          {template === 'modern-photo' && <ModernPhotoTemplate data={data} />}
         </div>
       </div>
     </div>
