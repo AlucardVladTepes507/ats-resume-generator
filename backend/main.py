@@ -7,6 +7,7 @@ import pdfplumber
 import io
 import os
 import json
+import time
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -14,6 +15,36 @@ from dotenv import load_dotenv
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ENV_PATH = os.path.join(BASE_DIR, ".env")
 load_dotenv(dotenv_path=ENV_PATH, override=True)
+
+def safe_generate_content(client, contents):
+    models_to_try = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-1.5-flash']
+    last_error = None
+
+    for model in models_to_try:
+        for attempt in range(3):
+            try:
+                response = client.models.generate_content(
+                    model=model,
+                    contents=contents
+                )
+                return response
+            except Exception as e:
+                err_str = str(e)
+                last_error = e
+                if any(k in err_str for k in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED"]):
+                    time.sleep(1)
+                    continue
+                else:
+                    break
+
+    if last_error:
+        err_msg = str(last_error)
+        if any(k in err_msg for k in ["503", "UNAVAILABLE", "429"]):
+            raise HTTPException(
+                status_code=503,
+                detail="La Inteligencia Artificial de Google está experimentando una alta demanda momentánea. Por favor, vuelve a presionar el botón en unos segundos."
+            )
+        raise HTTPException(status_code=500, detail=f"Error al procesar con IA: {err_msg}")
 
 def get_gemini_client():
     load_dotenv(dotenv_path=ENV_PATH, override=True)
@@ -193,10 +224,7 @@ async def upload_file(file: UploadFile = File(...)):
                 PROMPT_SCHEMA
             ]
 
-        response = client.models.generate_content(
-            model='gemini-flash-latest',
-            contents=contents_payload
-        )
+        response = safe_generate_content(client, contents_payload)
         
         response_text = clean_json_response(response.text)
             
@@ -244,10 +272,7 @@ Devuelve un JSON estricto:
 }}
         """
 
-        response = client.models.generate_content(
-            model='gemini-flash-latest',
-            contents=[prompt]
-        )
+        response = safe_generate_content(client, [prompt])
         cleaned = clean_json_response(response.text)
         return json.loads(cleaned)
     except Exception as e:
@@ -277,10 +302,7 @@ Devuelve un JSON estricto con 3 opciones mejoradas (Corta/Directa, Basada en Log
 }}
         """
 
-        response = client.models.generate_content(
-            model='gemini-flash-latest',
-            contents=[prompt]
-        )
+        response = safe_generate_content(client, [prompt])
         cleaned = clean_json_response(response.text)
         return json.loads(cleaned)
     except Exception as e:
@@ -311,10 +333,7 @@ Devuelve un JSON estricto:
 }}
         """
 
-        response = client.models.generate_content(
-            model='gemini-flash-latest',
-            contents=[prompt]
-        )
+        response = safe_generate_content(client, [prompt])
         cleaned = clean_json_response(response.text)
         return json.loads(cleaned)
     except Exception as e:
@@ -346,10 +365,7 @@ CV a traducir:
 Devuelve ÚNICAMENTE el JSON traducido estricto.
         """
 
-        response = client.models.generate_content(
-            model='gemini-flash-latest',
-            contents=[prompt]
-        )
+        response = safe_generate_content(client, [prompt])
         cleaned = clean_json_response(response.text)
         return json.loads(cleaned)
     except Exception as e:
@@ -390,10 +406,7 @@ Devuelve un JSON estricto con un mensaje para LinkedIn InMail/DM (corto y direct
 }}
         """
 
-        response = client.models.generate_content(
-            model='gemini-flash-latest',
-            contents=[prompt]
-        )
+        response = safe_generate_content(client, [prompt])
         cleaned = clean_json_response(response.text)
         return json.loads(cleaned)
     except Exception as e:
@@ -427,10 +440,7 @@ Devuelve un JSON estricto con 5 preguntas clave de entrevista (conductuales, té
 }}
         """
 
-        response = client.models.generate_content(
-            model='gemini-flash-latest',
-            contents=[prompt]
-        )
+        response = safe_generate_content(client, [prompt])
         cleaned = clean_json_response(response.text)
         return json.loads(cleaned)
     except Exception as e:
@@ -473,10 +483,7 @@ Devuelve un JSON estricto:
 }}
         """
 
-        response = client.models.generate_content(
-            model='gemini-flash-latest',
-            contents=[prompt]
-        )
+        response = safe_generate_content(client, [prompt])
         cleaned = clean_json_response(response.text)
         return json.loads(cleaned)
     except Exception as e:
@@ -509,10 +516,7 @@ Devuelve un JSON estricto:
 }}
         """
 
-        response = client.models.generate_content(
-            model='gemini-flash-latest',
-            contents=[prompt]
-        )
+        response = safe_generate_content(client, [prompt])
         cleaned = clean_json_response(response.text)
         return json.loads(cleaned)
     except Exception as e:
@@ -549,10 +553,7 @@ Devuelve un JSON estricto con 3 certificaciones reconocidas mundialmente:
 }}
         """
 
-        response = client.models.generate_content(
-            model='gemini-flash-latest',
-            contents=[prompt]
-        )
+        response = safe_generate_content(client, [prompt])
         cleaned = clean_json_response(response.text)
         return json.loads(cleaned)
     except Exception as e:
@@ -595,10 +596,7 @@ Devuelve un JSON estricto:
 }}
         """
 
-        response = client.models.generate_content(
-            model='gemini-flash-latest',
-            contents=[prompt]
-        )
+        response = safe_generate_content(client, [prompt])
         cleaned = clean_json_response(response.text)
         return json.loads(cleaned)
     except Exception as e:
@@ -628,10 +626,7 @@ Devuelve un JSON estricto:
 }}
         """
 
-        response = client.models.generate_content(
-            model='gemini-flash-latest',
-            contents=[prompt]
-        )
+        response = safe_generate_content(client, [prompt])
         cleaned = clean_json_response(response.text)
         return json.loads(cleaned)
     except Exception as e:
