@@ -20,6 +20,11 @@ export default function HarvardTemplate({ data }) {
     <div className="ats-template harvard-template">
       {/* HEADER */}
       <header className="harvard-header">
+        {personal_info.photo && (
+          <div className="template-photo-wrapper">
+            <img src={personal_info.photo} alt={personal_info.name} className="template-photo" />
+          </div>
+        )}
         <h1 className="harvard-name">{personal_info.name || 'NOMBRE COMPLETO'}</h1>
         <div className="harvard-contact">
           {personal_info.location && <span>{personal_info.location}</span>}

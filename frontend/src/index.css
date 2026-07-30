@@ -917,6 +917,35 @@ body {
   break-inside: avoid;
 }
 
+/* DYNAMIC TEMPLATE PHOTO STYLES */
+.template-photo-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.template-photo {
+  width: 75px;
+  height: 75px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #2563eb;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.modern-header, .europass-header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.modern-header .template-photo-wrapper,
+.europass-header .template-photo-wrapper {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
 /* ATS TEMPLATE 1: HARVARD CLASSIC */
 .harvard-template {
   font-family: 'Merriweather', 'Times New Roman', Georgia, serif;

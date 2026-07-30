@@ -8,29 +8,19 @@ import { Download, Layout, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
 import html2pdf from 'html2pdf.js'
 
 export default function ResumePreview({ data }) {
-  const [template, setTemplate] = useState('harvard') // 'harvard' | 'modern' | 'europass' | 'executive-photo' | 'modern-photo'
+  const [template, setTemplate] = useState('harvard') // 'harvard' | 'modern' | 'europass' | 'executive-photo'
   const [isExporting, setIsExporting] = useState(false)
   const [zoomScale, setZoomScale] = useState(1)
   const [autoFit, setAutoFit] = useState(true)
   const [sheetHeight, setSheetHeight] = useState(1056)
   const resumeRef = useRef(null)
 
-  // Auto-switch to a photo template when a photo is added/uploaded
-  useEffect(() => {
-    if (data?.personal_info?.photo) {
-      if (template === 'harvard' || template === 'modern' || template === 'europass') {
-        setTemplate('executive-photo')
-      }
-    }
-  }, [data?.personal_info?.photo])
-
   // Automatically fit the exact 816px Letter paper sheet to the mobile screen width
   useEffect(() => {
     const handleResize = () => {
       if (autoFit && window.innerWidth <= 850) {
         const availableWidth = Math.min(window.innerWidth - 24, 800)
-        const calculatedScale = availableWidth / 816
-        setZoomScale(calculatedScale > 0.15 ? calculatedScale : 0.4)
+        setZoomScale(availableWidth / 816)
       } else if (autoFit) {
         setZoomScale(1)
       }
@@ -89,8 +79,7 @@ export default function ResumePreview({ data }) {
             <option value="harvard">🇺🇸 🇨🇦 EE.UU. & Canadá (Harvard)</option>
             <option value="modern">🌎 América Latina (Modern)</option>
             <option value="europass">🇪🇺 Unión Europea (Europass ATS)</option>
-            <option value="executive-photo">💼 Internacional (Ejecutivo 🖼️)</option>
-            <option value="modern-photo">🖼️ Moderno con Foto</option>
+            <option value="executive-photo">💼 Ejecutivo Internacional</option>
           </select>
         </div>
 

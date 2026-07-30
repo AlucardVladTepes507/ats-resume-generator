@@ -19,12 +19,19 @@ export default function ModernTemplate({ data }) {
     <div className="ats-template modern-template">
       {/* HEADER */}
       <header className="modern-header">
-        <h1 className="modern-name">{personal_info.name || 'NOMBRE COMPLETO'}</h1>
-        <div className="modern-contact">
-          {personal_info.location && <span>📍 {personal_info.location}</span>}
-          {personal_info.phone && <span>📞 {personal_info.phone}</span>}
-          {personal_info.email && <span>✉️ {personal_info.email}</span>}
-          {personal_info.linkedin && <span>🔗 {personal_info.linkedin}</span>}
+        {personal_info.photo && (
+          <div className="template-photo-wrapper">
+            <img src={personal_info.photo} alt={personal_info.name} className="template-photo" />
+          </div>
+        )}
+        <div>
+          <h1 className="modern-name">{personal_info.name || 'NOMBRE COMPLETO'}</h1>
+          <div className="modern-contact">
+            {personal_info.location && <span>📍 {personal_info.location}</span>}
+            {personal_info.phone && <span>📞 {personal_info.phone}</span>}
+            {personal_info.email && <span>✉️ {personal_info.email}</span>}
+            {personal_info.linkedin && <span>🔗 {personal_info.linkedin}</span>}
+          </div>
         </div>
       </header>
 
