@@ -213,8 +213,16 @@ function App() {
       {!resumeData ? (
         <div className="upload-section">
           <div className="landing-header">
-            <h2>¿Cómo deseas empezar tu CV ATS?</h2>
-            <p>Selecciona una opción para comenzar a crear o personalizar tu currículum</p>
+            <div className="hero-badge">
+              <Sparkles size={14} />
+              <span>Inteligencia Artificial & Estándar ATS 2026</span>
+            </div>
+            <h2 className="landing-hero-title">
+              Crea u Optimiza tu Currículum para <span className="text-gradient">Pasar los Filtros ATS</span>
+            </h2>
+            <p className="landing-hero-subtitle">
+              Formatos profesionales validados para Estados Unidos, Canadá y América Latina.
+            </p>
           </div>
 
           <div className="landing-cards-grid">
@@ -234,6 +242,10 @@ function App() {
                 style={{ display: 'none' }}
               />
 
+              <div className="card-top-tag tag-blue">
+                <span>⚡ Escáner Visión IA</span>
+              </div>
+
               {isLoading ? (
                 <div className="upload-loading">
                   <div className="loading-spinner"></div>
@@ -242,18 +254,17 @@ function App() {
                 </div>
               ) : (
                 <>
-                  <div className="upload-icon-group">
-                    <UploadCloud className="upload-icon" />
-                    <ImageIcon className="upload-icon secondary" />
+                  <div className="upload-icon-group icon-group-blue">
+                    <UploadCloud className="upload-icon" size={32} />
                   </div>
                   <h3 className="landing-card-title">Tengo un CV o Foto</h3>
                   <p className="upload-text">Sube tu PDF o Foto</p>
                   <p className="upload-hint">
-                    Acepta PDFs de LinkedIn, currículums impresos o <strong>fotos de CVs escritos a mano</strong> (JPG, PNG, WEBP).
+                    Sube tu PDF de LinkedIn, currículum impreso o <strong>foto de CV manuscrito</strong> (JPG, PNG, WEBP).
                   </p>
                   <div className="upload-actions-mobile">
                     <button type="button" className="btn-primary">
-                      <UploadCloud size={16} />
+                      <UploadCloud size={18} />
                       <span>Seleccionar o tomar foto</span>
                     </button>
                   </div>
@@ -266,19 +277,22 @@ function App() {
               className="upload-container landing-card scratch-card"
               onClick={handleCreateFromScratch}
             >
-              <div className="upload-icon-group">
-                <FilePlus className="upload-icon scratch-icon" />
-                <Sparkles className="upload-icon secondary" />
+              <div className="card-top-tag tag-emerald">
+                <span>✨ Plantilla Limpia ATS</span>
+              </div>
+
+              <div className="upload-icon-group icon-group-emerald">
+                <FilePlus className="upload-icon scratch-icon" size={32} />
               </div>
               <h3 className="landing-card-title">Crear CV desde Cero</h3>
-              <p className="upload-text">Plantilla en Blanco ATS</p>
+              <p className="upload-text">Empezar en Blanco</p>
               <p className="upload-hint">
-                Si no tienes CV previo, completa tus datos paso a paso en un formato optimizado ATS con ayuda de IA.
+                Si no tienes un CV previo, completa tus datos paso a paso en un formato optimizado con asistentes de IA.
               </p>
               <div className="upload-actions-mobile">
                 <button type="button" className="btn-primary btn-scratch-action">
-                  <FilePlus size={16} />
-                  <span>Crear desde cero</span>
+                  <Sparkles size={18} />
+                  <span>Empezar desde cero</span>
                 </button>
               </div>
             </div>
