@@ -19,9 +19,6 @@ export default function EuropassTemplate({ data }) {
     <div className="ats-template europass-template">
       {/* EUROPASS HEADER BAR */}
       <header className="europass-header">
-        <div className="europass-flag-badge">
-          <span>europass</span>
-        </div>
         <h1 className="europass-name">{personal_info.name || 'NOMBRE COMPLETO'}</h1>
         <div className="europass-contact">
           {personal_info.location && <span>📍 {personal_info.location}</span>}

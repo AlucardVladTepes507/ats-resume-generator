@@ -2893,10 +2893,10 @@ body {
   padding-left: 1.2rem;
   font-size: 0.83rem;
   color: #374151;
+}
 
-  li {
-    margin-bottom: 0.2rem;
-  }
+.europass-bullets li {
+  margin-bottom: 0.2rem;
 }
 
 .europass-skills-grid {

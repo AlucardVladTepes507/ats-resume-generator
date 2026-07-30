@@ -70,7 +70,7 @@ export default function ResumePreview({ data }) {
       jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
       pagebreak: {
         mode: ['css', 'legacy'],
-        avoid: ['.exec-exp-item', '.exec-edu-item', '.exec-skill-badge', '.exec-section', '.modern-exp-item', '.modern-section', '.harvard-item', '.harvard-section', '.bullet-row']
+        avoid: ['.exec-exp-item', '.exec-edu-item', '.exec-skill-badge', '.exec-section', '.modern-exp-item', '.modern-section', '.harvard-item', '.harvard-section', '.europass-item', '.europass-section', '.bullet-row']
       }
     }
 
