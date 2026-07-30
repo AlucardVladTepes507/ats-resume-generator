@@ -3,11 +3,12 @@ import HarvardTemplate from './templates/HarvardTemplate'
 import ModernTemplate from './templates/ModernTemplate'
 import ExecutivePhotoTemplate from './templates/ExecutivePhotoTemplate'
 import ModernPhotoTemplate from './templates/ModernPhotoTemplate'
+import EuropassTemplate from './templates/EuropassTemplate'
 import { Download, Layout, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
 import html2pdf from 'html2pdf.js'
 
 export default function ResumePreview({ data }) {
-  const [template, setTemplate] = useState('harvard') // 'harvard' | 'modern' | 'executive-photo' | 'modern-photo'
+  const [template, setTemplate] = useState('harvard') // 'harvard' | 'modern' | 'europass' | 'executive-photo' | 'modern-photo'
   const [isExporting, setIsExporting] = useState(false)
   const [zoomScale, setZoomScale] = useState(1)
   const [autoFit, setAutoFit] = useState(true)
@@ -17,7 +18,7 @@ export default function ResumePreview({ data }) {
   // Auto-switch to a photo template when a photo is added/uploaded
   useEffect(() => {
     if (data?.personal_info?.photo) {
-      if (template === 'harvard' || template === 'modern') {
+      if (template === 'harvard' || template === 'modern' || template === 'europass') {
         setTemplate('executive-photo')
       }
     }
@@ -97,6 +98,7 @@ export default function ResumePreview({ data }) {
           >
             <option value="harvard">🇺🇸 🇨🇦 EE.UU. & Canadá (Harvard)</option>
             <option value="modern">🌎 América Latina (Modern)</option>
+            <option value="europass">🇪🇺 Unión Europea (Europass ATS)</option>
             <option value="executive-photo">💼 Internacional (Ejecutivo 🖼️)</option>
             <option value="modern-photo">🇪🇺 Europa (Modern 🖼️)</option>
           </select>
@@ -170,6 +172,7 @@ export default function ResumePreview({ data }) {
           >
             {template === 'harvard' && <HarvardTemplate data={data} />}
             {template === 'modern' && <ModernTemplate data={data} />}
+            {template === 'europass' && <EuropassTemplate data={data} />}
             {template === 'executive-photo' && <ExecutivePhotoTemplate data={data} />}
             {template === 'modern-photo' && <ModernPhotoTemplate data={data} />}
           </div>

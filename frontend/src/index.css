@@ -912,7 +912,7 @@ body {
   }
 }
 
-.harvard-item, .modern-item, .harvard-section, .modern-section {
+.harvard-item, .modern-item, .europass-item, .harvard-section, .modern-section, .europass-section {
   page-break-inside: avoid;
   break-inside: avoid;
 }
@@ -2790,6 +2790,129 @@ body {
     right: 0;
     width: 100%;
   }
+}
+/* ATS TEMPLATE 5: EUROPASS (EUROPEAN UNION STANDARD) */
+.europass-template {
+  font-family: 'Arial', 'Helvetica', sans-serif;
+  color: #1a1a1a;
+  line-height: 1.45;
+}
+
+.europass-header {
+  border-bottom: 2px solid #003399;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.2rem;
+  position: relative;
+}
+
+.europass-flag-badge {
+  display: inline-block;
+  background: #003399;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.6rem;
+  border-radius: 3px;
+  text-transform: lowercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
+}
+
+.europass-name {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #003399;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.35rem;
+}
+
+.europass-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  font-size: 0.82rem;
+  color: #4b5563;
+}
+
+.europass-section {
+  margin-bottom: 1.1rem;
+}
+
+.europass-section-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #003399;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-left: 0.5rem;
+  border-left: 3px solid #003399;
+  margin-bottom: 0.6rem;
+}
+
+.europass-summary {
+  font-size: 0.85rem;
+  color: #374151;
+  text-align: justify;
+}
+
+.europass-item {
+  margin-bottom: 0.75rem;
+}
+
+.europass-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.25rem;
+}
+
+.europass-position, .europass-degree {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.europass-company, .europass-institution {
+  font-size: 0.83rem;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.europass-date-badge {
+  font-size: 0.78rem;
+  color: #003399;
+  font-weight: 600;
+  background-color: #eff6ff;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.europass-bullets {
+  margin-top: 0.3rem;
+  padding-left: 1.2rem;
+  font-size: 0.83rem;
+  color: #374151;
+
+  li {
+    margin-bottom: 0.2rem;
+  }
+}
+
+.europass-skills-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.europass-skill-pill {
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  color: #1f2937;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
 }
 
 
