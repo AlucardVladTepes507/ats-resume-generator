@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle, Share2, DollarSign, Award, SpellCheck, Tag, ChevronDown, FilePlus } from 'lucide-react'
+import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle, Share2, DollarSign, Award, SpellCheck, Tag, ChevronDown, FilePlus, Sun, Moon, SunMoon } from 'lucide-react'
 import ResumeEditor from './components/ResumeEditor'
 import ResumePreview from './components/ResumePreview'
 import AtsMatchAnalyzer from './components/AtsMatchAnalyzer'
@@ -23,6 +23,49 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+
+  // Theme mode: 'auto' | 'dark' | 'light'
+  const [themeMode, setThemeMode] = useState(() => {
+    try {
+      return localStorage.getItem('ats_resume_theme_mode') || 'auto'
+    } catch (e) {
+      return 'auto'
+    }
+  })
+
+  // Theme calculation & application effect (auto adjusts depending on local time / system pref)
+  useEffect(() => {
+    const applyTheme = () => {
+      let resolvedTheme = 'dark'
+
+      if (themeMode === 'auto') {
+        const hour = new Date().getHours()
+        // Dark mode from 7 PM (19:00) to 7 AM (07:00), Light mode from 7 AM to 7 PM
+        const isNight = hour >= 19 || hour < 7
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        resolvedTheme = isNight || prefersDark ? 'dark' : 'light'
+      } else {
+        resolvedTheme = themeMode
+      }
+
+      document.documentElement.setAttribute('data-theme', resolvedTheme)
+      try {
+        localStorage.setItem('ats_resume_theme_mode', themeMode)
+      } catch (e) {}
+    }
+
+    applyTheme()
+    const interval = setInterval(applyTheme, 60000 * 15) // Re-evaluate every 15 mins if auto
+    return () => clearInterval(interval)
+  }, [themeMode])
+
+  const toggleTheme = () => {
+    setThemeMode(prev => {
+      if (prev === 'auto') return 'dark'
+      if (prev === 'dark') return 'light'
+      return 'auto'
+    })
+  }
 
   // Initialize from localStorage so refreshing (F5) doesn't lose the active CV
   const [resumeData, setResumeData] = useState(() => {
@@ -180,6 +223,27 @@ function App() {
         </div>
 
         <div className="header-actions">
+          {/* Theme Mode Toggle Button */}
+          <button
+            type="button"
+            className="btn-secondary theme-toggle-btn"
+            onClick={toggleTheme}
+            title={
+              themeMode === 'auto'
+                ? 'Modo Automático (Ajusta Tema por Hora del Día). Clic para cambiar.'
+                : themeMode === 'dark'
+                ? 'Modo Oscuro Activo. Clic para cambiar a Modo Claro.'
+                : 'Modo Claro Activo. Clic para cambiar a Modo Automático.'
+            }
+          >
+            {themeMode === 'auto' && <SunMoon size={17} />}
+            {themeMode === 'dark' && <Moon size={17} />}
+            {themeMode === 'light' && <Sun size={17} />}
+            <span>
+              {themeMode === 'auto' ? 'Auto (Hora)' : themeMode === 'dark' ? 'Oscuro' : 'Claro'}
+            </span>
+          </button>
+
           <button
             className="btn-secondary"
             onClick={() => setIsFeedbackOpen(true)}
