@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle, Share2, DollarSign, Award, SpellCheck, Tag, ChevronDown, FilePlus, Sun, Moon, SunMoon } from 'lucide-react'
+import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle, Share2, DollarSign, Award, SpellCheck, Tag, ChevronDown, FilePlus, Sun, Moon, SunMoon, Globe } from 'lucide-react'
 import ResumeEditor from './components/ResumeEditor'
 import ResumePreview from './components/ResumePreview'
 import AtsMatchAnalyzer from './components/AtsMatchAnalyzer'
@@ -13,6 +13,7 @@ import GrammarChecker from './components/GrammarChecker'
 import IndustryKeywords from './components/IndustryKeywords'
 import FeedbackModal from './components/FeedbackModal'
 import ContactModal from './components/ContactModal'
+import { translations, detectBrowserLanguage } from './i18n'
 import './index.css'
 
 import { getApiUrl } from './config'
@@ -23,6 +24,17 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+
+  // Language state (auto detected from browser, manually changeable)
+  const [currentLang, setCurrentLang] = useState(detectBrowserLanguage)
+  const t = translations[currentLang] || translations.es
+
+  const handleLangChange = (lang) => {
+    setCurrentLang(lang)
+    try {
+      localStorage.setItem('ats_resume_ui_lang', lang)
+    } catch (e) {}
+  }
 
   // Theme mode: 'auto' | 'dark' | 'light'
   const [themeMode, setThemeMode] = useState(() => {
@@ -223,6 +235,23 @@ function App() {
         </div>
 
         <div className="header-actions">
+          {/* Language Selector Dropdown */}
+          <div className="lang-selector-wrapper">
+            <Globe size={16} className="lang-icon" />
+            <select
+              className="lang-dropdown"
+              value={currentLang}
+              onChange={(e) => handleLangChange(e.target.value)}
+              title="Cambiar idioma / Change language"
+            >
+              <option value="es">🇪🇸 Español</option>
+              <option value="en">🇺🇸 English</option>
+              <option value="pt">🇵🇹 Português</option>
+              <option value="fr">🇫🇷 Français</option>
+              <option value="de">🇩🇪 Deutsch</option>
+            </select>
+          </div>
+
           {/* Theme Mode Toggle Button */}
           <button
             type="button"
@@ -230,17 +259,17 @@ function App() {
             onClick={toggleTheme}
             title={
               themeMode === 'auto'
-                ? 'Modo Automático (Ajusta Tema por Hora del Día). Clic para cambiar.'
+                ? 'Modo Automático'
                 : themeMode === 'dark'
-                ? 'Modo Oscuro Activo. Clic para cambiar a Modo Claro.'
-                : 'Modo Claro Activo. Clic para cambiar a Modo Automático.'
+                ? 'Modo Oscuro'
+                : 'Modo Claro'
             }
           >
             {themeMode === 'auto' && <SunMoon size={17} />}
             {themeMode === 'dark' && <Moon size={17} />}
             {themeMode === 'light' && <Sun size={17} />}
             <span>
-              {themeMode === 'auto' ? 'Auto (Hora)' : themeMode === 'dark' ? 'Oscuro' : 'Claro'}
+              {themeMode === 'auto' ? t.themeAuto : themeMode === 'dark' ? t.themeDark : t.themeLight}
             </span>
           </button>
 
@@ -250,7 +279,7 @@ function App() {
             title="Solicitar una plantilla para tu país o mercado"
           >
             <Lightbulb size={18} />
-            <span>Sugerir Plantilla</span>
+            <span>{t.suggestTemplate}</span>
           </button>
 
           <a
@@ -261,13 +290,13 @@ function App() {
             title="Invítame un café en Ko-fi"
           >
             <Coffee size={18} />
-            <span>Invítame un café</span>
+            <span>{t.buyCoffee}</span>
           </a>
 
           {resumeData && (
             <button className="btn-secondary header-reset-btn" onClick={handleResetCV}>
               <ArrowLeft size={16} />
-              <span>Subir o Crear otro CV</span>
+              <span>{t.uploadOrCreateOther}</span>
             </button>
           )}
         </div>
@@ -279,13 +308,13 @@ function App() {
           <div className="landing-header">
             <div className="hero-badge">
               <Sparkles size={14} />
-              <span>Inteligencia Artificial & Estándar ATS 2026</span>
+              <span>{t.heroBadge}</span>
             </div>
             <h2 className="landing-hero-title">
-              Crea u Optimiza tu Currículum para <span className="text-gradient">Pasar los Filtros ATS</span>
+              {t.heroTitlePrefix}<span className="text-gradient">{t.heroTitleHighlight}</span>
             </h2>
             <p className="landing-hero-subtitle">
-              Formatos profesionales validados para Estados Unidos, Canadá y América Latina.
+              {t.heroSubtitle}
             </p>
           </div>
 
@@ -307,29 +336,27 @@ function App() {
               />
 
               <div className="card-top-tag tag-blue">
-                <span>⚡ Escáner Visión IA</span>
+                <span>{t.card1Tag}</span>
               </div>
 
               {isLoading ? (
                 <div className="upload-loading">
                   <div className="loading-spinner"></div>
-                  <p className="upload-text">Escaneando y analizando con IA...</p>
-                  <p className="upload-hint">Transcribiendo texto, fotos de CVs o escritos a mano.</p>
+                  <p className="upload-text">{t.scanningIa}</p>
+                  <p className="upload-hint">{t.transcribingHint}</p>
                 </div>
               ) : (
                 <>
                   <div className="upload-icon-group icon-group-blue">
                     <UploadCloud className="upload-icon" size={32} />
                   </div>
-                  <h3 className="landing-card-title">Tengo un CV o Foto</h3>
-                  <p className="upload-text">Sube tu PDF o Foto</p>
-                  <p className="upload-hint">
-                    Sube tu PDF de LinkedIn, currículum impreso o <strong>foto de CV manuscrito</strong> (JPG, PNG, WEBP).
-                  </p>
+                  <h3 className="landing-card-title">{t.card1Title}</h3>
+                  <p className="upload-text">{t.card1Text}</p>
+                  <p className="upload-hint">{t.card1Hint}</p>
                   <div className="upload-actions-mobile">
                     <button type="button" className="btn-primary">
                       <UploadCloud size={18} />
-                      <span>Seleccionar o tomar foto</span>
+                      <span>{t.card1Btn}</span>
                     </button>
                   </div>
                 </>
@@ -342,21 +369,19 @@ function App() {
               onClick={handleCreateFromScratch}
             >
               <div className="card-top-tag tag-emerald">
-                <span>✨ Plantilla Limpia ATS</span>
+                <span>{t.card2Tag}</span>
               </div>
 
               <div className="upload-icon-group icon-group-emerald">
                 <FilePlus className="upload-icon scratch-icon" size={32} />
               </div>
-              <h3 className="landing-card-title">Crear CV desde Cero</h3>
-              <p className="upload-text">Empezar en Blanco</p>
-              <p className="upload-hint">
-                Si no tienes un CV previo, completa tus datos paso a paso en un formato optimizado con asistentes de IA.
-              </p>
+              <h3 className="landing-card-title">{t.card2Title}</h3>
+              <p className="upload-text">{t.card2Text}</p>
+              <p className="upload-hint">{t.card2Hint}</p>
               <div className="upload-actions-mobile">
                 <button type="button" className="btn-primary btn-scratch-action">
                   <Sparkles size={18} />
-                  <span>Empezar desde cero</span>
+                  <span>{t.card2Btn}</span>
                 </button>
               </div>
             </div>
@@ -378,7 +403,7 @@ function App() {
               onClick={() => { setViewMode('editor'); setIsDropdownOpen(false); }}
             >
               <Edit3 size={18} />
-              <span>1. Editar & Vista Previa ATS</span>
+              <span>{t.navMode1}</span>
             </button>
 
             <button
@@ -386,7 +411,7 @@ function App() {
               onClick={() => { setViewMode('analyzer'); setIsDropdownOpen(false); }}
             >
               <Target size={18} />
-              <span>2. Analizar Vacante (ATS)</span>
+              <span>{t.navMode2}</span>
             </button>
 
             {/* AI Tools Dropdown Menu */}
@@ -514,14 +539,14 @@ function App() {
                 <div className={`workspace-editor ${mobileTab === 'editor' ? 'mobile-visible' : 'mobile-hidden'}`}>
                   <div className="workspace-title">
                     <FileCheck size={20} />
-                    <h2>Editar Datos del CV</h2>
+                    <h2>{t.editDataTitle}</h2>
                   </div>
-                  <ResumeEditor data={resumeData} onChange={setResumeData} />
+                  <ResumeEditor data={resumeData} onChange={setResumeData} t={t} />
                 </div>
 
                 {/* Right Column: Live ATS Preview */}
                 <div className={`workspace-preview ${mobileTab === 'preview' ? 'mobile-visible' : 'mobile-hidden'}`}>
-                  <ResumePreview data={resumeData} />
+                  <ResumePreview data={resumeData} t={t} />
                 </div>
               </div>
             </>

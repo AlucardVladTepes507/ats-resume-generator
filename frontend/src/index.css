@@ -223,6 +223,45 @@ body {
   }
 }
 
+/* LANGUAGE SELECTOR DROPDOWN */
+.lang-selector-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  transition: all 0.2s ease;
+}
+
+.lang-selector-wrapper:hover {
+  border-color: var(--accent-primary);
+}
+
+.lang-icon {
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.lang-dropdown {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  padding-right: 0.2rem;
+}
+
+.lang-dropdown option {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
 /* Upload & Landing Section */
 .upload-section {
   max-width: 980px;

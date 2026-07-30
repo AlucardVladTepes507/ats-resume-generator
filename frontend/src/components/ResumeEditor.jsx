@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Plus, Trash2, User, Briefcase, GraduationCap, Wrench, Sparkles, Globe, Check, Loader2 } from 'lucide-react'
 import { getApiUrl } from '../config'
 
-export default function ResumeEditor({ data, onChange }) {
+export default function ResumeEditor({ data, onChange, t }) {
   const [activeTab, setActiveTab] = useState('personal')
   const [enhancingIndex, setEnhancingIndex] = useState(null) // `${expIdx}-${bIdx}`
   const [suggestions, setSuggestions] = useState([])
@@ -52,22 +52,31 @@ export default function ResumeEditor({ data, onChange }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bullet: bulletText,
-          position: position || 'Profesional'
+          position: position || ''
         })
       })
 
       const result = await response.json()
-      if (!response.ok) throw new Error(result.detail)
-      setSuggestions(result.suggestions || [])
+      if (!response.ok) {
+        throw new Error(result.detail || 'Error generando viñetas mejoradas')
+      }
+
+      if (result.suggestions && Array.isArray(result.suggestions)) {
+        setSuggestions(result.suggestions)
+      }
     } catch (err) {
-      alert(`Error al mejorar la viñeta: ${err.message}`)
+      alert(err.message)
+    } finally {
       setEnhancingIndex(null)
     }
   }
 
-  const applySuggestion = (expIdx, bIdx, newText) => {
-    handleBulletChange(expIdx, bIdx, newText)
-    setEnhancingIndex(null)
+  const handleApplySuggestion = (expIdx, bIdx, newText) => {
+    const newExp = [...(data.experience || [])]
+    if (newExp[expIdx] && newExp[expIdx].bullets) {
+      newExp[expIdx].bullets[bIdx] = newText
+      onChange({ ...data, experience: newExp })
+    }
     setSuggestions([])
   }
 
@@ -76,7 +85,7 @@ export default function ResumeEditor({ data, onChange }) {
     onChange({
       ...data,
       personal_info: {
-        ...data.personal_info,
+        ...(data.personal_info || {}),
         [field]: value
       }
     })
@@ -93,11 +102,12 @@ export default function ResumeEditor({ data, onChange }) {
     const newExp = [
       ...(data.experience || []),
       {
-        company: 'Nombre de Empresa',
-        position: 'Cargo / Puesto',
+        company: 'Empresa / Organización',
+        position: 'Cargo u Ocupación',
+        location: 'Ciudad, País',
         start_date: 'Mes Año',
         end_date: 'Presente',
-        description: ['Logro o responsabilidad clave 1']
+        bullets: ['Logro o responsabilidad principal']
       }
     ]
     onChange({ ...data, experience: newExp })
@@ -110,23 +120,23 @@ export default function ResumeEditor({ data, onChange }) {
 
   const handleBulletChange = (expIndex, bulletIndex, value) => {
     const newExp = [...(data.experience || [])]
-    const newDesc = [...(newExp[expIndex].description || [])]
-    newDesc[bulletIndex] = value
-    newExp[expIndex].description = newDesc
+    const bullets = [...(newExp[expIndex].bullets || [])]
+    bullets[bulletIndex] = value
+    newExp[expIndex] = { ...newExp[expIndex], bullets }
     onChange({ ...data, experience: newExp })
   }
 
   const handleAddBullet = (expIndex) => {
     const newExp = [...(data.experience || [])]
-    const newDesc = [...(newExp[expIndex].description || []), 'Nuevo logro o responsabilidad']
-    newExp[expIndex].description = newDesc
+    const bullets = [...(newExp[expIndex].bullets || []), '']
+    newExp[expIndex] = { ...newExp[expIndex], bullets }
     onChange({ ...data, experience: newExp })
   }
 
   const handleRemoveBullet = (expIndex, bulletIndex) => {
     const newExp = [...(data.experience || [])]
-    const newDesc = newExp[expIndex].description.filter((_, i) => i !== bulletIndex)
-    newExp[expIndex].description = newDesc
+    const bullets = newExp[expIndex].bullets.filter((_, i) => i !== bulletIndex)
+    newExp[expIndex] = { ...newExp[expIndex], bullets }
     onChange({ ...data, experience: newExp })
   }
 
@@ -177,31 +187,20 @@ export default function ResumeEditor({ data, onChange }) {
     reader.readAsDataURL(file)
   }
 
-
-
-  const [targetMarket, setTargetMarket] = useState('latam') // 'latam' | 'us-canada'
-
-  const handleMarketChange = (market) => {
-    setTargetMarket(market)
-    if (market === 'us-canada' && data.personal_info?.photo) {
-      alert('⚠️ Normativa Anti-Discriminación de EE.UU./Canadá: La foto se ha desactivado para este mercado.')
-    }
-  }
-
   return (
     <div className="editor-container">
       {/* Top Translation Toolbar */}
       <div className="editor-ai-toolbar">
         <div className="translate-group">
           <Globe size={16} />
-          <span>Traducir CV:</span>
+          <span>{t?.translateCvLabel || 'Traducir CV:'}</span>
           <button
             type="button"
             className="btn-secondary sm"
             onClick={() => handleTranslate('en')}
             disabled={isTranslating}
           >
-            🇺🇸 Inglés
+            🇺🇸 English
           </button>
           <button
             type="button"
@@ -210,6 +209,30 @@ export default function ResumeEditor({ data, onChange }) {
             disabled={isTranslating}
           >
             🇪🇸 Español
+          </button>
+          <button
+            type="button"
+            className="btn-secondary sm"
+            onClick={() => handleTranslate('pt')}
+            disabled={isTranslating}
+          >
+            🇵t Português
+          </button>
+          <button
+            type="button"
+            className="btn-secondary sm"
+            onClick={() => handleTranslate('fr')}
+            disabled={isTranslating}
+          >
+            🇫🇷 Français
+          </button>
+          <button
+            type="button"
+            className="btn-secondary sm"
+            onClick={() => handleTranslate('de')}
+            disabled={isTranslating}
+          >
+            🇩🇪 Deutsch
           </button>
           {isTranslating && <Loader2 size={16} className="spin-icon" />}
         </div>
@@ -222,15 +245,14 @@ export default function ResumeEditor({ data, onChange }) {
           onClick={() => setActiveTab('personal')}
         >
           <User size={15} />
-          <span>Personal</span>
+          <span>{t?.tabPersonal || 'Personal'}</span>
         </button>
         <button
           className={`tab-btn ${activeTab === 'experience' ? 'active' : ''}`}
           onClick={() => setActiveTab('experience')}
         >
           <Briefcase size={15} />
-          <span>Experiencia</span>
-          {data.experience?.length > 0 && <span className="tab-badge">{data.experience.length}</span>}
+          <span>{t?.tabExperience || 'Experiencia'}</span>
         </button>
         <button
           className={`tab-btn ${activeTab === 'education' ? 'active' : ''}`}

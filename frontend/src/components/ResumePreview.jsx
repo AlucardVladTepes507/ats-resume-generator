@@ -7,7 +7,7 @@ import EuropassTemplate from './templates/EuropassTemplate'
 import { Download, Layout, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
 import html2pdf from 'html2pdf.js'
 
-export default function ResumePreview({ data }) {
+export default function ResumePreview({ data, t }) {
   const [template, setTemplate] = useState('harvard') // 'harvard' | 'modern' | 'europass' | 'executive-photo'
   const [isExporting, setIsExporting] = useState(false)
   const [zoomScale, setZoomScale] = useState(1)
@@ -31,13 +31,11 @@ export default function ResumePreview({ data }) {
     return () => window.removeEventListener('resize', handleResize)
   }, [autoFit])
 
-  // Measure actual rendered DOM height of the sheet whenever data or template changes
+  // Dynamic sheet height calculation
   useEffect(() => {
     if (resumeRef.current) {
       const actualHeight = resumeRef.current.scrollHeight
-      if (actualHeight > 0) {
-        setSheetHeight(actualHeight)
-      }
+      setSheetHeight(Math.max(actualHeight, 1056))
     }
   }, [data, template, zoomScale])
 
@@ -76,10 +74,10 @@ export default function ResumePreview({ data }) {
             value={template}
             onChange={(e) => setTemplate(e.target.value)}
           >
-            <option value="harvard">🇺🇸 🇨🇦 EE.UU. & Canadá (Harvard)</option>
-            <option value="modern">🌎 América Latina (Modern)</option>
-            <option value="europass">🇪🇺 Unión Europea (Europass ATS)</option>
-            <option value="executive-photo">💼 Ejecutivo Internacional</option>
+            <option value="harvard">{t?.templateHarvard || '🇺🇸 🇨🇦 EE.UU. & Canadá (Harvard)'}</option>
+            <option value="modern">{t?.templateModern || '🌎 América Latina (Modern)'}</option>
+            <option value="europass">{t?.templateEuropass || '🇪🇺 Unión Europea (Europass ATS)'}</option>
+            <option value="executive-photo">{t?.templateExecutive || '💼 Ejecutivo Internacional'}</option>
           </select>
         </div>
 
@@ -91,7 +89,7 @@ export default function ResumePreview({ data }) {
             title="Ajustar hoja completa a la pantalla"
           >
             <Maximize2 size={14} />
-            <span>Ajustar Hoja</span>
+            <span>{t?.fitPage || 'Ajustar Hoja'}</span>
           </button>
           <button
             type="button"
@@ -113,9 +111,13 @@ export default function ResumePreview({ data }) {
         </div>
 
         <div className="export-actions">
-          <button className="btn-primary" onClick={handleDownloadPDF} disabled={isExporting}>
-            <Download size={16} />
-            <span>{isExporting ? 'Generando PDF...' : 'Descargar PDF ATS'}</span>
+          <button
+            className="btn-primary btn-export"
+            onClick={handleDownloadPDF}
+            disabled={isExporting}
+          >
+            <Download size={18} />
+            <span>{isExporting ? (t?.generatingPdf || 'Generando PDF...') : (t?.downloadPdf || 'Descargar PDF ATS')}</span>
           </button>
         </div>
       </div>
