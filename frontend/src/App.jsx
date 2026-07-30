@@ -170,7 +170,9 @@ function App() {
       {/* Top Navbar */}
       <header className="header">
         <div className="header-brand">
-          <FileText className="brand-icon" size={28} />
+          <div className="brand-icon-wrapper">
+            <FileText className="brand-icon" size={26} />
+          </div>
           <div>
             <h1>ATS Resume Generator</h1>
             <p>Convierte tu CV en PDF/foto o créalo desde cero en un formato 100% ATS.</p>

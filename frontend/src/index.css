@@ -1,16 +1,25 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap');
 
 :root {
-  --bg-primary: #0b1120;
-  --bg-secondary: #1e293b;
-  --bg-card: #151e2e;
+  --bg-primary: #090d16;
+  --bg-secondary: #131a2b;
+  --bg-card: #182238;
+  --bg-card-hover: #1e2b47;
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
-  --accent-primary: #3b82f6;
-  --accent-hover: #2563eb;
-  --border-color: #334155;
+  --text-muted: #64748b;
+  --accent-primary: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-glow: rgba(37, 99, 235, 0.25);
+  --accent-emerald: #10b981;
+  --border-color: #232f48;
+  --border-light: rgba(255, 255, 255, 0.08);
   --success-color: #10b981;
   --danger-color: #ef4444;
+  --radius-lg: 0.85rem;
+  --radius-md: 0.5rem;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 10px 30px -5px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 * {
@@ -20,11 +29,12 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
 .app-container {
@@ -41,51 +51,67 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 0;
+  padding: 1.1rem 0;
   border-bottom: 1px solid var(--border-color);
 }
 
 .header-brand {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.1rem;
+}
+
+.brand-icon-wrapper {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(99, 102, 241, 0.1));
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  padding: 0.6rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
 .brand-icon {
-  color: var(--accent-primary);
+  color: #3b82f6;
 }
 
 .header h1 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  background: linear-gradient(to right, #60a5fa, #a78bfa);
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 60%, #93c5fd 100%);
   -webkit-background-clip: text;
   color: transparent;
 }
 
 .header p {
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
+  font-weight: 400;
 }
 
 /* Buttons */
 .btn-primary {
-  background-color: var(--accent-primary);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: white;
   border: none;
-  padding: 0.6rem 1.25rem;
-  border-radius: 0.5rem;
+  padding: 0.65rem 1.35rem;
+  border-radius: 0.6rem;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
 }
 
 .btn-primary:hover {
-  background-color: var(--accent-hover);
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
 }
 
 .header-actions {
@@ -99,9 +125,9 @@ body {
   color: #ffffff;
   border: none;
   padding: 0.6rem 1.25rem;
-  border-radius: 0.5rem;
+  border-radius: 0.6rem;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -113,7 +139,7 @@ body {
 }
 
 .btn-kofi:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(255, 94, 91, 0.5);
   color: #ffffff;
 }
@@ -149,7 +175,7 @@ body {
   color: var(--text-primary);
   border: 1px solid var(--border-color);
   padding: 0.6rem 1.25rem;
-  border-radius: 0.5rem;
+  border-radius: 0.6rem;
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
@@ -160,7 +186,8 @@ body {
 }
 
 .btn-secondary:hover {
-  background-color: var(--border-color);
+  background-color: var(--bg-card);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .btn-icon {
@@ -170,13 +197,12 @@ body {
   color: var(--text-secondary);
   padding: 0.25rem;
   border-radius: 0.25rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  transition: all 0.2s;
+}
 
-  &.danger:hover {
-    color: var(--danger-color);
-  }
+.btn-icon:hover {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .btn-text {
@@ -193,67 +219,93 @@ body {
   }
 }
 
-/* Upload Section */
+/* Upload & Landing Section */
 .upload-section {
-  max-width: 920px;
-  margin: 2rem auto;
+  max-width: 960px;
+  margin: 2.5rem auto;
   width: 100%;
 }
 
 .landing-header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 2.25rem;
 }
 
 .landing-header h2 {
-  font-size: 1.6rem;
-  font-weight: 700;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   color: var(--text-primary);
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.4rem;
 }
 
 .landing-header p {
   color: var(--text-secondary);
-  font-size: 0.95rem;
+  font-size: 0.98rem;
 }
 
 .landing-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.75rem;
   width: 100%;
 }
 
 .upload-container {
-  background-color: var(--bg-secondary);
-  border: 2px dashed var(--border-color);
-  border-radius: 1rem;
-  padding: 2.5rem 1.75rem;
+  background: linear-gradient(180deg, #131a2b 0%, #0f1624 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 1.25rem;
+  padding: 2.75rem 2rem;
   text-align: center;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.upload-container:hover::before {
+  opacity: 1;
 }
 
 .upload-container:hover, .upload-container.drag-active {
-  border-color: var(--accent-primary);
-  background-color: rgba(59, 130, 246, 0.05);
-  transform: translateY(-2px);
+  border-color: #3b82f6;
+  background: linear-gradient(180deg, #182238 0%, #121b2d 100%);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5), 0 0 20px var(--accent-glow);
+}
+
+.scratch-card::before {
+  background: linear-gradient(90deg, transparent, #10b981, transparent);
 }
 
 .scratch-card:hover {
   border-color: #10b981;
-  background-color: rgba(16, 185, 129, 0.05);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(16, 185, 129, 0.2);
 }
 
 .landing-card-title {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--text-primary);
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.35rem;
 }
 
 .scratch-icon {
@@ -262,10 +314,12 @@ body {
 
 .btn-scratch-action {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3) !important;
 }
 
 .btn-scratch-action:hover {
   background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45) !important;
 }
 
 .upload-icon {
