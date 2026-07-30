@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle, Share2, DollarSign, Award, SpellCheck, Tag, ChevronDown } from 'lucide-react'
+import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle, Share2, DollarSign, Award, SpellCheck, Tag, ChevronDown, FilePlus } from 'lucide-react'
 import ResumeEditor from './components/ResumeEditor'
 import ResumePreview from './components/ResumePreview'
 import AtsMatchAnalyzer from './components/AtsMatchAnalyzer'
@@ -65,6 +65,49 @@ function App() {
     setFile(null)
   }
 
+  const handleCreateFromScratch = () => {
+    const blankResume = {
+      personal_info: {
+        name: 'TU NOMBRE COMPLETO',
+        email: 'tu.email@ejemplo.com',
+        phone: '+507 6000-0000',
+        location: 'Ciudad, País',
+        linkedin: 'linkedin.com/in/tu-perfil',
+        summary: 'Profesional enfocado en la consecución de resultados con experiencia en organización, gestión y trabajo en equipo. Hábil en la resolución de problemas y cumplimiento de metas.'
+      },
+      experience: [
+        {
+          company: 'Empresa Ejemplo S.A.',
+          position: 'Cargo o Puesto Ocupado',
+          start_date: '2022',
+          end_date: 'Presente',
+          bullets: [
+            'Lideré y coordiné actividades operativas clave para la organización.',
+            'Implementé mejoras en procesos incrementando la productividad del departamento.'
+          ]
+        }
+      ],
+      education: [
+        {
+          institution: 'Universidad o Centro Educativo',
+          degree: 'Título o Licenciatura Obtenida',
+          year: '2021'
+        }
+      ],
+      skills: [
+        'Trabajo en Equipo',
+        'Gestión del Tiempo',
+        'Resolución de Problemas',
+        'Comunicación Asertiva'
+      ]
+    }
+
+    setResumeData(blankResume)
+    setIsImageUpload(false)
+    setViewMode('editor')
+    setMobileTab('editor')
+  }
+
   const handleDragOver = (e) => {
     e.preventDefault()
     setIsDragging(true)
@@ -90,23 +133,10 @@ function App() {
   }
 
   const handleFile = async (selectedFile) => {
-    const fileName = (selectedFile.name || '').toLowerCase()
-    const isPdf = fileName.endsWith('.pdf') || (selectedFile.type || '').includes('pdf')
-    const isImage = (selectedFile.type || '').startsWith('image/') || ['.jpg', '.jpeg', '.png', '.webp'].some(ext => fileName.endsWith(ext))
-
-    if (!isPdf && !isImage) {
-      setError('Por favor, selecciona un PDF o una imagen (JPG, PNG, WEBP).')
-      return
-    }
-    setError(null)
-    setFile(selectedFile)
-    await processFile(selectedFile)
-  }
-
-  const processFile = async (uploadedFile) => {
     setIsLoading(true)
+    setError(null)
     const formData = new FormData()
-    formData.append('file', uploadedFile)
+    formData.append('file', selectedFile)
 
     const API_BASE = getApiUrl()
 
@@ -127,6 +157,7 @@ function App() {
 
       setResumeData(data.data)
       setIsImageUpload(data.is_image || false)
+      setViewMode('editor')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -142,7 +173,7 @@ function App() {
           <FileText className="brand-icon" size={28} />
           <div>
             <h1>ATS Resume Generator</h1>
-            <p>Convierte tu CV en PDF o foto (impreso/manuscrito) en un formato 100% ATS.</p>
+            <p>Convierte tu CV en PDF/foto o créalo desde cero en un formato 100% ATS.</p>
           </div>
         </div>
 
@@ -179,45 +210,76 @@ function App() {
       {/* Main Content Area */}
       {!resumeData ? (
         <div className="upload-section">
-          <div
-            className={`upload-container ${isDragging ? 'drag-active' : ''}`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileSelect}
-              accept="image/*,.pdf,.png,.jpg,.jpeg,.webp"
-              style={{ display: 'none' }}
-            />
+          <div className="landing-header">
+            <h2>¿Cómo deseas empezar tu CV ATS?</h2>
+            <p>Selecciona una opción para comenzar a crear o personalizar tu currículum</p>
+          </div>
 
-            {isLoading ? (
-              <div className="upload-loading">
-                <div className="loading-spinner"></div>
-                <p className="upload-text">Escaneando y analizando con Inteligencia Artificial...</p>
-                <p className="upload-hint">Transcribiendo texto, fotos de CVs o escritos a mano con visión IA.</p>
+          <div className="landing-cards-grid">
+            {/* Card 1: Upload / Scan existing CV */}
+            <div
+              className={`upload-container landing-card ${isDragging ? 'drag-active' : ''}`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept="image/*,.pdf,.png,.jpg,.jpeg,.webp"
+                style={{ display: 'none' }}
+              />
+
+              {isLoading ? (
+                <div className="upload-loading">
+                  <div className="loading-spinner"></div>
+                  <p className="upload-text">Escaneando y analizando con IA...</p>
+                  <p className="upload-hint">Transcribiendo texto, fotos de CVs o escritos a mano.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="upload-icon-group">
+                    <UploadCloud className="upload-icon" />
+                    <ImageIcon className="upload-icon secondary" />
+                  </div>
+                  <h3 className="landing-card-title">Tengo un CV o Foto</h3>
+                  <p className="upload-text">Sube tu PDF o Foto</p>
+                  <p className="upload-hint">
+                    Acepta PDFs de LinkedIn, currículums impresos o <strong>fotos de CVs escritos a mano</strong> (JPG, PNG, WEBP).
+                  </p>
+                  <div className="upload-actions-mobile">
+                    <button type="button" className="btn-primary">
+                      <UploadCloud size={16} />
+                      <span>Seleccionar o tomar foto</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Card 2: Create from Scratch */}
+            <div
+              className="upload-container landing-card scratch-card"
+              onClick={handleCreateFromScratch}
+            >
+              <div className="upload-icon-group">
+                <FilePlus className="upload-icon scratch-icon" />
+                <Sparkles className="upload-icon secondary" />
               </div>
-            ) : (
-              <>
-                <div className="upload-icon-group">
-                  <UploadCloud className="upload-icon" />
-                  <ImageIcon className="upload-icon secondary" />
-                </div>
-                <p className="upload-text">Arrastra o selecciona tu CV en PDF o Foto</p>
-                <p className="upload-hint">
-                  Acepta PDFs de LinkedIn, currículums impresos o <strong>fotos de CVs escritos a mano</strong> (JPG, PNG, WEBP).
-                </p>
-                <div className="upload-actions-mobile">
-                  <button type="button" className="btn-primary">
-                    <UploadCloud size={16} />
-                    <span>Seleccionar o tomar foto</span>
-                  </button>
-                </div>
-              </>
-            )}
+              <h3 className="landing-card-title">Crear CV desde Cero</h3>
+              <p className="upload-text">Plantilla en Blanco ATS</p>
+              <p className="upload-hint">
+                Si no tienes CV previo, completa tus datos paso a paso en un formato optimizado ATS con ayuda de IA.
+              </p>
+              <div className="upload-actions-mobile">
+                <button type="button" className="btn-primary btn-scratch-action">
+                  <FilePlus size={16} />
+                  <span>Crear desde cero</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           {error && (

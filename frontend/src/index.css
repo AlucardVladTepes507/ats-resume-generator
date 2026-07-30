@@ -195,8 +195,32 @@ body {
 
 /* Upload Section */
 .upload-section {
-  max-width: 700px;
-  margin: 3rem auto;
+  max-width: 920px;
+  margin: 2rem auto;
+  width: 100%;
+}
+
+.landing-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.landing-header h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.35rem;
+}
+
+.landing-header p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.landing-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
   width: 100%;
 }
 
@@ -204,15 +228,44 @@ body {
   background-color: var(--bg-secondary);
   border: 2px dashed var(--border-color);
   border-radius: 1rem;
-  padding: 4rem 2rem;
+  padding: 2.5rem 1.75rem;
   text-align: center;
   transition: all 0.3s ease;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .upload-container:hover, .upload-container.drag-active {
   border-color: var(--accent-primary);
   background-color: rgba(59, 130, 246, 0.05);
+  transform: translateY(-2px);
+}
+
+.scratch-card:hover {
+  border-color: #10b981;
+  background-color: rgba(16, 185, 129, 0.05);
+}
+
+.landing-card-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.scratch-icon {
+  color: #10b981 !important;
+}
+
+.btn-scratch-action {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+.btn-scratch-action:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
 }
 
 .upload-icon {
