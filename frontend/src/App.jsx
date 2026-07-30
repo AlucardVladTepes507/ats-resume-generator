@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle, Share2, DollarSign, Award, SpellCheck, Tag, ChevronDown, FilePlus, Sun, Moon, SunMoon, Globe } from 'lucide-react'
+import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle, Share2, DollarSign, Award, SpellCheck, Tag, ChevronDown, FilePlus, Sun, Moon, SunMoon, Globe, Settings, X } from 'lucide-react'
 import ResumeEditor from './components/ResumeEditor'
 import ResumePreview from './components/ResumePreview'
 import AtsMatchAnalyzer from './components/AtsMatchAnalyzer'
@@ -24,6 +24,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   // Language state (auto detected from browser, manually changeable)
   const [currentLang, setCurrentLang] = useState(detectBrowserLanguage)
@@ -235,72 +236,154 @@ function App() {
         </div>
 
         <div className="header-actions">
-          {/* Language Selector Dropdown */}
-          <div className="lang-selector-wrapper">
-            <Globe size={16} className="lang-icon" />
-            <select
-              className="lang-dropdown"
-              value={currentLang}
-              onChange={(e) => handleLangChange(e.target.value)}
-              title="Cambiar idioma / Change language"
-            >
-              <option value="es">🇪🇸 Español</option>
-              <option value="en">🇺🇸 English</option>
-              <option value="pt">🇵🇹 Português</option>
-              <option value="fr">🇫🇷 Français</option>
-              <option value="de">🇩🇪 Deutsch</option>
-            </select>
-          </div>
-
-          {/* Theme Mode Toggle Button */}
+          {/* Mobile Settings Trigger Button */}
           <button
             type="button"
-            className="btn-secondary theme-toggle-btn"
-            onClick={toggleTheme}
-            title={
-              themeMode === 'auto'
-                ? 'Modo Automático'
-                : themeMode === 'dark'
-                ? 'Modo Oscuro'
-                : 'Modo Claro'
-            }
+            className="mobile-settings-trigger"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            title="Ajustes / Settings"
           >
-            {themeMode === 'auto' && <SunMoon size={17} />}
-            {themeMode === 'dark' && <Moon size={17} />}
-            {themeMode === 'light' && <Sun size={17} />}
-            <span>
-              {themeMode === 'auto' ? t.themeAuto : themeMode === 'dark' ? t.themeDark : t.themeLight}
-            </span>
+            {isMobileMenuOpen ? <X size={20} /> : <Settings size={20} />}
           </button>
 
-          <button
-            className="btn-secondary"
-            onClick={() => setIsFeedbackOpen(true)}
-            title="Solicitar una plantilla para tu país o mercado"
-          >
-            <Lightbulb size={18} />
-            <span>{t.suggestTemplate}</span>
-          </button>
+          {/* Desktop Actions */}
+          <div className="desktop-actions-group">
+            {/* Language Selector Dropdown */}
+            <div className="lang-selector-wrapper">
+              <Globe size={16} className="lang-icon" />
+              <select
+                className="lang-dropdown"
+                value={currentLang}
+                onChange={(e) => handleLangChange(e.target.value)}
+                title="Cambiar idioma / Change language"
+              >
+                <option value="es">🇪🇸 Español</option>
+                <option value="en">🇺🇸 English</option>
+                <option value="pt">🇵🇹 Português</option>
+                <option value="fr">🇫🇷 Français</option>
+                <option value="de">🇩🇪 Deutsch</option>
+              </select>
+            </div>
 
-          <a
-            href="https://ko-fi.com/smart507"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-kofi"
-            title="Invítame un café en Ko-fi"
-          >
-            <Coffee size={18} />
-            <span>{t.buyCoffee}</span>
-          </a>
-
-          {resumeData && (
-            <button className="btn-secondary header-reset-btn" onClick={handleResetCV}>
-              <ArrowLeft size={16} />
-              <span>{t.uploadOrCreateOther}</span>
+            {/* Theme Mode Toggle Button */}
+            <button
+              type="button"
+              className="btn-secondary theme-toggle-btn"
+              onClick={toggleTheme}
+              title={
+                themeMode === 'auto'
+                  ? 'Modo Automático'
+                  : themeMode === 'dark'
+                  ? 'Modo Oscuro'
+                  : 'Modo Claro'
+              }
+            >
+              {themeMode === 'auto' && <SunMoon size={17} />}
+              {themeMode === 'dark' && <Moon size={17} />}
+              {themeMode === 'light' && <Sun size={17} />}
+              <span>
+                {themeMode === 'auto' ? t.themeAuto : themeMode === 'dark' ? t.themeDark : t.themeLight}
+              </span>
             </button>
-          )}
+
+            <button
+              className="btn-secondary"
+              onClick={() => setIsFeedbackOpen(true)}
+              title="Solicitar una plantilla para tu país o mercado"
+            >
+              <Lightbulb size={18} />
+              <span>{t.suggestTemplate}</span>
+            </button>
+
+            <a
+              href="https://ko-fi.com/smart507"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-kofi"
+              title="Invítame un café en Ko-fi"
+            >
+              <Coffee size={18} />
+              <span>{t.buyCoffee}</span>
+            </a>
+
+            {resumeData && (
+              <button className="btn-secondary header-reset-btn" onClick={handleResetCV}>
+                <ArrowLeft size={16} />
+                <span>{t.uploadOrCreateOther}</span>
+              </button>
+            )}
+          </div>
         </div>
       </header>
+
+      {/* Mobile Settings Bottom Sheet Overlay */}
+      {isMobileMenuOpen && (
+        <div className="mobile-menu-overlay" onClick={() => setIsMobileMenuOpen(false)}>
+          <div className="mobile-menu-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="mobile-menu-header">
+              <h3>⚙️ Ajustes & Opciones</h3>
+              <button className="mobile-menu-close" onClick={() => setIsMobileMenuOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="mobile-menu-body">
+              <div className="mobile-menu-item">
+                <span className="mobile-item-label">🌐 Idioma / Language:</span>
+                <select
+                  className="lang-dropdown mobile-select"
+                  value={currentLang}
+                  onChange={(e) => handleLangChange(e.target.value)}
+                >
+                  <option value="es">🇪🇸 Español</option>
+                  <option value="en">🇺🇸 English</option>
+                  <option value="pt">🇵🇹 Português</option>
+                  <option value="fr">🇫🇷 Français</option>
+                  <option value="de">🇩🇪 Deutsch</option>
+                </select>
+              </div>
+
+              <div className="mobile-menu-item">
+                <span className="mobile-item-label">🌗 Tema / Theme:</span>
+                <button type="button" className="btn-secondary theme-toggle-btn w-full" onClick={toggleTheme}>
+                  {themeMode === 'auto' && <SunMoon size={17} />}
+                  {themeMode === 'dark' && <Moon size={17} />}
+                  {themeMode === 'light' && <Sun size={17} />}
+                  <span>{themeMode === 'auto' ? t.themeAuto : themeMode === 'dark' ? t.themeDark : t.themeLight}</span>
+                </button>
+              </div>
+
+              <button
+                className="btn-secondary w-full"
+                onClick={() => { setIsFeedbackOpen(true); setIsMobileMenuOpen(false); }}
+              >
+                <Lightbulb size={18} />
+                <span>{t.suggestTemplate}</span>
+              </button>
+
+              <a
+                href="https://ko-fi.com/smart507"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-kofi w-full"
+              >
+                <Coffee size={18} />
+                <span>{t.buyCoffee}</span>
+              </a>
+
+              {resumeData && (
+                <button
+                  className="btn-secondary header-reset-btn w-full"
+                  onClick={() => { handleResetCV(); setIsMobileMenuOpen(false); }}
+                >
+                  <ArrowLeft size={16} />
+                  <span>{t.uploadOrCreateOther}</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content Area */}
       {!resumeData ? (
