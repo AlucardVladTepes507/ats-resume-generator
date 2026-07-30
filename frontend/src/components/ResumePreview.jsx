@@ -90,7 +90,7 @@ export default function ResumePreview({ data }) {
             <option value="modern">🌎 América Latina (Modern)</option>
             <option value="europass">🇪🇺 Unión Europea (Europass ATS)</option>
             <option value="executive-photo">💼 Internacional (Ejecutivo 🖼️)</option>
-            <option value="modern-photo">🇪🇺 Europa (Modern 🖼️)</option>
+            <option value="modern-photo">🖼️ Moderno con Foto</option>
           </select>
         </div>
 
