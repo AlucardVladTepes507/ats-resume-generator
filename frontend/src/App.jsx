@@ -230,7 +230,7 @@ function App() {
           </div>
           <div>
             <h1>ATS Resume Generator</h1>
-            <p>Convierte tu CV en PDF/foto o créalo desde cero en un formato 100% ATS.</p>
+            <p>{t.tagline}</p>
           </div>
         </div>
 
@@ -504,10 +504,8 @@ function App() {
               <div className="warning-content">
                 <AlertTriangle size={24} className="warning-icon" />
                 <div>
-                  <strong>⚠️ Aviso de verificación (CV en Foto / Manuscrito):</strong>
-                  <p>
-                    Este currículum fue procesado desde una imagen o manuscrito. Te sugerimos <strong>revisar y corregir los datos</strong> en el editor (nombres, fechas, texto) antes de descargar tu PDF final para garantizar precisión total.
-                  </p>
+                  <strong>{t.imageWarningTitle}</strong>
+                  <p>{t.imageWarningText}</p>
                 </div>
               </div>
             </div>
@@ -624,7 +622,7 @@ function App() {
       {/* Footer */}
       <footer className="footer">
         <p>
-          Desarrollado con Inteligencia Artificial por{' '}
+          {t.footerPoweredBy}{' '}
           <a href="https://smart507.com" target="_blank" rel="noopener noreferrer" className="footer-brand-link">
             smart507.com
           </a>
@@ -633,12 +631,12 @@ function App() {
         <div className="footer-links-group">
           <button className="footer-link-btn" onClick={() => setIsFeedbackOpen(true)}>
             <Lightbulb size={16} />
-            <span>Sugerir Plantilla / Mercado</span>
+            <span>{t.footerSuggest}</span>
           </button>
           
           <button className="footer-link-btn" onClick={() => setIsContactOpen(true)}>
             <Mail size={16} />
-            <span>Contacto</span>
+            <span>{t.footerContact}</span>
           </button>
 
           <a
@@ -648,7 +646,7 @@ function App() {
             className="footer-kofi-link"
           >
             <Coffee size={16} />
-            <span>¿Te fue útil? Invítame un café</span>
+            <span>{t.footerKofi}</span>
           </a>
         </div>
       </footer>
