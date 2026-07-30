@@ -51,47 +51,28 @@ export default function ResumePreview({ data }) {
     }
   }, [data, template, zoomScale])
 
-  const handleDownloadPDF = async () => {
+  const handleDownloadPDF = () => {
     if (!resumeRef.current) return
     setIsExporting(true)
 
     const element = resumeRef.current
-    const originalTransform = element.style.transform
-    const originalPosition = element.style.position
-
-    // Temporarily reset CSS transform and position for 100% full-scale HTML2Canvas capture
-    element.style.transform = 'none'
-    element.style.position = 'relative'
-
     const opt = {
-      margin: [0.25, 0.25, 0.25, 0.25],
-      filename: `CV_ATS_${(data?.personal_info?.name || 'Resume').replace(/\s+/g, '_')}.pdf`,
+      margin: 0,
+      filename: `${(data?.personal_info?.name || 'Curriculum').replace(/\s+/g, '_')}_ATS.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: 816
-      },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-      pagebreak: {
-        mode: ['css', 'legacy'],
-        avoid: ['.exec-exp-item', '.exec-edu-item', '.exec-skill-badge', '.exec-section', '.modern-exp-item', '.modern-section', '.harvard-item', '.harvard-section', '.europass-item', '.europass-section', '.bullet-row']
-      }
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
     }
 
-    try {
-      await html2pdf().set(opt).from(element).save()
-    } catch (err) {
-      console.error('Error generating PDF:', err)
-    } finally {
-      // Restore original styling for preview display
-      element.style.transform = originalTransform
-      element.style.position = originalPosition
-      setIsExporting(false)
-    }
+    html2pdf()
+      .set(opt)
+      .from(element)
+      .save()
+      .then(() => setIsExporting(false))
+      .catch((err) => {
+        console.error('Error generating PDF:', err)
+        setIsExporting(false)
+      })
   }
 
   return (
