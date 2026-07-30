@@ -51,21 +51,29 @@ export default function ResumePreview({ data }) {
     }
   }, [data, template, zoomScale])
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (!resumeRef.current) return
     setIsExporting(true)
 
     const element = resumeRef.current
+    const originalTransform = element.style.transform
+    const originalPosition = element.style.position
+
+    // Temporarily reset CSS transform and position for 100% full-scale HTML2Canvas capture
+    element.style.transform = 'none'
+    element.style.position = 'relative'
+
     const opt = {
-      margin: [0.35, 0, 0.35, 0],
-      filename: `CV_ATS_${data?.personal_info?.name || 'Resume'}.pdf`,
+      margin: [0.25, 0.25, 0.25, 0.25],
+      filename: `CV_ATS_${(data?.personal_info?.name || 'Resume').replace(/\s+/g, '_')}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: {
         scale: 2,
         useCORS: true,
-        letterRendering: true,
+        logging: false,
         scrollX: 0,
-        scrollY: 0
+        scrollY: 0,
+        windowWidth: 816
       },
       jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
       pagebreak: {
@@ -74,15 +82,16 @@ export default function ResumePreview({ data }) {
       }
     }
 
-    html2pdf()
-      .set(opt)
-      .from(element)
-      .save()
-      .then(() => setIsExporting(false))
-      .catch((err) => {
-        console.error('Error generating PDF:', err)
-        setIsExporting(false)
-      })
+    try {
+      await html2pdf().set(opt).from(element).save()
+    } catch (err) {
+      console.error('Error generating PDF:', err)
+    } finally {
+      // Restore original styling for preview display
+      element.style.transform = originalTransform
+      element.style.position = originalPosition
+      setIsExporting(false)
+    }
   }
 
   return (
