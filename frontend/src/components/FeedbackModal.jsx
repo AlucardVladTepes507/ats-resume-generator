@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Lightbulb, X, Send, CheckCircle2, Globe, MessageSquare } from 'lucide-react'
 
-export default function FeedbackModal({ isOpen, onClose }) {
+export default function FeedbackModal({ isOpen, onClose, t }) {
   const [requestType, setRequestType] = useState('template') // 'template' | 'feature'
   const [marketCountry, setMarketCountry] = useState('EE.UU. & Canadá')
   const [details, setDetails] = useState('')
@@ -46,8 +46,8 @@ export default function FeedbackModal({ isOpen, onClose }) {
             <div className="modal-header">
               <Lightbulb size={24} className="modal-icon" />
               <div>
-                <h3>Sugerir Plantilla o Función Internacional</h3>
-                <p>¿Necesitas una plantilla para un mercado internacional o región específica? ¡Dinos cuál y la agregaremos!</p>
+                <h3>{t?.feedbackTitle || 'Sugerir Plantilla o Función Internacional'}</h3>
+                <p>{t?.feedbackSubtitle || '¿Necesitas una plantilla para un mercado internacional o región específica? ¡Dinos cuál y la agregaremos!'}</p>
               </div>
             </div>
 

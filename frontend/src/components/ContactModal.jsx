@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Mail, X, Send, CheckCircle2 } from 'lucide-react'
 
-export default function ContactModal({ isOpen, onClose }) {
+export default function ContactModal({ isOpen, onClose, t }) {
   const [senderName, setSenderName] = useState('')
   const [senderEmail, setSenderEmail] = useState('')
   const [subject, setSubject] = useState('')
@@ -47,8 +47,8 @@ export default function ContactModal({ isOpen, onClose }) {
             <div className="modal-header">
               <Mail size={24} className="modal-icon" />
               <div>
-                <h3>Contacto — smart507.com</h3>
-                <p>¿Tienes dudas, proyectos o consultas sobre la plataforma? Escríbenos directamente.</p>
+                <h3>{t?.contactTitle || 'Contacto — smart507.com'}</h3>
+                <p>{t?.contactSubtitle || '¿Tienes dudas, proyectos o consultas sobre la plataforma? Escríbenos directamente.'}</p>
               </div>
             </div>
 

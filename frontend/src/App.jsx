@@ -616,8 +616,8 @@ function App() {
       )}
 
       {/* Modals */}
-      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
-      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
+      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} t={t} />
+      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} t={t} />
 
       {/* Footer */}
       <footer className="footer">
