@@ -481,6 +481,24 @@ async def analyze_job_match(payload: JobMatchRequest):
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
     
     try:
+        job_input = (payload.job_description or "").strip()
+        # If input looks like a URL, try fetching its content
+        if job_input.startswith("http://") or job_input.startswith("https://"):
+            try:
+                import urllib.request
+                from bs4 import BeautifulSoup
+                req = urllib.request.Request(job_input, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+                html = urllib.request.urlopen(req, timeout=8).read().decode('utf-8', errors='ignore')
+                soup = BeautifulSoup(html, 'html.parser')
+                for script_or_style in soup(["script", "style", "nav", "footer"]):
+                    script_or_style.extract()
+                extracted_text = soup.get_text(separator=' ')
+                lines = (line.strip() for line in extracted_text.splitlines())
+                chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+                job_input = '\n'.join(chunk for chunk in chunks if chunk)[:4500]
+            except Exception as url_err:
+                print("URL fetch notice:", url_err)
+
         prompt = f"""
 Eres un reclutador experto y sistema de filtrado ATS.
 Compara el siguiente currículum con la oferta de empleo provista.
@@ -488,8 +506,8 @@ Compara el siguiente currículum con la oferta de empleo provista.
 CV del candidato:
 {json.dumps(payload.resume_data, ensure_ascii=False)}
 
-Oferta de Empleo:
-{payload.job_description}
+Oferta de Empleo / Vacante:
+{job_input}
 
 Devuelve un JSON estricto:
 {{

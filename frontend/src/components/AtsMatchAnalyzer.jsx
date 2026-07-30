@@ -46,14 +46,14 @@ export default function AtsMatchAnalyzer({ resumeData }) {
         <Target size={22} className="analyzer-icon" />
         <div>
           <h3>Calculador de Compatibilidad ATS</h3>
-          <p>Pega la descripción de la vacante para medir la puntuación de tu CV y detectar palabras clave faltantes.</p>
+          <p>Pega la descripción o el enlace (URL) de la vacante para medir la puntuación de tu CV y detectar palabras clave faltantes.</p>
         </div>
       </div>
 
       <div className="analyzer-input-group">
         <textarea
           rows={5}
-          placeholder="Pega aquí el texto completo de la oferta laboral (requisitos, funciones, competencias requeridas)..."
+          placeholder="Pega aquí el texto completo o el enlace (URL) de la oferta laboral (requisitos, funciones, competencias requeridas)..."
           value={jobDescription}
           onChange={(e) => setJobDescription(e.target.value)}
         />
