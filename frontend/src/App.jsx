@@ -201,7 +201,7 @@ function App() {
           {resumeData && (
             <button className="btn-secondary header-reset-btn" onClick={handleResetCV}>
               <ArrowLeft size={16} />
-              <span>Subir otro CV</span>
+              <span>Subir o Crear otro CV</span>
             </button>
           )}
         </div>
