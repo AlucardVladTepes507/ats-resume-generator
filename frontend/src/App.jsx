@@ -241,9 +241,10 @@ function App() {
             type="button"
             className="mobile-settings-trigger"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            title="Ajustes / Settings"
+            title={t.settings || 'Ajustes'}
           >
             {isMobileMenuOpen ? <X size={20} /> : <Settings size={20} />}
+            <span className="settings-tooltip-label">{t.settings || 'Ajustes'}</span>
           </button>
 
           {/* Desktop Actions */}
@@ -295,17 +296,6 @@ function App() {
               <span>{t.suggestTemplate}</span>
             </button>
 
-            <a
-              href="https://ko-fi.com/smart507"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-kofi"
-              title="Invítame un café en Ko-fi"
-            >
-              <Coffee size={18} />
-              <span>{t.buyCoffee}</span>
-            </a>
-
             {resumeData && (
               <button className="btn-secondary header-reset-btn" onClick={handleResetCV}>
                 <ArrowLeft size={16} />
@@ -321,7 +311,7 @@ function App() {
         <div className="mobile-menu-overlay" onClick={() => setIsMobileMenuOpen(false)}>
           <div className="mobile-menu-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="mobile-menu-header">
-              <h3>⚙️ Ajustes & Opciones</h3>
+              <h3>⚙️ {t.settings || 'Ajustes'}</h3>
               <button className="mobile-menu-close" onClick={() => setIsMobileMenuOpen(false)}>
                 <X size={20} />
               </button>
@@ -360,16 +350,6 @@ function App() {
                 <Lightbulb size={18} />
                 <span>{t.suggestTemplate}</span>
               </button>
-
-              <a
-                href="https://ko-fi.com/smart507"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-kofi w-full"
-              >
-                <Coffee size={18} />
-                <span>{t.buyCoffee}</span>
-              </a>
 
               {resumeData && (
                 <button
@@ -701,6 +681,18 @@ function App() {
       {/* Modals */}
       <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} t={t} />
       <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} t={t} />
+
+      {/* Floating Ko-Fi Coffee FAB Button (Bottom Right) */}
+      <a
+        href="https://ko-fi.com/smart507"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="kofi-fab-button"
+        title={t.buyCoffee}
+      >
+        <Coffee size={22} className="kofi-fab-icon" />
+        <span className="kofi-fab-label">{t.buyCoffee}</span>
+      </a>
 
       {/* Footer */}
       <footer className="footer">
