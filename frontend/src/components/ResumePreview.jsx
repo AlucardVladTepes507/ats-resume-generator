@@ -39,28 +39,57 @@ export default function ResumePreview({ data, t }) {
     }
   }, [data, template, zoomScale])
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (!resumeRef.current) return
     setIsExporting(true)
 
-    const element = resumeRef.current
-    const opt = {
-      margin: 0,
-      filename: `${(data?.personal_info?.name || 'Curriculum').replace(/\s+/g, '_')}_ATS.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-    }
+    try {
+      const originalElement = resumeRef.current
 
-    html2pdf()
-      .set(opt)
-      .from(element)
-      .save()
-      .then(() => setIsExporting(false))
-      .catch((err) => {
-        console.error('Error generating PDF:', err)
-        setIsExporting(false)
-      })
+      // Create a clean clone without CSS transforms or zoom offsets
+      const clone = originalElement.cloneNode(true)
+      clone.style.transform = 'none'
+      clone.style.position = 'fixed'
+      clone.style.top = '0'
+      clone.style.left = '-9999px'
+      clone.style.width = '816px'
+      clone.style.minWidth = '816px'
+      clone.style.maxWidth = '816px'
+      clone.style.minHeight = '1056px'
+      clone.style.boxShadow = 'none'
+      clone.style.margin = '0'
+      clone.style.background = '#ffffff'
+      clone.style.color = '#000000'
+
+      document.body.appendChild(clone)
+
+      const fileName = `${(data?.personal_info?.name || 'Curriculum').trim().replace(/\s+/g, '_')}_ATS.pdf`
+
+      const opt = {
+        margin: 0,
+        filename: fileName,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          scrollY: 0,
+          scrollX: 0,
+          windowWidth: 816
+        },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      }
+
+      await html2pdf().set(opt).from(clone).save()
+
+      if (document.body.contains(clone)) {
+        document.body.removeChild(clone)
+      }
+    } catch (err) {
+      console.error('Error generating PDF:', err)
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   return (

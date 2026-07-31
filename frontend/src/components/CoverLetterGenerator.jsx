@@ -51,18 +51,52 @@ export default function CoverLetterGenerator({ resumeData }) {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (!letterRef.current) return
 
-    const opt = {
-      margin: 0,
-      filename: `Carta_Presentacion_${resumeData?.personal_info?.name || 'Candidato'}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-    }
+    try {
+      const originalElement = letterRef.current
 
-    html2pdf().set(opt).from(letterRef.current).save()
+      // Create a clean clone without CSS transforms or zoom offsets
+      const clone = originalElement.cloneNode(true)
+      clone.style.transform = 'none'
+      clone.style.position = 'fixed'
+      clone.style.top = '0'
+      clone.style.left = '-9999px'
+      clone.style.width = '816px'
+      clone.style.minWidth = '816px'
+      clone.style.maxWidth = '816px'
+      clone.style.minHeight = '1056px'
+      clone.style.boxShadow = 'none'
+      clone.style.margin = '0'
+      clone.style.background = '#ffffff'
+      clone.style.color = '#000000'
+
+      document.body.appendChild(clone)
+
+      const opt = {
+        margin: 0,
+        filename: `Carta_Presentacion_${(resumeData?.personal_info?.name || 'Candidato').trim().replace(/\s+/g, '_')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          scrollY: 0,
+          scrollX: 0,
+          windowWidth: 816
+        },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      }
+
+      await html2pdf().set(opt).from(clone).save()
+
+      if (document.body.contains(clone)) {
+        document.body.removeChild(clone)
+      }
+    } catch (err) {
+      console.error('Error generating PDF:', err)
+    }
   }
 
   return (
