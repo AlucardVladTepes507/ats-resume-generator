@@ -166,24 +166,26 @@ export default function AtsMatchAnalyzer({ resumeData }) {
 
       {error && <div className="error-banner">{error}</div>}
 
-      {result && (
-        <div className="analyzer-results">
-          {/* Score Circle / Gauge */}
-          <div className="score-card">
-            <div className={`score-badge ${result.score >= 80 ? 'high' : result.score >= 60 ? 'medium' : 'low'}`}>
-              <span className="score-number">{result.score}%</span>
-              <span className="score-label">Compatibilidad ATS</span>
+      {result && (() => {
+        const matchScore = result.match_score ?? result.score ?? 0
+        return (
+          <div className="analyzer-results">
+            {/* Score Circle / Gauge */}
+            <div className="score-card">
+              <div className={`score-badge ${matchScore >= 80 ? 'high' : matchScore >= 60 ? 'medium' : 'low'}`}>
+                <span className="score-number">{matchScore}%</span>
+                <span className="score-label">Compatibilidad ATS</span>
+              </div>
+              <div className="score-summary">
+                {matchScore >= 80 ? (
+                  <p className="status-good">¡Excelente encaje! Tu CV contiene las palabras clave principales requeridas.</p>
+                ) : matchScore >= 60 ? (
+                  <p className="status-medium">Buen nivel, pero incorporar algunas palabras clave faltantes aumentará tus entrevistas.</p>
+                ) : (
+                  <p className="status-low">Bajo porcentaje ({matchScore}%). Te recomendamos agregar las competencias y palabras clave sugeridas.</p>
+                )}
+              </div>
             </div>
-            <div className="score-summary">
-              {result.score >= 80 ? (
-                <p className="status-good">¡Excelente encaje! Tu CV contiene las palabras clave principales requeridas.</p>
-              ) : result.score >= 60 ? (
-                <p className="status-medium">Buen nivel, pero incorporar algunas palabras clave faltantes aumentará tus entrevistas.</p>
-              ) : (
-                <p className="status-low">Bajo porcentaje. Te recomendamos agregar las competencias y palabras clave sugeridas.</p>
-              )}
-            </div>
-          </div>
 
           {/* Keywords Breakdown */}
           <div className="keywords-grid">
@@ -224,7 +226,8 @@ export default function AtsMatchAnalyzer({ resumeData }) {
             </div>
           )}
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
