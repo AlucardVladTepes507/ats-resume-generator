@@ -171,6 +171,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import threading
+from telegram_bot import start_bot_polling
+
+@app.on_event("startup")
+def start_telegram_bot():
+    try:
+        threading.Thread(target=start_bot_polling, daemon=True).start()
+        print("Telegram bot background thread launched successfully!")
+    except Exception as e:
+        print("Failed to launch Telegram bot thread:", e)
+
 class JobMatchRequest(BaseModel):
     resume_data: Dict[str, Any]
     job_description: str
