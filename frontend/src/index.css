@@ -3835,11 +3835,22 @@ body {
 .europass-section-title,
 .ats-section-title,
 .exec-section-title,
+.modern-bullets,
+.europass-bullets,
+.ats-bullets,
 .modern-bullets li,
 .europass-bullets li,
 .ats-bullets li {
   break-inside: avoid !important;
   page-break-inside: avoid !important;
+}
+
+.modern-section-title,
+.europass-section-title,
+.ats-section-title,
+.exec-section-title {
+  break-after: avoid !important;
+  page-break-after: avoid !important;
 }
 
 
