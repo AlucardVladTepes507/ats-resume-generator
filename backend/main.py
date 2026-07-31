@@ -15,6 +15,11 @@ from dotenv import load_dotenv
 
 from PIL import Image
 
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    BeautifulSoup = None
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ENV_PATH = os.path.join(BASE_DIR, ".env")
 load_dotenv(dotenv_path=ENV_PATH, override=True)
@@ -603,13 +608,17 @@ async def analyze_job_match(payload: JobMatchRequest):
         if job_input.startswith("http://") or job_input.startswith("https://"):
             try:
                 import urllib.request
-                from bs4 import BeautifulSoup
                 req = urllib.request.Request(job_input, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
                 html = urllib.request.urlopen(req, timeout=8).read().decode('utf-8', errors='ignore')
-                soup = BeautifulSoup(html, 'html.parser')
-                for script_or_style in soup(["script", "style", "nav", "footer"]):
-                    script_or_style.extract()
-                extracted_text = soup.get_text(separator=' ')
+                if BeautifulSoup:
+                    soup = BeautifulSoup(html, 'html.parser')
+                    for script_or_style in soup(["script", "style", "nav", "footer"]):
+                        script_or_style.extract()
+                    extracted_text = soup.get_text(separator=' ')
+                else:
+                    clean_text = re.sub(r'<script.*?>.*?</script>', '', html, flags=re.DOTALL | re.IGNORECASE)
+                    clean_text = re.sub(r'<style.*?>.*?</style>', '', clean_text, flags=re.DOTALL | re.IGNORECASE)
+                    extracted_text = re.sub(r'<[^>]+>', ' ', clean_text)
                 lines = (line.strip() for line in extracted_text.splitlines())
                 chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
                 job_input = '\n'.join(chunk for chunk in chunks if chunk)[:4500]
