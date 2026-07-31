@@ -58,7 +58,7 @@ export default function ResumePreview({ data, t }) {
       const fileName = `${(data?.personal_info?.name || 'Curriculum').trim().replace(/\s+/g, '_')}_ATS.pdf`
 
       const opt = {
-        margin: 0,
+        margin: [0.35, 0.35, 0.35, 0.35],
         filename: fileName,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
@@ -69,7 +69,8 @@ export default function ResumePreview({ data, t }) {
           scrollX: 0,
           windowWidth: 816
         },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       }
 
       await html2pdf().set(opt).from(element).save()

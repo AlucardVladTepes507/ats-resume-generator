@@ -3806,6 +3806,42 @@ body {
   }
 }
 
+/* ATS MULTI-PAGE & PAGE BREAK PROTECTION RULES */
+.ats-template,
+.harvard-template,
+.modern-template,
+.europass-template,
+.executive-template,
+.modern-photo-template {
+  box-sizing: border-box;
+}
+
+.modern-section,
+.europass-section,
+.ats-section,
+.exec-section,
+.modern-item,
+.europass-item,
+.ats-item,
+.exec-item,
+.modern-skills-grid,
+.europass-skills-grid,
+.ats-skills-grid,
+.modern-skill-pill,
+.europass-skill-pill,
+.ats-skill-pill,
+.exec-skill-pill,
+.modern-section-title,
+.europass-section-title,
+.ats-section-title,
+.exec-section-title,
+.modern-bullets li,
+.europass-bullets li,
+.ats-bullets li {
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+
 
 
 

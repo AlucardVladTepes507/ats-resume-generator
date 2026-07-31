@@ -63,7 +63,7 @@ export default function CoverLetterGenerator({ resumeData }) {
       await new Promise((resolve) => setTimeout(resolve, 120))
 
       const opt = {
-        margin: 0,
+        margin: [0.35, 0.35, 0.35, 0.35],
         filename: `Carta_Presentacion_${(resumeData?.personal_info?.name || 'Candidato').trim().replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
@@ -74,7 +74,8 @@ export default function CoverLetterGenerator({ resumeData }) {
           scrollX: 0,
           windowWidth: 816
         },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       }
 
       await html2pdf().set(opt).from(element).save()
