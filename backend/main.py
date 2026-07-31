@@ -99,6 +99,52 @@ def safe_generate_content(primary_client, contents):
             )
         raise HTTPException(status_code=500, detail=f"Error al procesar con IA: {err_msg}")
 
+import urllib.request
+
+def call_groq_api(prompt: str, json_mode: bool = True) -> str:
+    load_dotenv(dotenv_path=ENV_PATH, override=True)
+    groq_key = os.environ.get("GROQ_API_KEY")
+    if not groq_key:
+        raise Exception("GROQ_API_KEY not configured")
+
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {groq_key}",
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    }
+
+    payload = {
+        "model": "llama-3.3-70b-versatile",
+        "messages": [
+            {"role": "system", "content": "You are an expert ATS resume generator and career assistant. Always output clean valid JSON when requested."},
+            {"role": "user", "content": prompt}
+        ]
+    }
+    if json_mode:
+        payload["response_format"] = {"type": "json_object"}
+
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers=headers)
+
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        res = json.loads(resp.read().decode("utf-8"))
+        return res["choices"][0]["message"]["content"]
+
+def safe_generate_text(prompt: str, json_mode: bool = True) -> str:
+    # 1. Try Groq API first (Llama 3.3 70B - Lightning Fast, 14,400 RPD Free)
+    groq_key = os.environ.get("GROQ_API_KEY")
+    if groq_key:
+        try:
+            return call_groq_api(prompt, json_mode=json_mode)
+        except Exception as groq_err:
+            print("Groq API notice, falling back to Gemini:", groq_err)
+
+    # 2. Fallback to Gemini AI if Groq fails or is not available
+    primary_client = get_gemini_client()
+    response = safe_generate_content(primary_client, [prompt])
+    return response.text
+
 def get_gemini_client():
     load_dotenv(dotenv_path=ENV_PATH, override=True)
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -519,8 +565,8 @@ Devuelve un JSON estricto:
 }}
         """
 
-        response = safe_generate_content(client, [prompt])
-        cleaned = clean_json_response(response.text)
+        raw_text = safe_generate_text(prompt, json_mode=True)
+        cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al analizar vacante: {str(e)}")
@@ -528,10 +574,6 @@ Devuelve un JSON estricto:
 @app.post("/enhance-bullet")
 @app.post("/enhance-bullet/")
 async def enhance_bullet(payload: EnhanceBulletRequest):
-    client = get_gemini_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
-    
     try:
         prompt = f"""
 Eres un experto redactor de CVs ejecutivos para sistemas ATS.
@@ -549,8 +591,8 @@ Devuelve un JSON estricto con 3 opciones mejoradas (Corta/Directa, Basada en Log
 }}
         """
 
-        response = safe_generate_content(client, [prompt])
-        cleaned = clean_json_response(response.text)
+        raw_text = safe_generate_text(prompt, json_mode=True)
+        cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al mejorar la viñeta: {str(e)}")
@@ -558,10 +600,6 @@ Devuelve un JSON estricto con 3 opciones mejoradas (Corta/Directa, Basada en Log
 @app.post("/generate-cover-letter")
 @app.post("/generate-cover-letter/")
 async def generate_cover_letter(payload: CoverLetterRequest):
-    client = get_gemini_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
-    
     try:
         prompt = f"""
 Eres un redactor profesional de cartas de presentación ejecutivas en español.
@@ -580,8 +618,8 @@ Devuelve un JSON estricto:
 }}
         """
 
-        response = safe_generate_content(client, [prompt])
-        cleaned = clean_json_response(response.text)
+        raw_text = safe_generate_text(prompt, json_mode=True)
+        cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al generar la carta de presentación: {str(e)}")
@@ -589,10 +627,6 @@ Devuelve un JSON estricto:
 @app.post("/translate-resume")
 @app.post("/translate-resume/")
 async def translate_resume(payload: TranslateResumeRequest):
-    client = get_gemini_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
-    
     target_lang_name = "Inglés (English)" if payload.target_language == "en" else "Español"
 
     try:
@@ -612,8 +646,8 @@ CV a traducir:
 Devuelve ÚNICAMENTE el JSON traducido estricto.
         """
 
-        response = safe_generate_content(client, [prompt])
-        cleaned = clean_json_response(response.text)
+        raw_text = safe_generate_text(prompt, json_mode=True)
+        cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al traducir el CV: {str(e)}")
@@ -630,10 +664,6 @@ class InterviewPrepRequest(BaseModel):
 @app.post("/generate-outreach-message")
 @app.post("/generate-outreach-message/")
 async def generate_outreach_message(payload: OutreachMessageRequest):
-    client = get_gemini_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
-    
     try:
         prompt = f"""
 Eres un especialista en Networking Ejecutivo y Reclutamiento Directo.
@@ -653,8 +683,8 @@ Devuelve un JSON estricto con un mensaje para LinkedIn InMail/DM (corto y direct
 }}
         """
 
-        response = safe_generate_content(client, [prompt])
-        cleaned = clean_json_response(response.text)
+        raw_text = safe_generate_text(prompt, json_mode=True)
+        cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al generar mensajes de contacto: {str(e)}")
@@ -662,10 +692,6 @@ Devuelve un JSON estricto con un mensaje para LinkedIn InMail/DM (corto y direct
 @app.post("/generate-interview-questions")
 @app.post("/generate-interview-questions/")
 async def generate_interview_questions(payload: InterviewPrepRequest):
-    client = get_gemini_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
-    
     try:
         prompt = f"""
 Eres un entrevistador de talento senior y coach de entrevista laboral.
@@ -687,8 +713,8 @@ Devuelve un JSON estricto con 5 preguntas clave de entrevista (conductuales, té
 }}
         """
 
-        response = safe_generate_content(client, [prompt])
-        cleaned = clean_json_response(response.text)
+        raw_text = safe_generate_text(prompt, json_mode=True)
+        cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al generar preguntas de entrevista: {str(e)}")
@@ -708,10 +734,6 @@ class CertificationsRequest(BaseModel):
 @app.post("/generate-linkedin-profile")
 @app.post("/generate-linkedin-profile/")
 async def generate_linkedin_profile(payload: LinkedInProfileRequest):
-    client = get_gemini_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
-    
     try:
         prompt = f"""
 Eres un experto estratega de posicionamiento en LinkedIn y personal branding.
@@ -730,8 +752,8 @@ Devuelve un JSON estricto:
 }}
         """
 
-        response = safe_generate_content(client, [prompt])
-        cleaned = clean_json_response(response.text)
+        raw_text = safe_generate_text(prompt, json_mode=True)
+        cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al generar perfil de LinkedIn: {str(e)}")
@@ -739,10 +761,6 @@ Devuelve un JSON estricto:
 @app.post("/estimate-salary")
 @app.post("/estimate-salary/")
 async def estimate_salary(payload: SalaryEstimateRequest):
-    client = get_gemini_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
-    
     try:
         prompt = f"""
 Eres un analista de compensaciones y salarios en RRHH para el mercado laboral internacional.
@@ -763,8 +781,8 @@ Devuelve un JSON estricto:
 }}
         """
 
-        response = safe_generate_content(client, [prompt])
-        cleaned = clean_json_response(response.text)
+        raw_text = safe_generate_text(prompt, json_mode=True)
+        cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al estimar salario: {str(e)}")
@@ -772,10 +790,6 @@ Devuelve un JSON estricto:
 @app.post("/recommend-certifications")
 @app.post("/recommend-certifications/")
 async def recommend_certifications(payload: CertificationsRequest):
-    client = get_gemini_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
-    
     try:
         prompt = f"""
 Eres un mentor de carrera y desarrollo profesional tecnológico/ejecutivo.
@@ -800,8 +814,8 @@ Devuelve un JSON estricto con 3 certificaciones reconocidas mundialmente:
 }}
         """
 
-        response = safe_generate_content(client, [prompt])
-        cleaned = clean_json_response(response.text)
+        raw_text = safe_generate_text(prompt, json_mode=True)
+        cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al recomendar certificaciones: {str(e)}")
@@ -816,10 +830,6 @@ class IndustryKeywordsRequest(BaseModel):
 @app.post("/check-grammar")
 @app.post("/check-grammar/")
 async def check_grammar(payload: GrammarCheckRequest):
-    client = get_gemini_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
-    
     try:
         prompt = f"""
 Eres un editor ortográfico y gramatical profesional en español e inglés.
@@ -843,8 +853,8 @@ Devuelve un JSON estricto:
 }}
         """
 
-        response = safe_generate_content(client, [prompt])
-        cleaned = clean_json_response(response.text)
+        raw_text = safe_generate_text(prompt, json_mode=True)
+        cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al verificar ortografía: {str(e)}")
@@ -852,10 +862,6 @@ Devuelve un JSON estricto:
 @app.post("/get-industry-keywords")
 @app.post("/get-industry-keywords/")
 async def get_industry_keywords(payload: IndustryKeywordsRequest):
-    client = get_gemini_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
-    
     try:
         prompt = f"""
 Eres un reclutador experto en optimización ATS para la industria: {payload.industry}.
@@ -873,8 +879,8 @@ Devuelve un JSON estricto:
 }}
         """
 
-        response = safe_generate_content(client, [prompt])
-        cleaned = clean_json_response(response.text)
+        raw_text = safe_generate_text(prompt, json_mode=True)
+        cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener palabras clave de industria: {str(e)}")
