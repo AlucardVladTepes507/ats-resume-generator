@@ -43,25 +43,17 @@ export default function ResumePreview({ data, t }) {
     if (!resumeRef.current) return
     setIsExporting(true)
 
+    const element = resumeRef.current
+    const originalTransform = element.style.transform
+    const originalPosition = element.style.position
+
     try {
-      const originalElement = resumeRef.current
+      // Temporarily reset transform for clean html2canvas capture
+      element.style.transform = 'none'
+      element.style.position = 'relative'
 
-      // Create a clean clone without CSS transforms or zoom offsets
-      const clone = originalElement.cloneNode(true)
-      clone.style.transform = 'none'
-      clone.style.position = 'fixed'
-      clone.style.top = '0'
-      clone.style.left = '-9999px'
-      clone.style.width = '816px'
-      clone.style.minWidth = '816px'
-      clone.style.maxWidth = '816px'
-      clone.style.minHeight = '1056px'
-      clone.style.boxShadow = 'none'
-      clone.style.margin = '0'
-      clone.style.background = '#ffffff'
-      clone.style.color = '#000000'
-
-      document.body.appendChild(clone)
+      // Wait a frame for browser layout calculation
+      await new Promise((resolve) => setTimeout(resolve, 120))
 
       const fileName = `${(data?.personal_info?.name || 'Curriculum').trim().replace(/\s+/g, '_')}_ATS.pdf`
 
@@ -80,14 +72,13 @@ export default function ResumePreview({ data, t }) {
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
       }
 
-      await html2pdf().set(opt).from(clone).save()
-
-      if (document.body.contains(clone)) {
-        document.body.removeChild(clone)
-      }
+      await html2pdf().set(opt).from(element).save()
     } catch (err) {
       console.error('Error generating PDF:', err)
     } finally {
+      // Restore original zoom transform
+      element.style.transform = originalTransform
+      element.style.position = originalPosition
       setIsExporting(false)
     }
   }

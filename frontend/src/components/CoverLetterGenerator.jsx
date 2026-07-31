@@ -54,25 +54,13 @@ export default function CoverLetterGenerator({ resumeData }) {
   const handleDownloadPDF = async () => {
     if (!letterRef.current) return
 
+    const element = letterRef.current
+    const originalTransform = element.style.transform
+
     try {
-      const originalElement = letterRef.current
-
-      // Create a clean clone without CSS transforms or zoom offsets
-      const clone = originalElement.cloneNode(true)
-      clone.style.transform = 'none'
-      clone.style.position = 'fixed'
-      clone.style.top = '0'
-      clone.style.left = '-9999px'
-      clone.style.width = '816px'
-      clone.style.minWidth = '816px'
-      clone.style.maxWidth = '816px'
-      clone.style.minHeight = '1056px'
-      clone.style.boxShadow = 'none'
-      clone.style.margin = '0'
-      clone.style.background = '#ffffff'
-      clone.style.color = '#000000'
-
-      document.body.appendChild(clone)
+      element.style.transform = 'none'
+      element.style.position = 'relative'
+      await new Promise((resolve) => setTimeout(resolve, 120))
 
       const opt = {
         margin: 0,
@@ -89,13 +77,11 @@ export default function CoverLetterGenerator({ resumeData }) {
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
       }
 
-      await html2pdf().set(opt).from(clone).save()
-
-      if (document.body.contains(clone)) {
-        document.body.removeChild(clone)
-      }
+      await html2pdf().set(opt).from(element).save()
     } catch (err) {
       console.error('Error generating PDF:', err)
+    } finally {
+      element.style.transform = originalTransform
     }
   }
 
