@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react'
 import { Target, CheckCircle2, AlertTriangle, Sparkles, Lightbulb, Image as ImageIcon, X, Upload, Clipboard } from 'lucide-react'
+import AiOrbLoader from './AiOrbLoader'
 
 export default function AtsMatchAnalyzer({ resumeData, setResumeData, setViewMode }) {
   const [jobDescription, setJobDescription] = useState('')
@@ -257,6 +258,12 @@ export default function AtsMatchAnalyzer({ resumeData, setResumeData, setViewMod
           <span>{isAnalyzing ? 'Analizando con IA...' : 'Analizar Compatibilidad ATS'}</span>
         </button>
       </div>
+
+      {isAnalyzing && (
+        <div className="analyzer-loading-overlay">
+          <AiOrbLoader size="medium" text="Analizando compatibilidad ATS con IA..." hint="Escaneando palabras clave, competencias requeridas y nivel de encaje laboral" />
+        </div>
+      )}
 
       {error && <div className="error-banner">{error}</div>}
 

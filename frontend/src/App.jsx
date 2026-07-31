@@ -3,6 +3,7 @@ import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as Imag
 import ResumeEditor from './components/ResumeEditor'
 import ResumePreview from './components/ResumePreview'
 import AtsMatchAnalyzer from './components/AtsMatchAnalyzer'
+import AiOrbLoader from './components/AiOrbLoader'
 import CoverLetterGenerator from './components/CoverLetterGenerator'
 import OutreachMessageGenerator from './components/OutreachMessageGenerator'
 import InterviewPrepGenerator from './components/InterviewPrepGenerator'
@@ -403,11 +404,7 @@ function App() {
               </div>
 
               {isLoading ? (
-                <div className="upload-loading">
-                  <div className="loading-spinner"></div>
-                  <p className="upload-text">{t.scanningIa}</p>
-                  <p className="upload-hint">{t.transcribingHint}</p>
-                </div>
+                <AiOrbLoader size="large" text={t.scanningIa} hint={t.transcribingHint} />
               ) : (
                 <>
                   <div className="upload-icon-group icon-group-blue">

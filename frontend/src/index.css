@@ -3574,6 +3574,170 @@ body {
   }
 }
 
+/* JAKUB ANTALIK INSPIRED GLOWING AI ORB LOADER */
+.ai-orb-loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.ai-orb-wrapper {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.ai-orb-loader-container.small .ai-orb-wrapper {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 0.5rem;
+}
+
+.ai-orb-loader-container.large .ai-orb-wrapper {
+  width: 130px;
+  height: 130px;
+  margin-bottom: 1.75rem;
+}
+
+/* Outer Glow Backdrop Aura */
+.ai-orb-glow-backdrop {
+  position: absolute;
+  inset: -15px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.6) 0%, rgba(168, 85, 247, 0.4) 40%, rgba(236, 72, 153, 0.2) 70%, transparent 100%);
+  filter: blur(22px);
+  border-radius: 50%;
+  animation: orbGlowPulse 3s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+
+/* Outer Morphing Gradient Layer */
+.ai-orb-outer-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 48% 52% 68% 32% / 42% 58% 42% 58%;
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 35%, #ec4899 70%, #06b6d4 100%);
+  background-size: 200% 200%;
+  filter: blur(4px);
+  box-shadow: 0 0 30px rgba(168, 85, 247, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.4);
+  animation: orbMorphRotate 6s ease-in-out infinite alternate, orbGradientShift 4s linear infinite;
+  will-change: transform, border-radius;
+}
+
+/* Middle Fluid Rotating Layer */
+.ai-orb-middle-layer {
+  position: absolute;
+  inset: 8px;
+  border-radius: 55% 45% 35% 65% / 60% 40% 60% 40%;
+  background: linear-gradient(225deg, #06b6d4 0%, #3b82f6 40%, #8b5cf6 80%, #f43f5e 100%);
+  background-size: 200% 200%;
+  opacity: 0.9;
+  filter: blur(2px);
+  animation: orbMorphRotateReverse 5s ease-in-out infinite alternate, orbGradientShift 3s linear infinite reverse;
+  will-change: transform, border-radius;
+}
+
+/* Inner Liquid Core */
+.ai-orb-inner-core {
+  position: absolute;
+  inset: 16px;
+  border-radius: 40% 60% 50% 50% / 50% 40% 60% 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.95) 0%, rgba(192, 132, 252, 0.8) 35%, rgba(99, 102, 241, 0.9) 70%, #06b6d4 100%);
+  box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.8);
+  animation: orbCorePulse 2.5s ease-in-out infinite alternate;
+}
+
+/* Bright White Highlight Sparkle Center */
+.ai-orb-center-light {
+  position: absolute;
+  top: 25%;
+  left: 28%;
+  width: 28%;
+  height: 28%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.6) 50%, transparent 100%);
+  filter: blur(2px);
+  border-radius: 50%;
+  transform: rotate(-25deg);
+}
+
+/* Orb Text Styles */
+.ai-orb-text {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+.ai-orb-hint {
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* ORB KEYFRAME ANIMATIONS */
+@keyframes orbGlowPulse {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.18);
+    opacity: 0.9;
+  }
+}
+
+@keyframes orbMorphRotate {
+  0% {
+    transform: rotate(0deg) scale(0.96);
+    border-radius: 48% 52% 68% 32% / 42% 58% 42% 58%;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.04);
+    border-radius: 62% 38% 45% 55% / 55% 45% 55% 45%;
+  }
+  100% {
+    transform: rotate(360deg) scale(0.96);
+    border-radius: 48% 52% 68% 32% / 42% 58% 42% 58%;
+  }
+}
+
+@keyframes orbMorphRotateReverse {
+  0% {
+    transform: rotate(360deg) scale(1.02);
+    border-radius: 55% 45% 35% 65% / 60% 40% 60% 40%;
+  }
+  50% {
+    transform: rotate(180deg) scale(0.94);
+    border-radius: 38% 62% 58% 42% / 45% 55% 45% 55%;
+  }
+  100% {
+    transform: rotate(0deg) scale(1.02);
+    border-radius: 55% 45% 35% 65% / 60% 40% 60% 40%;
+  }
+}
+
+@keyframes orbGradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes orbCorePulse {
+  0% {
+    transform: scale(0.92) rotate(-10deg);
+  }
+  100% {
+    transform: scale(1.08) rotate(10deg);
+  }
+}
+
 
 
 
