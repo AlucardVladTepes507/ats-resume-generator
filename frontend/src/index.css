@@ -3450,6 +3450,37 @@ body {
   }
 }
 
+.incomplete-cv-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  color: var(--text-primary);
+}
+
+.incomplete-cv-warning .warning-icon {
+  color: #f59e0b;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.incomplete-cv-warning h4 {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #f59e0b;
+  margin-bottom: 0.3rem;
+}
+
+.incomplete-cv-warning p {
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
 
 
 

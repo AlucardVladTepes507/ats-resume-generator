@@ -78,7 +78,41 @@ export default function AtsMatchAnalyzer({ resumeData }) {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
+  // Check if resume has minimal real user content filled in
+  const checkResumeCompleteness = () => {
+    if (!resumeData) return false
+    const info = resumeData.personal_info || {}
+    const exp = resumeData.experience || []
+    const skills = resumeData.skills || []
+
+    const name = (info.name || '').trim().toLowerCase()
+    const isDefaultName = !name || name === 'tu nombre' || name === 'nombre completo' || name === 'juan pérez' || name === 'john doe'
+
+    const hasRealExp = exp.some(item => {
+      const comp = (item.company || '').trim().toLowerCase()
+      const pos = (item.position || '').trim().toLowerCase()
+      return comp && comp !== 'empresa ejemplo' && comp !== 'nombre de la empresa' && pos && pos !== 'cargo / puesto'
+    })
+
+    const hasRealSkills = (Array.isArray(skills) ? skills : []).some(s => {
+      const skillName = typeof s === 'string' ? s : s.name
+      return skillName && skillName.trim().length > 0
+    })
+
+    if (isDefaultName && !hasRealExp && !hasRealSkills) {
+      return false
+    }
+    return true
+  }
+
+  const isCvReady = checkResumeCompleteness()
+
   const handleAnalyze = async () => {
+    if (!isCvReady) {
+      setError('⚠️ Tu CV no contiene información laboral aún. Primero completa tu información personal, experiencia y habilidades en la pestaña "1. Editar & Vista Previa ATS".')
+      return
+    }
+
     if (!jobDescription.trim() && !imageBase64) {
       setError('Por favor, pega el texto, enlace (URL) o sube una captura/imagen de la vacante.')
       return
@@ -121,6 +155,18 @@ export default function AtsMatchAnalyzer({ resumeData }) {
           <p>Pega el texto, enlace (URL) o sube/pega una captura de pantalla de la vacante para medir la compatibilidad de tu CV.</p>
         </div>
       </div>
+
+      {!isCvReady && (
+        <div className="incomplete-cv-warning">
+          <AlertTriangle size={24} className="warning-icon" />
+          <div>
+            <h4>⚠️ Primero ingresa tus datos en el CV</h4>
+            <p>
+              Para medir la compatibilidad ATS real con una vacante, primero debes completar tu Información Personal, Experiencia Laboral y Habilidades en la pestaña <strong>"1. Editar & Vista Previa ATS"</strong>.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="analyzer-input-group" onPaste={handlePaste}>
         {/* Hidden Image File Input */}
