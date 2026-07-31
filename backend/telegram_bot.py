@@ -118,8 +118,12 @@ def start_bot_polling():
                         print(f"Mensaje recibido de {chat_id}: {user_text}")
                         process_command(chat_id, user_text)
         except Exception as e:
-            print("Error en Polling loop:", e)
-            time.sleep(3)
+            err_str = str(e)
+            if "409" in err_str:
+                time.sleep(5)
+            else:
+                print("Notice en Polling loop:", err_str)
+                time.sleep(3)
 
 if __name__ == "__main__":
     start_bot_polling()
