@@ -192,49 +192,53 @@ export default function ResumeEditor({ data, onChange, t }) {
       {/* Top Translation Toolbar */}
       <div className="editor-ai-toolbar">
         <div className="translate-group">
-          <Globe size={16} />
-          <span>{t?.translateCvLabel || 'Traducir CV:'}</span>
-          <button
-            type="button"
-            className="btn-secondary sm"
-            onClick={() => handleTranslate('en')}
-            disabled={isTranslating}
-          >
-            🇺🇸 English
-          </button>
-          <button
-            type="button"
-            className="btn-secondary sm"
-            onClick={() => handleTranslate('es')}
-            disabled={isTranslating}
-          >
-            🇪🇸 Español
-          </button>
-          <button
-            type="button"
-            className="btn-secondary sm"
-            onClick={() => handleTranslate('pt')}
-            disabled={isTranslating}
-          >
-            🇵t Português
-          </button>
-          <button
-            type="button"
-            className="btn-secondary sm"
-            onClick={() => handleTranslate('fr')}
-            disabled={isTranslating}
-          >
-            🇫🇷 Français
-          </button>
-          <button
-            type="button"
-            className="btn-secondary sm"
-            onClick={() => handleTranslate('de')}
-            disabled={isTranslating}
-          >
-            🇩🇪 Deutsch
-          </button>
-          {isTranslating && <Loader2 size={16} className="spin-icon" />}
+          <div className="translate-label">
+            <Globe size={16} />
+            <span>{t?.translateCvLabel || 'Traducir CV:'}</span>
+          </div>
+          <div className="translate-buttons">
+            <button
+              type="button"
+              className="translate-btn"
+              onClick={() => handleTranslate('en')}
+              disabled={isTranslating}
+            >
+              🇺🇸 English
+            </button>
+            <button
+              type="button"
+              className="translate-btn"
+              onClick={() => handleTranslate('es')}
+              disabled={isTranslating}
+            >
+              🇪🇸 Español
+            </button>
+            <button
+              type="button"
+              className="translate-btn"
+              onClick={() => handleTranslate('pt')}
+              disabled={isTranslating}
+            >
+              🇵🇹 Português
+            </button>
+            <button
+              type="button"
+              className="translate-btn"
+              onClick={() => handleTranslate('fr')}
+              disabled={isTranslating}
+            >
+              🇫🇷 Français
+            </button>
+            <button
+              type="button"
+              className="translate-btn"
+              onClick={() => handleTranslate('de')}
+              disabled={isTranslating}
+            >
+              🇩🇪 Deutsch
+            </button>
+            {isTranslating && <Loader2 size={16} className="spin-icon" />}
+          </div>
         </div>
       </div>
 
