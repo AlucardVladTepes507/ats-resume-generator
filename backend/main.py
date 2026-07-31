@@ -548,7 +548,7 @@ async def extract_job_image_text(payload: JobImageExtractRequest):
         img_bytes = base64.b64decode(encoded)
         compressed_bytes = compress_image_for_ai(img_bytes)
 
-        prompt = "Transcribe y extrae de forma limpia y exacta todo el texto visible de esta captura o imagen de oferta laboral (requisitos, funciones y competencias solicitadas). Devuelve ÚNICAMENTE el texto extraído sin introducciones."
+        prompt = "Analiza esta captura o imagen. Si la imagen NO contiene una oferta de empleo, anuncio laboral, descripción de puesto o vacante de trabajo (por ejemplo es una foto personal, meme, factura o documento no relacionado), responde ÚNICAMENTE con: ERROR_NOT_JOB_VACANCY. Si SÍ contiene una vacante de empleo, transcribe de forma limpia y exacta todo el texto visible (requisitos, funciones y competencias)."
 
         contents_payload = [
             types.Part.from_bytes(data=compressed_bytes, mime_type="image/jpeg"),
@@ -556,17 +556,23 @@ async def extract_job_image_text(payload: JobImageExtractRequest):
         ]
 
         response = safe_generate_content(client, contents_payload)
-        return {"extracted_text": response.text.strip()}
+        text_out = response.text.strip()
+
+        if "ERROR_NOT_JOB_VACANCY" in text_out or len(text_out) < 15:
+            raise HTTPException(
+                status_code=400,
+                detail="La imagen o captura subida no corresponde a una oferta de trabajo válida. Por favor, sube una foto de un anuncio o vacante de empleo real."
+            )
+
+        return {"extracted_text": text_out}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al extraer texto de la imagen de vacante: {str(e)}")
 
 @app.post("/analyze-job-match")
 @app.post("/analyze-job-match/")
 async def analyze_job_match(payload: JobMatchRequest):
-    client = get_gemini_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
-    
     try:
         job_input = (payload.job_description or "").strip()
 
@@ -576,15 +582,24 @@ async def analyze_job_match(payload: JobMatchRequest):
                 encoded = payload.image_base64.split(",", 1)[-1] if "," in payload.image_base64 else payload.image_base64
                 img_bytes = base64.b64decode(encoded)
                 compressed_bytes = compress_image_for_ai(img_bytes)
-                ocr_prompt = "Transcribe y extrae todo el texto visible de esta captura o imagen de oferta laboral."
-                contents_payload = [
-                    types.Part.from_bytes(data=compressed_bytes, mime_type="image/jpeg"),
-                    ocr_prompt
-                ]
-                ocr_resp = safe_generate_content(client, contents_payload)
-                ocr_text = ocr_resp.text.strip()
-                if ocr_text:
-                    job_input = (job_input + "\n\n" + ocr_text).strip()
+                ocr_prompt = "Analiza la imagen. Si NO es una oferta laboral, responde: ERROR_NOT_JOB_VACANCY. Si SÍ es una vacante, transcribe todo el texto visible."
+                client = get_gemini_client()
+                if client:
+                    contents_payload = [
+                        types.Part.from_bytes(data=compressed_bytes, mime_type="image/jpeg"),
+                        ocr_prompt
+                    ]
+                    ocr_resp = safe_generate_content(client, contents_payload)
+                    ocr_text = ocr_resp.text.strip()
+                    if "ERROR_NOT_JOB_VACANCY" in ocr_text or len(ocr_text) < 15:
+                        raise HTTPException(
+                            status_code=400,
+                            detail="La imagen o captura subida no es una oferta de trabajo válida. Por favor, sube una foto con los requisitos de un empleo real."
+                        )
+                    if ocr_text:
+                        job_input = (job_input + "\n\n" + ocr_text).strip()
+            except HTTPException:
+                raise
             except Exception as ocr_err:
                 print("OCR job image extraction notice:", ocr_err)
 
@@ -605,18 +620,26 @@ async def analyze_job_match(payload: JobMatchRequest):
             except Exception as url_err:
                 print("URL fetch notice:", url_err)
 
+        if not job_input or len(job_input.strip()) < 15:
+            raise HTTPException(
+                status_code=400,
+                detail="El contenido o imagen ingresado no contiene suficiente información de una oferta de empleo. Por favor, ingresa los detalles de una vacante laboral."
+            )
+
         prompt = f"""
 Eres un reclutador experto y sistema de filtrado ATS.
-Compara el siguiente currículum con la oferta de empleo provista.
+Evalúa primero si el siguiente texto corresponde a una oferta de empleo o vacante laboral (requisitos, funciones, perfil deseado).
 
 CV del candidato:
 {json.dumps(payload.resume_data, ensure_ascii=False)}
 
-Oferta de Empleo / Vacante:
+Texto provisto para la Oferta de Empleo / Vacante:
 {job_input}
 
 Devuelve un JSON estricto:
 {{
+    "is_valid_job": true,
+    "invalid_reason": "Si NO es una vacante laboral (ej. Es un texto aleatorio, receta, chat o documento no laboral), explica brevemente por qué.",
     "match_score": 85,
     "matching_keywords": ["habilidad 1", "habilidad 2"],
     "missing_keywords": ["habilidad faltante 1", "habilidad faltante 2"],
@@ -627,8 +650,17 @@ Devuelve un JSON estricto:
 
         raw_text = safe_generate_text(prompt, json_mode=True)
         cleaned = clean_json_response(raw_text)
-        return json.loads(cleaned)
+        parsed_res = json.loads(cleaned)
+
+        if not parsed_res.get("is_valid_job", True):
+            reason = parsed_res.get("invalid_reason") or "El texto o imagen ingresado no corresponde a una oferta de trabajo o vacante laboral válida."
+            raise HTTPException(status_code=400, detail=reason)
+
+        return parsed_res
+
     except Exception as e:
+        if isinstance(e, HTTPException):
+            raise
         raise HTTPException(status_code=500, detail=f"Error al analizar vacante: {str(e)}")
 
 @app.post("/enhance-bullet")
