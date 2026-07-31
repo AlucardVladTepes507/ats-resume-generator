@@ -64,40 +64,36 @@ def safe_generate_content(primary_client, contents):
     elif not clients:
         clients = [primary_client] if primary_client else []
 
-    models_to_try = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-1.5-flash']
+    models_to_try = ['gemini-flash-latest', 'gemini-2.0-flash', 'gemini-2.0-flash-lite']
     last_error = None
 
     for client_inst in clients:
         for model in models_to_try:
-            for attempt in range(2):
-                try:
-                    response = client_inst.models.generate_content(
-                        model=model,
-                        contents=contents
-                    )
-                    return response
-                except Exception as e:
-                    err_str = str(e)
-                    last_error = e
-                    if any(k in err_str for k in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "quota"]):
-                        time.sleep(0.5)
-                        continue
-                    else:
-                        break
+            try:
+                response = client_inst.models.generate_content(
+                    model=model,
+                    contents=contents
+                )
+                return response
+            except Exception as e:
+                err_str = str(e)
+                last_error = e
+                print(f"Gemini model {model} notice:", err_str[:150])
+                continue
 
     if last_error:
         err_msg = str(last_error)
         if any(k in err_msg for k in ["429", "RESOURCE_EXHAUSTED", "quota", "Quota"]):
             raise HTTPException(
                 status_code=429,
-                detail="Se ha alcanzado temporalmente el límite de velocidad por minuto de la IA de Google (Error 429). Por favor, espera 10 segundos y vuelve a intentar."
+                detail="Se ha alcanzado temporalmente el límite de velocidad por minuto de la IA. Por favor, espera unos segundos y vuelve a intentar."
             )
         elif any(k in err_msg for k in ["503", "UNAVAILABLE"]):
             raise HTTPException(
                 status_code=503,
-                detail="La Inteligencia Artificial de Google está experimentando alta demanda. Por favor, reintenta en unos segundos."
+                detail="La Inteligencia Artificial está experimentando alta demanda. Por favor, reintenta en unos segundos."
             )
-        raise HTTPException(status_code=500, detail=f"Error al procesar con IA: {err_msg}")
+        raise HTTPException(status_code=400, detail="No se pudo procesar la imagen o texto. Por favor, asegúrate de subir una captura o vacante de empleo válida.")
 
 import urllib.request
 
