@@ -31,11 +31,19 @@ export default function AtsMatchAnalyzer({ resumeData }) {
         })
 
         const data = await response.json()
-        if (response.ok && data.extracted_text) {
+        if (!response.ok) {
+          setImageBase64(null)
+          setImageName('')
+          if (fileInputRef.current) fileInputRef.current.value = ''
+          throw new Error(data.detail || 'La imagen subida no corresponde a una oferta de empleo válida.')
+        }
+        if (data.extracted_text) {
           setJobDescription((prev) => (prev ? prev + '\n\n' + data.extracted_text : data.extracted_text))
         }
       } catch (err) {
-        console.log('Image extraction notice:', err)
+        setError(err.message || 'La imagen subida no corresponde a una oferta de trabajo válida.')
+        setImageBase64(null)
+        setImageName('')
       } finally {
         setIsExtractingImage(false)
       }

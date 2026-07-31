@@ -548,7 +548,7 @@ async def extract_job_image_text(payload: JobImageExtractRequest):
         img_bytes = base64.b64decode(encoded)
         compressed_bytes = compress_image_for_ai(img_bytes)
 
-        prompt = "Analiza esta captura o imagen. Si la imagen NO contiene una oferta de empleo, anuncio laboral, descripción de puesto o vacante de trabajo (por ejemplo es una foto personal, meme, factura o documento no relacionado), responde ÚNICAMENTE con: ERROR_NOT_JOB_VACANCY. Si SÍ contiene una vacante de empleo, transcribe de forma limpia y exacta todo el texto visible (requisitos, funciones y competencias)."
+        prompt = "Analiza la imagen provista con atención. ¿Esta foto o captura representa una oferta de trabajo, anuncio laboral, descripción de puesto o vacante de empleo? Si la imagen es la foto de una persona, niño, cara, paisaje, vehículo, factura, meme u objeto no relacionado con un anuncio de trabajo, responde ÚNICAMENTE con el código: ERROR_NOT_JOB_VACANCY. Si SÍ contiene una vacante de empleo, transcribe de forma limpia y exacta todo el texto visible (requisitos, funciones y competencias)."
 
         contents_payload = [
             types.Part.from_bytes(data=compressed_bytes, mime_type="image/jpeg"),
@@ -558,10 +558,10 @@ async def extract_job_image_text(payload: JobImageExtractRequest):
         response = safe_generate_content(client, contents_payload)
         text_out = response.text.strip()
 
-        if "ERROR_NOT_JOB_VACANCY" in text_out or len(text_out) < 15:
+        if "ERROR_NOT_JOB_VACANCY" in text_out or len(text_out) < 20:
             raise HTTPException(
                 status_code=400,
-                detail="La imagen o captura subida no corresponde a una oferta de trabajo válida. Por favor, sube una foto de un anuncio o vacante de empleo real."
+                detail="La imagen subida no parece ser una oferta de empleo válida (parece una foto personal u objeto). Por favor, sube una captura con los requisitos de un trabajo real."
             )
 
         return {"extracted_text": text_out}
@@ -578,30 +578,25 @@ async def analyze_job_match(payload: JobMatchRequest):
 
         # If an image base64 of job screenshot is provided, extract text via AI Vision
         if payload.image_base64:
-            try:
-                encoded = payload.image_base64.split(",", 1)[-1] if "," in payload.image_base64 else payload.image_base64
-                img_bytes = base64.b64decode(encoded)
-                compressed_bytes = compress_image_for_ai(img_bytes)
-                ocr_prompt = "Analiza la imagen. Si NO es una oferta laboral, responde: ERROR_NOT_JOB_VACANCY. Si SÍ es una vacante, transcribe todo el texto visible."
-                client = get_gemini_client()
-                if client:
-                    contents_payload = [
-                        types.Part.from_bytes(data=compressed_bytes, mime_type="image/jpeg"),
-                        ocr_prompt
-                    ]
-                    ocr_resp = safe_generate_content(client, contents_payload)
-                    ocr_text = ocr_resp.text.strip()
-                    if "ERROR_NOT_JOB_VACANCY" in ocr_text or len(ocr_text) < 15:
-                        raise HTTPException(
-                            status_code=400,
-                            detail="La imagen o captura subida no es una oferta de trabajo válida. Por favor, sube una foto con los requisitos de un empleo real."
-                        )
-                    if ocr_text:
-                        job_input = (job_input + "\n\n" + ocr_text).strip()
-            except HTTPException:
-                raise
-            except Exception as ocr_err:
-                print("OCR job image extraction notice:", ocr_err)
+            encoded = payload.image_base64.split(",", 1)[-1] if "," in payload.image_base64 else payload.image_base64
+            img_bytes = base64.b64decode(encoded)
+            compressed_bytes = compress_image_for_ai(img_bytes)
+            ocr_prompt = "Analiza la imagen provista. Si es una foto personal, persona, objeto o NO es un anuncio de empleo, responde: ERROR_NOT_JOB_VACANCY. Si SÍ es una vacante, transcribe todo el texto de la oferta."
+            client = get_gemini_client()
+            if client:
+                contents_payload = [
+                    types.Part.from_bytes(data=compressed_bytes, mime_type="image/jpeg"),
+                    ocr_prompt
+                ]
+                ocr_resp = safe_generate_content(client, contents_payload)
+                ocr_text = ocr_resp.text.strip()
+                if "ERROR_NOT_JOB_VACANCY" in ocr_text or len(ocr_text) < 20:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="La imagen subida no contiene una oferta de trabajo válida (parece una foto personal u objeto). Por favor, sube una foto con un anuncio de empleo real."
+                    )
+                if ocr_text:
+                    job_input = (job_input + "\n\n" + ocr_text).strip()
 
         # If input looks like a URL, try fetching its content
         if job_input.startswith("http://") or job_input.startswith("https://"):
@@ -623,12 +618,13 @@ async def analyze_job_match(payload: JobMatchRequest):
         if not job_input or len(job_input.strip()) < 15:
             raise HTTPException(
                 status_code=400,
-                detail="El contenido o imagen ingresado no contiene suficiente información de una oferta de empleo. Por favor, ingresa los detalles de una vacante laboral."
+                detail="El contenido o imagen ingresado no contiene suficiente información de una oferta de empleo. Por favor, ingresa los detalles de una vacante laboral real."
             )
 
         prompt = f"""
-Eres un reclutador experto y sistema de filtrado ATS.
-Evalúa primero si el siguiente texto corresponde a una oferta de empleo o vacante laboral (requisitos, funciones, perfil deseado).
+Eres un auditor estricto de reclutamiento ATS.
+Paso 1: Evalúa si el 'Texto provisto para la Vacante' contiene una OFERTA DE EMPLEO O VACANTE LABORAL REAL (con descripción de puesto, requisitos o competencias).
+Si el texto provisto es una foto personal, paisaje, documento aleatorio, receta, chat o no contiene requisitos laborales, establece `"is_valid_job": false` y `"match_score": 0`.
 
 CV del candidato:
 {json.dumps(payload.resume_data, ensure_ascii=False)}
@@ -639,7 +635,7 @@ Texto provisto para la Oferta de Empleo / Vacante:
 Devuelve un JSON estricto:
 {{
     "is_valid_job": true,
-    "invalid_reason": "Si NO es una vacante laboral (ej. Es un texto aleatorio, receta, chat o documento no laboral), explica brevemente por qué.",
+    "invalid_reason": "Si NO es una vacante laboral, explica amablemente qué contiene la foto/texto y por qué no es una oferta de trabajo.",
     "match_score": 85,
     "matching_keywords": ["habilidad 1", "habilidad 2"],
     "missing_keywords": ["habilidad faltante 1", "habilidad faltante 2"],
@@ -652,8 +648,8 @@ Devuelve un JSON estricto:
         cleaned = clean_json_response(raw_text)
         parsed_res = json.loads(cleaned)
 
-        if not parsed_res.get("is_valid_job", True):
-            reason = parsed_res.get("invalid_reason") or "El texto o imagen ingresado no corresponde a una oferta de trabajo o vacante laboral válida."
+        if not parsed_res.get("is_valid_job", True) or parsed_res.get("match_score", 0) == 0:
+            reason = parsed_res.get("invalid_reason") or "La imagen o texto ingresado no corresponde a una oferta de trabajo o vacante laboral válida."
             raise HTTPException(status_code=400, detail=reason)
 
         return parsed_res
