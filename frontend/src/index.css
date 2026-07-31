@@ -3389,17 +3389,15 @@ body {
 
 .score-badge {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 105px;
-  height: 105px;
-  min-width: 105px;
+  width: 90px;
+  height: 90px;
+  min-width: 90px;
   border-radius: 50%;
   text-align: center;
   border: 3.5px solid;
-  padding: 0.4rem;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
   box-sizing: border-box;
 }
 
@@ -3422,21 +3420,17 @@ body {
 }
 
 .score-number {
-  font-size: 1.75rem;
+  font-size: 1.9rem;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.03em;
 }
 
-.score-label {
-  font-size: 0.62rem;
+.score-title {
+  font-size: 1.05rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin-top: 0.25rem;
-  line-height: 1.15;
-  word-break: break-word;
-  text-align: center;
+  color: var(--text-primary);
+  margin-bottom: 0.35rem;
 }
 
 .score-summary {

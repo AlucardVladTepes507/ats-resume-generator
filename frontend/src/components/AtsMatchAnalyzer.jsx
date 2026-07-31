@@ -174,15 +174,15 @@ export default function AtsMatchAnalyzer({ resumeData }) {
             <div className="score-card">
               <div className={`score-badge ${matchScore >= 80 ? 'high' : matchScore >= 60 ? 'medium' : 'low'}`}>
                 <span className="score-number">{matchScore}%</span>
-                <span className="score-label">Compatibilidad ATS</span>
               </div>
               <div className="score-summary">
+                <h4 className="score-title">Compatibilidad ATS: <strong>{matchScore}%</strong></h4>
                 {matchScore >= 80 ? (
-                  <p className="status-good">¡Excelente encaje! Tu CV contiene las palabras clave principales requeridas.</p>
+                  <p className="status-good">¡Excelente encaje! Tu CV contiene las palabras clave principales requeridas para este puesto.</p>
                 ) : matchScore >= 60 ? (
-                  <p className="status-medium">Buen nivel, pero incorporar algunas palabras clave faltantes aumentará tus entrevistas.</p>
+                  <p className="status-medium">Buen nivel, pero incorporar algunas palabras clave faltantes aumentará tus posibilidades de entrevista.</p>
                 ) : (
-                  <p className="status-low">Bajo porcentaje ({matchScore}%). Te recomendamos agregar las competencias y palabras clave sugeridas.</p>
+                  <p className="status-low">Bajo porcentaje de encaje ({matchScore}%). Te recomendamos agregar las competencias y palabras clave sugeridas a continuación.</p>
                 )}
               </div>
             </div>
