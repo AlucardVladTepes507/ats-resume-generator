@@ -182,9 +182,15 @@ def start_telegram_bot():
     except Exception as e:
         print("Failed to launch Telegram bot thread:", e)
 
+import base64
+
+class JobImageExtractRequest(BaseModel):
+    image_base64: str
+
 class JobMatchRequest(BaseModel):
     resume_data: Dict[str, Any]
-    job_description: str
+    job_description: Optional[str] = ""
+    image_base64: Optional[str] = None
 
 class EnhanceBulletRequest(BaseModel):
     bullet: str
@@ -530,6 +536,30 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error procesando el archivo: {str(e)}")
 
+@app.post("/extract-job-image-text")
+@app.post("/extract-job-image-text/")
+async def extract_job_image_text(payload: JobImageExtractRequest):
+    client = get_gemini_client()
+    if not client:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no configurada")
+    
+    try:
+        encoded = payload.image_base64.split(",", 1)[-1] if "," in payload.image_base64 else payload.image_base64
+        img_bytes = base64.b64decode(encoded)
+        compressed_bytes = compress_image_for_ai(img_bytes)
+
+        prompt = "Transcribe y extrae de forma limpia y exacta todo el texto visible de esta captura o imagen de oferta laboral (requisitos, funciones y competencias solicitadas). Devuelve ÚNICAMENTE el texto extraído sin introducciones."
+
+        contents_payload = [
+            types.Part.from_bytes(data=compressed_bytes, mime_type="image/jpeg"),
+            prompt
+        ]
+
+        response = safe_generate_content(client, contents_payload)
+        return {"extracted_text": response.text.strip()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al extraer texto de la imagen de vacante: {str(e)}")
+
 @app.post("/analyze-job-match")
 @app.post("/analyze-job-match/")
 async def analyze_job_match(payload: JobMatchRequest):
@@ -539,6 +569,25 @@ async def analyze_job_match(payload: JobMatchRequest):
     
     try:
         job_input = (payload.job_description or "").strip()
+
+        # If an image base64 of job screenshot is provided, extract text via AI Vision
+        if payload.image_base64:
+            try:
+                encoded = payload.image_base64.split(",", 1)[-1] if "," in payload.image_base64 else payload.image_base64
+                img_bytes = base64.b64decode(encoded)
+                compressed_bytes = compress_image_for_ai(img_bytes)
+                ocr_prompt = "Transcribe y extrae todo el texto visible de esta captura o imagen de oferta laboral."
+                contents_payload = [
+                    types.Part.from_bytes(data=compressed_bytes, mime_type="image/jpeg"),
+                    ocr_prompt
+                ]
+                ocr_resp = safe_generate_content(client, contents_payload)
+                ocr_text = ocr_resp.text.strip()
+                if ocr_text:
+                    job_input = (job_input + "\n\n" + ocr_text).strip()
+            except Exception as ocr_err:
+                print("OCR job image extraction notice:", ocr_err)
+
         # If input looks like a URL, try fetching its content
         if job_input.startswith("http://") or job_input.startswith("https://"):
             try:

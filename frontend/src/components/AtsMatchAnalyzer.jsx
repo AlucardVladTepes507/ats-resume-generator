@@ -1,15 +1,78 @@
-import React, { useState } from 'react'
-import { Target, CheckCircle2, AlertTriangle, Sparkles, Lightbulb } from 'lucide-react'
+import React, { useState, useRef } from 'react'
+import { Target, CheckCircle2, AlertTriangle, Sparkles, Lightbulb, Image as ImageIcon, X, Upload, Clipboard } from 'lucide-react'
 
 export default function AtsMatchAnalyzer({ resumeData }) {
   const [jobDescription, setJobDescription] = useState('')
+  const [imageBase64, setImageBase64] = useState(null)
+  const [imageName, setImageName] = useState('')
+  const [isExtractingImage, setIsExtractingImage] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
+  const fileInputRef = useRef(null)
+
+  const processImageFile = async (file) => {
+    if (!file || !file.type.startsWith('image/')) return
+    setError(null)
+    setIsExtractingImage(true)
+    setImageName(file.name || 'captura_de_pantalla.png')
+
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      const base64Data = e.target.result
+      setImageBase64(base64Data)
+
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      try {
+        const response = await fetch(`${API_URL}/extract-job-image-text`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image_base64: base64Data })
+        })
+
+        const data = await response.json()
+        if (response.ok && data.extracted_text) {
+          setJobDescription((prev) => (prev ? prev + '\n\n' + data.extracted_text : data.extracted_text))
+        }
+      } catch (err) {
+        console.log('Image extraction notice:', err)
+      } finally {
+        setIsExtractingImage(false)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0]
+    if (file) processImageFile(file)
+  }
+
+  const handlePaste = (e) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile()
+        if (file) {
+          e.preventDefault()
+          processImageFile(file)
+          break
+        }
+      }
+    }
+  }
+
+  const handleRemoveImage = () => {
+    setImageBase64(null)
+    setImageName('')
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
   const handleAnalyze = async () => {
-    if (!jobDescription.trim()) {
-      setError('Por favor, pega el texto de la oferta de trabajo o vacante.')
+    if (!jobDescription.trim() && !imageBase64) {
+      setError('Por favor, pega el texto, enlace (URL) o sube una captura/imagen de la vacante.')
       return
     }
     setError(null)
@@ -23,7 +86,8 @@ export default function AtsMatchAnalyzer({ resumeData }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           resume_data: resumeData,
-          job_description: jobDescription
+          job_description: jobDescription,
+          image_base64: imageBase64
         })
       })
 
@@ -46,21 +110,54 @@ export default function AtsMatchAnalyzer({ resumeData }) {
         <Target size={22} className="analyzer-icon" />
         <div>
           <h3>Calculador de Compatibilidad ATS</h3>
-          <p>Pega la descripción o el enlace (URL) de la vacante para medir la puntuación de tu CV y detectar palabras clave faltantes.</p>
+          <p>Pega el texto, enlace (URL) o sube/pega una captura de pantalla de la vacante para medir la compatibilidad de tu CV.</p>
         </div>
       </div>
 
-      <div className="analyzer-input-group">
+      <div className="analyzer-input-group" onPaste={handlePaste}>
+        {/* Hidden Image File Input */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept="image/*"
+          onChange={handleFileChange}
+          style={{ display: 'none' }}
+        />
+
+        <div className="analyzer-toolbar">
+          <button
+            type="button"
+            className="btn-secondary upload-job-img-btn"
+            onClick={() => fileInputRef.current?.click()}
+            title="Subir una foto o captura de pantalla de la oferta laboral"
+          >
+            <ImageIcon size={16} />
+            <span>{isExtractingImage ? 'Extrayendo texto con IA...' : '🖼️ Subir o Pegar Captura'}</span>
+          </button>
+          <span className="paste-hint">💡 O pega una imagen de captura directamente con <code>Ctrl + V</code></span>
+        </div>
+
+        {imageName && (
+          <div className="attached-image-badge">
+            <ImageIcon size={15} />
+            <span>Imagen de la oferta: <strong>{imageName}</strong></span>
+            <button type="button" className="remove-img-btn" onClick={handleRemoveImage} title="Quitar imagen">
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
         <textarea
           rows={5}
-          placeholder="Pega aquí el texto completo o el enlace (URL) de la oferta laboral (requisitos, funciones, competencias requeridas)..."
+          placeholder="Pega aquí el texto completo, el enlace (URL) o captura de la oferta laboral (requisitos, funciones, competencias)..."
           value={jobDescription}
           onChange={(e) => setJobDescription(e.target.value)}
         />
+
         <button
           className="btn-primary analyze-btn"
           onClick={handleAnalyze}
-          disabled={isAnalyzing}
+          disabled={isAnalyzing || isExtractingImage}
         >
           <Sparkles size={16} />
           <span>{isAnalyzing ? 'Analizando con IA...' : 'Analizar Compatibilidad ATS'}</span>
