@@ -188,6 +188,11 @@ class JobMatchRequest(BaseModel):
     job_description: Optional[str] = ""
     image_base64: Optional[str] = None
 
+class AutoOptimizeResumeRequest(BaseModel):
+    resume_data: Dict[str, Any]
+    job_description: Optional[str] = ""
+    missing_keywords: Optional[List[str]] = []
+
 class EnhanceBulletRequest(BaseModel):
     bullet: str
     position: Optional[str] = ""
@@ -654,6 +659,54 @@ Devuelve un JSON estricto:
         if isinstance(e, HTTPException):
             raise
         raise HTTPException(status_code=500, detail=f"Error al analizar vacante: {str(e)}")
+
+@app.post("/auto-optimize-resume")
+@app.post("/auto-optimize-resume/")
+async def auto_optimize_resume(payload: AutoOptimizeResumeRequest):
+    try:
+        keywords_str = ", ".join(payload.missing_keywords or [])
+        job_str = (payload.job_description or "")[:3000]
+
+        prompt = f"""
+Eres un redactor experto de CVs de alto nivel para sistemas de selección ATS.
+Tu objetivo es optimizar el currículum provisto agregando de forma natural e inteligente las competencias y palabras clave faltantes de la vacante, sin inventar datos falsos de empresas o fechas.
+
+Palabras clave faltantes a integrar prioritariamente:
+{keywords_str}
+
+Oferta laboral de referencia:
+{job_str}
+
+CV Actual en formato JSON:
+{json.dumps(payload.resume_data, ensure_ascii=False)}
+
+INSTRUCCIONES:
+1. Mejora el perfil/resumen profesional (`personal_info.summary`) para alinearlo con el puesto y las palabras clave.
+2. Añade las habilidades faltantes relevantes a la lista de `skills`.
+3. Mejora las viñetas de `experience` integrando sutilmente palabras clave requeridas con verbos de acción fuertes.
+4. Mantén intactos los nombres de personas, empresas, fechas y datos de contacto.
+5. Devuelve ÚNICAMENTE la estructura JSON completa actualizada del CV con las mismas claves exactas: `personal_info`, `experience`, `education`, `skills`, `certifications`, `languages`, `projects`.
+
+JSON Estricto del CV Optimizado:
+"""
+
+        raw_text = safe_generate_text(prompt, json_mode=True)
+        cleaned = clean_json_response(raw_text)
+        updated_resume = json.loads(cleaned)
+
+        if "personal_info" not in updated_resume:
+            updated_resume["personal_info"] = payload.resume_data.get("personal_info", {})
+        if "experience" not in updated_resume:
+            updated_resume["experience"] = payload.resume_data.get("experience", [])
+        if "skills" not in updated_resume:
+            updated_resume["skills"] = payload.resume_data.get("skills", [])
+
+        return {"optimized_resume": updated_resume}
+
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise
+        raise HTTPException(status_code=500, detail=f"Error al auto-optimizar CV: {str(e)}")
 
 @app.post("/enhance-bullet")
 @app.post("/enhance-bullet/")

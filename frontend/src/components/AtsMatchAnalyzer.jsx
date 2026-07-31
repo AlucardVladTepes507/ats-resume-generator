@@ -1,15 +1,55 @@
 import React, { useState, useRef } from 'react'
 import { Target, CheckCircle2, AlertTriangle, Sparkles, Lightbulb, Image as ImageIcon, X, Upload, Clipboard } from 'lucide-react'
 
-export default function AtsMatchAnalyzer({ resumeData }) {
+export default function AtsMatchAnalyzer({ resumeData, setResumeData, setViewMode }) {
   const [jobDescription, setJobDescription] = useState('')
   const [imageBase64, setImageBase64] = useState(null)
   const [imageName, setImageName] = useState('')
   const [isExtractingImage, setIsExtractingImage] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [isOptimizing, setIsOptimizing] = useState(false)
+  const [optimizeSuccess, setOptimizeSuccess] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const fileInputRef = useRef(null)
+
+  const handleAutoOptimize = async () => {
+    if (!result) return
+    setIsOptimizing(true)
+    setError(null)
+    setOptimizeSuccess(false)
+
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+    try {
+      const response = await fetch(`${API_URL}/auto-optimize-resume`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resume_data: resumeData,
+          job_description: jobDescription,
+          missing_keywords: result.missing_keywords || []
+        })
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.detail || 'Error al auto-optimizar el CV')
+      }
+
+      if (data.optimized_resume && setResumeData) {
+        setResumeData(data.optimized_resume)
+        setOptimizeSuccess(true)
+        setTimeout(() => {
+          if (setViewMode) setViewMode('editor')
+        }, 2000)
+      }
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setIsOptimizing(false)
+    }
+  }
 
   const processImageFile = async (file) => {
     if (!file || !file.type.startsWith('image/')) return
@@ -240,6 +280,33 @@ export default function AtsMatchAnalyzer({ resumeData }) {
                 )}
               </div>
             </div>
+
+            {/* 1-Click Auto-Optimize CTA Banner */}
+            <div className="auto-optimize-banner">
+              <div className="banner-info">
+                <Sparkles className="sparkles-icon" size={24} />
+                <div>
+                  <h4>✨ ¿Quieres adaptar tu CV a esta vacante en 1-Clic?</h4>
+                  <p>La IA inyectará sutilmente las palabras clave faltantes en tus viñetas de experiencia y habilidades para subir tu compatibilidad ATS al máximo.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-auto-optimize"
+                onClick={handleAutoOptimize}
+                disabled={isOptimizing}
+              >
+                <Sparkles size={18} />
+                <span>{isOptimizing ? 'Optimizando tu CV con IA...' : '✨ Ajustar mi CV a esta Vacante (1-Clic)'}</span>
+              </button>
+            </div>
+
+            {optimizeSuccess && (
+              <div className="optimize-success-card">
+                <CheckCircle2 size={20} />
+                <span>¡Tu CV ha sido optimizado con éxito con las palabras clave de la vacante! Redireccionando al editor...</span>
+              </div>
+            )}
 
           {/* Keywords Breakdown */}
           <div className="keywords-grid">

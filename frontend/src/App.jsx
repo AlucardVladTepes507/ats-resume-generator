@@ -616,7 +616,7 @@ function App() {
           {/* VIEW MODE 2: ATS MATCH ANALYZER */}
           {viewMode === 'analyzer' && (
             <div className="feature-view-box">
-              <AtsMatchAnalyzer resumeData={resumeData} />
+              <AtsMatchAnalyzer resumeData={resumeData} setResumeData={setResumeData} setViewMode={setViewMode} />
             </div>
           )}
 
