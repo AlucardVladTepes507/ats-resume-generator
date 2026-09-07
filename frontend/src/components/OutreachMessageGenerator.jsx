@@ -64,7 +64,7 @@ export default function OutreachMessageGenerator({ resumeData }) {
           <label>Nombre de la Empresa</label>
           <input
             type="text"
-            placeholder="Ej. Softvici, Banco General..."
+            placeholder="Ej. Banco General, Google, Amazon..."
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
           />

@@ -101,7 +101,7 @@ export default function CoverLetterGenerator({ resumeData }) {
           <label>Nombre de la Empresa</label>
           <input
             type="text"
-            placeholder="Ej. Softvici, Banco General, Amazon..."
+            placeholder="Ej. Banco General, Amazon, TechCorp..."
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
           />

@@ -24,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ENV_PATH = os.path.join(BASE_DIR, ".env")
 load_dotenv(dotenv_path=ENV_PATH, override=True)
 
-def compress_image_for_ai(image_bytes: bytes, max_dim: int = 1400) -> bytes:
+def compress_image_for_ai(image_bytes: bytes, max_dim: int = 1200, quality: int = 75) -> bytes:
     try:
         img = Image.open(io.BytesIO(image_bytes))
         img = img.convert('RGB')
@@ -40,7 +40,7 @@ def compress_image_for_ai(image_bytes: bytes, max_dim: int = 1400) -> bytes:
             img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
             
         output = io.BytesIO()
-        img.save(output, format='JPEG', quality=82, optimize=True)
+        img.save(output, format='JPEG', quality=quality, optimize=True)
         return output.getvalue()
     except Exception as err:
         print("Image compression skipped:", err)
@@ -69,7 +69,7 @@ def safe_generate_content(primary_client, contents):
     elif not clients:
         clients = [primary_client] if primary_client else []
 
-    models_to_try = ['gemini-flash-latest', 'gemini-2.0-flash', 'gemini-2.0-flash-lite']
+    models_to_try = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-2.0-flash-lite']
     last_error = None
 
     for client_inst in clients:
@@ -98,7 +98,7 @@ def safe_generate_content(primary_client, contents):
                 status_code=503,
                 detail="La Inteligencia Artificial está experimentando alta demanda. Por favor, reintenta en unos segundos."
             )
-        raise HTTPException(status_code=400, detail="No se pudo procesar la imagen o texto. Por favor, asegúrate de subir una captura o vacante de empleo válida.")
+        raise HTTPException(status_code=400, detail="No se pudo procesar el documento con la IA. Por favor, reintenta en unos momentos.")
 
 import urllib.request
 
@@ -217,9 +217,10 @@ Eres un experto analizador, corrector ortográfico y transcriptor de currículum
 Analiza la información proporcionada (texto de PDF o foto/imagen de currículum impreso o manuscrito).
 
 Instrucciones de Procesamiento:
-1. CORRECCIÓN AUTOMÁTICA DE ORTOGRAFÍA Y GRAMÁTICA: Revisa y corrige minuciosamente la redacción, tildes y gramática de todos los campos (resumen, cargos, logros, habilidades) en su idioma nativo (Español o Inglés).
-2. GENERACIÓN AUTOMÁTICA DE PERFIL LINKEDIN: Basado en la experiencia laboral detectada, genera automáticamente un Titular optimizado con palabras clave y una sección "Acerca de" narrativa profesional en primera persona en el objeto `linkedin_profile`.
-3. TRANSCRIBIR CON PRECISIÓN: Si el documento es escrito a mano o una foto, extrae con máxima exactitud los nombres, empresas y fechas.
+1. EXTRACCIÓN ESTRICTA Y PRIVACIDAD TOTAL: Extrae ÚNICAMENTE la información verídica y exacta que aparezca en el documento provisto (nombre, contacto, enlaces, experiencia, educación, habilidades). JAMÁS inventes nombres, correos ni datos de contacto o experiencia que no estén en el documento. Si un campo no existe en el documento del candidato, déjalo como string vacío ("") o lista vacía ([]).
+2. CORRECCIÓN AUTOMÁTICA DE ORTOGRAFÍA Y GRAMÁTICA: Revisa y corrige minuciosamente la redacción, tildes y gramática de todos los campos extraídos del documento en su idioma original (Español o Inglés).
+3. GENERACIÓN AUTOMÁTICA DE PERFIL LINKEDIN: Basado ÚNICAMENTE en la experiencia laboral y habilidades reales detectadas del candidato en su documento, genera automáticamente un Titular optimizado con palabras clave y una sección "Acerca de" narrativa profesional en primera persona en el objeto `linkedin_profile`.
+4. TRANSCRIBIR CON PRECISIÓN: Si el documento es una foto o escaneo, extrae con máxima exactitud los nombres, empresas, cargos, logros y fechas reales.
 
 Devuelve ÚNICAMENTE el JSON estricto:
 {
@@ -232,8 +233,8 @@ Devuelve ÚNICAMENTE el JSON estricto:
         "summary": ""
     },
     "linkedin_profile": {
-        "headline": "Titular de LinkedIn optimizado con palabras clave (máx 220 caract.)",
-        "about": "Sección 'Acerca de' narrativa en primera persona, perspicaz y profesional"
+        "headline": "Titular de LinkedIn optimizado con palabras clave del candidato",
+        "about": "Sección 'Acerca de' narrativa en primera persona basada en el perfil del candidato"
     },
     "experience": [
         {
@@ -241,7 +242,7 @@ Devuelve ÚNICAMENTE el JSON estricto:
             "position": "",
             "start_date": "",
             "end_date": "",
-            "description": ["bullet 1 mejorado", "bullet 2 mejorado"]
+            "description": ["bullet 1", "bullet 2"]
         }
     ],
     "education": [
@@ -290,8 +291,17 @@ def read_root():
 
 def parse_extracted_text_fallback(text: str) -> Dict[str, Any]:
     lines = [l.strip() for l in text.splitlines() if l.strip()]
-    name = lines[0] if lines else "CESAR PEREZ"
     
+    # Extract candidate name from first non-empty header line (ignoring generic document headers)
+    name = ""
+    for line in lines[:5]:
+        clean_l = line.strip()
+        if clean_l.upper() not in ["CURRICULUM VITAE", "CURRICULUM", "CV", "HOJA DE VIDA", "RESUME"] and len(clean_l) > 2:
+            name = clean_l
+            break
+    if not name and lines:
+        name = lines[0]
+        
     email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text)
     email = email_match.group(0) if email_match else ""
     
@@ -314,15 +324,15 @@ def parse_extracted_text_fallback(text: str) -> Dict[str, Any]:
 
     for line in lines[1:]:
         upper_l = line.upper()
-        if "RESUMEN" in upper_l or "PERFIL" in upper_l:
+        if "RESUMEN" in upper_l or "PERFIL" in upper_l or "SUMMARY" in upper_l or "PROFILE" in upper_l:
             current_section = "summary"
             continue
-        elif "EXPERIENCIA" in upper_l or "LABORAL" in upper_l:
+        elif "EXPERIENCIA" in upper_l or "LABORAL" in upper_l or "EXPERIENCE" in upper_l or "WORK" in upper_l:
             if current_section == "summary" and sec_summary:
                 pass
             current_section = "experience"
             continue
-        elif "EDUCACIÓN" in upper_l or "EDUCACION" in upper_l:
+        elif "EDUCACIÓN" in upper_l or "EDUCACION" in upper_l or "EDUCATION" in upper_l or "FORMACIÓN" in upper_l or "ESTUDIOS" in upper_l:
             if exp_buffer:
                 experiences.append(exp_buffer)
                 exp_buffer = []
@@ -356,14 +366,14 @@ def parse_extracted_text_fallback(text: str) -> Dict[str, Any]:
         header = eb[0] if eb else "Empresa"
         parts = re.split(r'[—\-]', header, maxsplit=1)
         comp = parts[0].strip() if len(parts) > 0 else "Empresa"
-        pos = parts[1].strip() if len(parts) > 1 else "Especialista"
+        pos = parts[1].strip() if len(parts) > 1 else "Puesto"
         
         dates_match = re.search(r'(\w+\s*\d{4}\s*[-—]\s*\w+\s*\d{0,4}|\d{4}\s*[-—]\s*\w+|Presente)', " ".join(eb))
         dates = dates_match.group(0) if dates_match else "Presente"
         
         bullets = [l.lstrip('•-* ').strip() for l in eb[1:] if l.strip()]
         if not bullets:
-            bullets = ["Desarrollo y gestión de responsabilidades en el área."]
+            bullets = ["Desarrollo de funciones y responsabilidades del cargo."]
             
         parsed_experiences.append({
             "company": comp,
@@ -373,43 +383,11 @@ def parse_extracted_text_fallback(text: str) -> Dict[str, Any]:
             "description": bullets
         })
 
-    if not parsed_experiences:
-        parsed_experiences = [
-            {
-                "company": "IT SYSTEMS SOLUTIONS S.A (SOFTVICI)",
-                "position": "Técnico de Soporte IT",
-                "start_date": "Octubre 2025",
-                "end_date": "Presente",
-                "description": ["Administración y monitoreo de endpoints mediante NinjaRMM para asegurar la continuidad operativa.", "Resolución de fallas técnicas de hardware y software de forma remota y presencial.", "Gestión de respaldos y protocolos de seguridad de datos utilizando Acronis Cyber Protect."]
-            },
-            {
-                "company": "ÓRGANO JUDICIAL DE LA REPÚBLICA DE PANAMÁ",
-                "position": "Analista de Compras",
-                "start_date": "Enero 2016",
-                "end_date": "Presente",
-                "description": ["Ejecución y monitoreo de aproximadamente 200 procesos de compra anuales garantizando transparencia y eficiencia.", "Gestión de Actos Públicos y adquisiciones por Convenio Marco.", "Coordinación de requerimientos de usuarios internos y análisis de cotizaciones."]
-            },
-            {
-                "company": "SMART507",
-                "position": "CEO & Técnico Líder",
-                "start_date": "Enero 2000",
-                "end_date": "Presente",
-                "description": ["Dirección de servicios técnicos especializados en diagnóstico y reparación de equipos informáticos.", "Implementación de modelos de servicio enfocados en resolución de problemas de hardware."]
-            },
-            {
-                "company": "WESTWING",
-                "position": "Asociado de Atención al Cliente",
-                "start_date": "Junio 2025",
-                "end_date": "Octubre 2025",
-                "description": ["Soporte multicanal mediante Zendesk y Retool para la resolución de incidencias.", "Gestión de pedidos y consultas técnicas bajo estándares internacionales."]
-            }
-        ]
-
     parsed_education = []
     for ed_line in educations:
         parts = re.split(r'[—\-]', ed_line, maxsplit=1)
-        inst = parts[0].strip() if len(parts) > 0 else "Universidad"
-        deg = parts[1].strip() if len(parts) > 1 else "Grado Asociado"
+        inst = parts[0].strip() if len(parts) > 0 else "Institución Educativa"
+        deg = parts[1].strip() if len(parts) > 1 else "Grado / Carrera"
         parsed_education.append({
             "institution": inst,
             "degree": deg,
@@ -417,33 +395,24 @@ def parse_extracted_text_fallback(text: str) -> Dict[str, Any]:
             "end_date": ""
         })
 
-    if not parsed_education:
-        parsed_education = [
-            {
-                "institution": "University of the People",
-                "degree": "Grado Asociado en Ciencias de la Computación",
-                "start_date": "En curso",
-                "end_date": "Jun 2025"
-            }
-        ]
-
     raw_skills = " ".join(skills_list).replace('•', ',').replace(':', ',').replace(';', ',')
     parsed_skills = [s.strip() for s in raw_skills.split(',') if len(s.strip()) > 1]
-    if not parsed_skills:
-        parsed_skills = ["NinjaRMM", "Acronis Cyber Protect", "AnyDesk", "Soporte Nivel 1 y 2", "Mantenimiento de Hardware/Software", "Zendesk", "Retool", "nShift", "Whaticket", "Microsoft 365", "Google Workspace", "SAP MM", "Scrum Fundamentals (SFC)", "Actos Públicos", "Convenio Marco", "Análisis de Datos", "SQL", "Java", "Python", "Lógica de programación", "Español (Nativo)", "Inglés (B1)"]
+
+    first_pos = parsed_experiences[0]["position"] if parsed_experiences else "Profesional"
+    headline = f"{name} | {first_pos}" if name else first_pos
 
     return {
         "personal_info": {
             "name": name,
             "email": email,
             "phone": phone,
-            "location": location or "Ciudad de Panamá",
-            "linkedin": linkedin or "linkedin.com/in/cperez24",
-            "summary": sec_summary.strip() or "Profesional técnico con más de 10 años de trayectoria en soporte de sistemas, atención al cliente y gestión operativa. Especialista en resolución de incidencias remotas mediante herramientas RMM y gestión de plataformas de soporte multicanal como Zendesk."
+            "location": location,
+            "linkedin": linkedin,
+            "summary": sec_summary.strip()
         },
         "linkedin_profile": {
-            "headline": f"{name} | Técnico de Soporte IT | Analista de Compras | CEO SMART507",
-            "about": sec_summary.strip() or "Profesional enfocado en optimización de procesos tecnológicos y seguridad de datos."
+            "headline": headline,
+            "about": sec_summary.strip()
         },
         "experience": parsed_experiences,
         "education": parsed_education,
@@ -464,10 +433,6 @@ async def upload_file(file: UploadFile = File(...)):
             status_code=400, 
             detail="Formato no soportado. Por favor sube un PDF o una foto en formato JPG, PNG o WEBP."
         )
-    
-    client = get_gemini_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no está configurada en el servidor.")
         
     try:
         content = await file.read()
@@ -480,7 +445,7 @@ async def upload_file(file: UploadFile = File(...)):
 
         is_image_file = not is_pdf_file
         extracted_text = ""
-        contents_payload = []
+        structured_data = None
 
         if is_pdf_file:
             try:
@@ -495,41 +460,67 @@ async def upload_file(file: UploadFile = File(...)):
                                 extracted_text += " ".join([w.get('text', '') for w in words if w.get('text')]) + "\n"
             except Exception as pdf_err:
                 print("Error extracting text with pdfplumber:", pdf_err)
-                
-            if extracted_text.strip():
-                contents_payload = [f"{PROMPT_SCHEMA}\n\nTEXTO DEL CURRÍCULUM:\n{extracted_text}"]
-            else:
-                is_image_file = True
-                compressed_bytes = compress_image_for_ai(content)
-                contents_payload = [
-                    types.Part.from_bytes(data=compressed_bytes, mime_type="application/pdf"),
-                    PROMPT_SCHEMA
-                ]
+
+        if is_pdf_file and extracted_text.strip():
+            # 1. High-speed extraction with Groq Llama 3.3 70B (ultra-fast, ~1-2s)
+            groq_key = os.environ.get("GROQ_API_KEY")
+            if groq_key:
+                try:
+                    groq_resp = call_groq_api(f"{PROMPT_SCHEMA}\n\nTEXTO DEL CURRÍCULUM:\n{extracted_text}", json_mode=True)
+                    structured_data = json.loads(clean_json_response(groq_resp))
+                except Exception as groq_err:
+                    print("Groq fast parser notice, falling back to Gemini:", groq_err)
+
+            # 2. Fallback to Gemini if Groq is unavailable or errored
+            if not structured_data:
+                client = get_gemini_client()
+                if client:
+                    try:
+                        contents_payload = [f"{PROMPT_SCHEMA}\n\nTEXTO DEL CURRÍCULUM:\n{extracted_text}"]
+                        response = safe_generate_content(client, contents_payload)
+                        response_text = clean_json_response(response.text)
+                        structured_data = json.loads(response_text)
+                    except Exception as gemini_err:
+                        print("Gemini PDF parsing notice, activating clean regex parser:", gemini_err)
+
+            # 3. Final fallback for PDF text: clean regex parsing (strictly without hardcoded personal data)
+            if not structured_data:
+                structured_data = parse_extracted_text_fallback(extracted_text)
+
         else:
+            # Scanned PDF or Image file: requires Vision AI
+            is_image_file = True
+            client = get_gemini_client()
+            if not client:
+                raise HTTPException(
+                    status_code=500, 
+                    detail="GEMINI_API_KEY no está configurada en el servidor para analizar imágenes/fotos."
+                )
+
             mime_map = {
                 '.png': 'image/png',
                 '.jpg': 'image/jpeg',
                 '.jpeg': 'image/jpeg',
                 '.webp': 'image/webp'
             }
-            mime_type = mime_map.get(ext, 'image/jpeg')
-            compressed_bytes = compress_image_for_ai(content)
+            mime_type = mime_map.get(ext, 'image/jpeg') if not is_pdf_file else 'application/pdf'
+            compressed_bytes = compress_image_for_ai(content, max_dim=1200, quality=75)
             contents_payload = [
                 types.Part.from_bytes(data=compressed_bytes, mime_type=mime_type),
                 PROMPT_SCHEMA
             ]
 
-        try:
-            response = safe_generate_content(client, contents_payload)
-            response_text = clean_json_response(response.text)
-            structured_data = json.loads(response_text)
-        except Exception as ai_err:
-            print("Gemini API Exception, activating structured fallback parser:", ai_err)
-            if extracted_text and extracted_text.strip():
-                structured_data = parse_extracted_text_fallback(extracted_text)
-            else:
-                structured_data = parse_extracted_text_fallback("Curriculum Vitae")
-            
+            try:
+                response = safe_generate_content(client, contents_payload)
+                response_text = clean_json_response(response.text)
+                structured_data = json.loads(response_text)
+            except Exception as vision_err:
+                print("Gemini Vision processing error:", vision_err)
+                raise HTTPException(
+                    status_code=400,
+                    detail="No se pudo procesar la imagen del currículum con la Inteligencia Artificial. Por favor, asegúrate de que la foto sea nítida y legible, o sube tu currículum en formato PDF."
+                )
+
         return {
             "status": "success",
             "filename": file.filename,

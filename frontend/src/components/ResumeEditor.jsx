@@ -327,7 +327,7 @@ export default function ResumeEditor({ data, onChange, t }) {
                   type="text"
                   value={data.personal_info?.name || ''}
                   onChange={(e) => handlePersonalInfoChange('name', e.target.value)}
-                  placeholder="Ej. Cesar Perez"
+                  placeholder="Ej. Carlos Mendoza"
                 />
               </div>
               <div className="form-group">
