@@ -671,6 +671,15 @@ async def upload_file(file: UploadFile = File(...)):
                     detail="No se pudo procesar la imagen del currículum con la Inteligencia Artificial. Por favor, asegúrate de que la foto sea nítida y legible, o sube tu currículum en formato PDF."
                 )
 
+        # Ensure experience items have both 'bullets' and 'description' synchronized
+        if structured_data and "experience" in structured_data and isinstance(structured_data["experience"], list):
+            for exp in structured_data["experience"]:
+                desc = exp.get("description") or exp.get("bullets") or []
+                if isinstance(desc, str):
+                    desc = [desc]
+                exp["description"] = desc
+                exp["bullets"] = desc
+
         return {
             "status": "success",
             "filename": file.filename,
