@@ -73,8 +73,10 @@ export default function ResumeEditor({ data, onChange, t }) {
 
   const handleApplySuggestion = (expIdx, bIdx, newText) => {
     const newExp = [...(data.experience || [])]
-    if (newExp[expIdx] && newExp[expIdx].bullets) {
-      newExp[expIdx].bullets[bIdx] = newText
+    if (newExp[expIdx]) {
+      const currentBullets = [...(newExp[expIdx].description || newExp[expIdx].bullets || [])]
+      currentBullets[bIdx] = newText
+      newExp[expIdx] = { ...newExp[expIdx], description: currentBullets, bullets: currentBullets }
       onChange({ ...data, experience: newExp })
     }
     setSuggestions([])
@@ -120,23 +122,24 @@ export default function ResumeEditor({ data, onChange, t }) {
 
   const handleBulletChange = (expIndex, bulletIndex, value) => {
     const newExp = [...(data.experience || [])]
-    const bullets = [...(newExp[expIndex].bullets || [])]
+    const bullets = [...(newExp[expIndex].description || newExp[expIndex].bullets || [])]
     bullets[bulletIndex] = value
-    newExp[expIndex] = { ...newExp[expIndex], bullets }
+    newExp[expIndex] = { ...newExp[expIndex], description: bullets, bullets }
     onChange({ ...data, experience: newExp })
   }
 
   const handleAddBullet = (expIndex) => {
     const newExp = [...(data.experience || [])]
-    const bullets = [...(newExp[expIndex].bullets || []), '']
-    newExp[expIndex] = { ...newExp[expIndex], bullets }
+    const bullets = [...(newExp[expIndex].description || newExp[expIndex].bullets || []), '']
+    newExp[expIndex] = { ...newExp[expIndex], description: bullets, bullets }
     onChange({ ...data, experience: newExp })
   }
 
   const handleRemoveBullet = (expIndex, bulletIndex) => {
     const newExp = [...(data.experience || [])]
-    const bullets = newExp[expIndex].bullets.filter((_, i) => i !== bulletIndex)
-    newExp[expIndex] = { ...newExp[expIndex], bullets }
+    const currentBullets = newExp[expIndex].description || newExp[expIndex].bullets || []
+    const bullets = currentBullets.filter((_, i) => i !== bulletIndex)
+    newExp[expIndex] = { ...newExp[expIndex], description: bullets, bullets }
     onChange({ ...data, experience: newExp })
   }
 
@@ -435,7 +438,7 @@ export default function ResumeEditor({ data, onChange, t }) {
 
                 <div className="bullets-section">
                   <label>Logros y Responsabilidades (Viñetas ATS)</label>
-                  {(exp.description || []).map((bullet, bIdx) => {
+                  {(exp.description || exp.bullets || []).map((bullet, bIdx) => {
                     const isCurrentEnhancing = enhancingIndex === `${expIdx}-${bIdx}`
                     return (
                       <div className="bullet-container-wrapper" key={bIdx}>
@@ -472,7 +475,7 @@ export default function ResumeEditor({ data, onChange, t }) {
                                   <button
                                     key={sIdx}
                                     className="suggestion-item-btn"
-                                    onClick={() => applySuggestion(expIdx, bIdx, sug)}
+                                    onClick={() => handleApplySuggestion(expIdx, bIdx, sug)}
                                   >
                                     <span>{sug}</span>
                                     <Check size={14} className="apply-icon" />
