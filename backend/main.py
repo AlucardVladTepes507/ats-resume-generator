@@ -24,7 +24,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ENV_PATH = os.path.join(BASE_DIR, ".env")
 load_dotenv(dotenv_path=ENV_PATH, override=True)
 
-def compress_image_for_ai(image_bytes: bytes, max_dim: int = 1400) -> bytes:
 def compress_image_for_ai(image_bytes: bytes, max_dim: int = 1200, quality: int = 75) -> bytes:
     try:
         img = Image.open(io.BytesIO(image_bytes))
@@ -71,8 +70,7 @@ def safe_generate_content(primary_client, contents):
     elif not clients:
         clients = [primary_client] if primary_client else []
 
-    models_to_try = ['gemini-flash-latest', 'gemini-2.0-flash', 'gemini-2.0-flash-lite']
-    models_to_try = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-2.0-flash-lite']
+    models_to_try = ['gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash']
     last_error = None
 
     for client_inst in clients:
@@ -101,10 +99,9 @@ def safe_generate_content(primary_client, contents):
                 status_code=503,
                 detail="La Inteligencia Artificial está experimentando alta demanda. Por favor, reintenta en unos segundos."
             )
-        raise HTTPException(status_code=400, detail="No se pudo procesar la imagen o texto. Por favor, asegúrate de subir una captura o vacante de empleo válida.")
         raise HTTPException(status_code=400, detail="No se pudo procesar el documento con la IA. Por favor, reintenta en unos momentos.")
 
-import urllib.request
+import requests
 
 def call_groq_api(prompt: str, json_mode: bool = True) -> str:
     load_dotenv(dotenv_path=ENV_PATH, override=True)
@@ -115,26 +112,34 @@ def call_groq_api(prompt: str, json_mode: bool = True) -> str:
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {groq_key}",
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        "Content-Type": "application/json"
     }
 
-    payload = {
-        "model": "llama-3.3-70b-versatile",
-        "messages": [
-            {"role": "system", "content": "You are an expert ATS resume generator and career assistant. Always output clean valid JSON when requested."},
-            {"role": "user", "content": prompt}
-        ]
-    }
-    if json_mode:
-        payload["response_format"] = {"type": "json_object"}
+    models_to_try = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b", "groq/compound"]
+    last_err = None
 
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=data, headers=headers)
+    for mod in models_to_try:
+        payload = {
+            "model": mod,
+            "messages": [
+                {"role": "system", "content": "You are an expert ATS resume generator and career assistant. Always output clean valid JSON when requested."},
+                {"role": "user", "content": prompt}
+            ]
+        }
+        if json_mode:
+            payload["response_format"] = {"type": "json_object"}
 
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        res = json.loads(resp.read().decode("utf-8"))
-        return res["choices"][0]["message"]["content"]
+        try:
+            resp = requests.post(url, headers=headers, json=payload, timeout=20)
+            if resp.status_code == 200:
+                return resp.json()["choices"][0]["message"]["content"]
+            else:
+                last_err = Exception(f"Groq {mod} status {resp.status_code}: {resp.text[:100]}")
+        except Exception as e:
+            last_err = e
+            continue
+
+    raise last_err or Exception("All Groq models failed")
 
 def safe_generate_text(prompt: str, json_mode: bool = True) -> str:
     # 1. Try Groq API first (Llama 3.3 70B - Lightning Fast, 14,400 RPD Free)
@@ -299,191 +304,269 @@ def read_root():
         ]
     }
 
+def is_date_only_line(line_str: str) -> bool:
+    cleaned = re.sub(r'^\s*([•\*\-\–\—\u2022\u25cf\u25cb\u25aa\u25ab]|\d+[\.\)])\s*', '', line_str).strip()
+    date_tokens = r'(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?|Ene(?:ro)?|Feb(?:rero)?|Mar(?:zo)?|Abr(?:il)?|Mayo?|Jun(?:io)?|Jul(?:io)?|Ago(?:sto)?|Sep(?:tiembre)?|Oct(?:ubre)?|Nov(?:iembre)?|Dic(?:iembre)?|\d{1,2}/\d{2,4}|\d{4}|Presente|Present|Current|Actualidad|En curso|–|-|to|a|al|—|\s|,)'
+    remainder = re.sub(date_tokens, '', cleaned, flags=re.IGNORECASE)
+    return len(remainder.strip()) <= 3
+
 def parse_extracted_text_fallback(text: str) -> Dict[str, Any]:
     lines = [l.strip() for l in text.splitlines() if l.strip()]
-    name = lines[0] if lines else "CESAR PEREZ"
-    
-    # Extract candidate name from first non-empty header line (ignoring generic document headers)
+    if not lines:
+        return {
+            "personal_info": {"name": "", "email": "", "phone": "", "location": "", "linkedin": "", "summary": ""},
+            "linkedin_profile": {"headline": "", "about": ""},
+            "experience": [],
+            "education": [],
+            "skills": []
+        }
+
+    # 1. Candidate Name: first line that isn't a generic document title or contact
     name = ""
     for line in lines[:5]:
         clean_l = line.strip()
-        if clean_l.upper() not in ["CURRICULUM VITAE", "CURRICULUM", "CV", "HOJA DE VIDA", "RESUME"] and len(clean_l) > 2:
+        upper_l = clean_l.upper()
+        if upper_l in ["CURRICULUM VITAE", "CURRICULUM", "CV", "HOJA DE VIDA", "RESUME", "RESUMÉ"]:
+            continue
+        if "@" in clean_l or "HTTP" in upper_l or "LINKEDIN" in upper_l:
+            continue
+        if len(clean_l) > 2 and len(clean_l) < 50 and not re.search(r'\d{5,}', clean_l):
             name = clean_l
             break
     if not name and lines:
         name = lines[0]
-        
-    email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text)
-    email = email_match.group(0) if email_match else ""
-    
-    phone_match = re.search(r'[\+\(]?[0-9\s\-\.\(\)]{8,20}', text)
-    phone = phone_match.group(0) if phone_match else ""
-    
-    linkedin_match = re.search(r'linkedin\.com/in/[\w\-]+', text, re.IGNORECASE)
-    linkedin = linkedin_match.group(0) if linkedin_match else ""
-    
-    location_match = re.search(r'(Ciudad de [\w\s]+|[\w\s]+,\s*[\w\s]+)', text)
-    location = location_match.group(0) if location_match else ""
 
-    sec_summary = ""
-    experiences = []
-    educations = []
-    skills_list = []
+    # 2. Candidate Email
+    email_match = re.search(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', text)
+    email = email_match.group(0) if email_match else ""
+
+    # 3. Candidate Phone
+    phone_match = re.search(r'(?:\+\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}', text)
+    phone = phone_match.group(0) if phone_match else ""
+
+    # 4. Candidate LinkedIn (Strictly candidate's own - NEVER hardcoded)
+    linkedin_match = re.search(r'(?:https?://)?(?:www\.)?linkedin\.com/in/([a-zA-Z0-9_-]+)', text, re.IGNORECASE)
+    linkedin = f"linkedin.com/in/{linkedin_match.group(1)}" if linkedin_match else ""
+
+    # 5. Candidate Location (Strict: must not match sentences, job titles, or objectives)
+    location = ""
+    loc_labeled = re.search(r'(?:Ubicaci[oó]n|Location|Direcci[oó]n|Address|Ciudad|City)\s*[:\-]\s*([^\n|,]{2,35})', text, re.IGNORECASE)
+    if loc_labeled:
+        cand_loc = loc_labeled.group(1).strip()
+        if len(cand_loc) < 35 and not any(w in cand_loc.lower() for w in ["looking", "seeking", "experience", "position", "analyst", "manager", "support", "trabajo", "puesto"]):
+            location = cand_loc
+
+    if not location:
+        loc_match = re.search(r'\b(Ciudad de Panamá|Panamá|Panama|San José|Bogotá|Medellín|Lima|Santiago|Buenos Aires|Ciudad de México|Madrid|Barcelona|Miami,?\s*FL|New York,?\s*NY)\b', text, re.IGNORECASE)
+        if loc_match:
+            m_start = loc_match.start()
+            prefix = text[max(0, m_start - 15):m_start].lower()
+            if not any(w in prefix for w in ["hotel", "universidad", "banco", "empresa", "de "]):
+                location = loc_match.group(0).strip()
+
+    # 6. Objective / Professional Statement detection from top lines (e.g. "Looking for a job position in...")
+    detected_objective = ""
+    for line in lines[1:5]:
+        lower_l = line.lower()
+        if any(lower_l.startswith(w) for w in ["looking for", "seeking", "buscando", "objetivo:", "objective:", "profesional con", "professional with"]):
+            clean_obj = re.sub(r'\|.*$', '', line).strip()
+            clean_obj = re.sub(r'[\w\.-]+@[\w\.-]+\.\w+', '', clean_obj).strip()
+            clean_obj = re.sub(r'\+?[0-9\s\-\.\(\)]{8,20}', '', clean_obj).strip()
+            clean_obj = clean_obj.strip(' |-,')
+            if len(clean_obj) > 15:
+                detected_objective = clean_obj
+                break
+
+    # Section Headers Mapping
+    def get_section_type(line_str: str):
+        u = line_str.strip().upper()
+        u = re.sub(r'^[\s#\*\-—–:]+|[\s:\-—–]+$', '', u)
+        if u in ["RESUMEN", "RESUMEN PROFESIONAL", "PERFIL", "PERFIL PROFESIONAL", "OBJETIVO", "OBJETIVO PROFESIONAL", "SUMMARY", "PROFESSIONAL SUMMARY", "EXECUTIVE SUMMARY", "PROFILE", "ABOUT ME", "CAREER OBJECTIVE"]:
+            return "summary"
+        if u in ["EXPERIENCIA", "EXPERIENCIA LABORAL", "EXPERIENCIA PROFESIONAL", "HISTORIAL LABORAL", "TRAYECTORIA LABORAL", "TRAYECTORIA PROFESIONAL", "WORK EXPERIENCE", "PROFESSIONAL EXPERIENCE", "EMPLOYMENT HISTORY", "WORK HISTORY", "CAREER HISTORY", "RELEVANT EXPERIENCE", "EXPERIENCE"]:
+            return "experience"
+        if u in ["EDUCACIÓN", "EDUCACION", "FORMACIÓN", "FORMACION", "FORMACIÓN ACADÉMICA", "FORMACION ACADEMICA", "ESTUDIOS", "ESTUDIOS REALIZADOS", "EDUCATION", "ACADEMIC BACKGROUND", "EDUCATIONAL BACKGROUND", "DEGREES"]:
+            return "education"
+        if u in ["HABILIDADES", "COMPETENCIAS", "HABILIDADES TÉCNICAS", "HABILIDADES TECNICAS", "CONOCIMIENTOS", "SKILLS", "KEY SKILLS", "TECHNICAL SKILLS", "CORE COMPETENCIES", "AREAS OF EXPERTISE", "TOOLS", "HERRAMIENTAS"]:
+            return "skills"
+        if u in ["CERTIFICACIONES", "CERTIFICATIONS", "IDIOMAS", "LANGUAGES", "CURSOS", "COURSES", "REFERENCIAS", "REFERENCES"]:
+            return "other"
+        return None
 
     current_section = None
-    exp_buffer = []
+    sec_summary_lines = []
+    experience_raw_blocks = []
+    current_exp_block = []
+    education_raw_blocks = []
+    current_edu_block = []
+    skills_lines = []
 
     for line in lines[1:]:
-        upper_l = line.upper()
-        if "RESUMEN" in upper_l or "PERFIL" in upper_l:
-        if "RESUMEN" in upper_l or "PERFIL" in upper_l or "SUMMARY" in upper_l or "PROFILE" in upper_l:
-            current_section = "summary"
+        clean_l = line.strip()
+        if not clean_l:
             continue
-        elif "EXPERIENCIA" in upper_l or "LABORAL" in upper_l:
-        elif "EXPERIENCIA" in upper_l or "LABORAL" in upper_l or "EXPERIENCE" in upper_l or "WORK" in upper_l:
-            if current_section == "summary" and sec_summary:
-                pass
-            current_section = "experience"
-            continue
-        elif "EDUCACIÓN" in upper_l or "EDUCACION" in upper_l:
-        elif "EDUCACIÓN" in upper_l or "EDUCACION" in upper_l or "EDUCATION" in upper_l or "FORMACIÓN" in upper_l or "ESTUDIOS" in upper_l:
-            if exp_buffer:
-                experiences.append(exp_buffer)
-                exp_buffer = []
-            current_section = "education"
-            continue
-        elif "HABILIDADES" in upper_l or "COMPETENCIAS" in upper_l or "SKILLS" in upper_l:
-            if exp_buffer:
-                experiences.append(exp_buffer)
-                exp_buffer = []
-            current_section = "skills"
+
+        sec = get_section_type(clean_l)
+        if sec:
+            if current_exp_block:
+                experience_raw_blocks.append(current_exp_block)
+                current_exp_block = []
+            if current_edu_block:
+                education_raw_blocks.append(current_edu_block)
+                current_edu_block = []
+            current_section = sec
             continue
 
         if current_section == "summary":
-            sec_summary += line + " "
+            sec_summary_lines.append(clean_l)
         elif current_section == "experience":
-            if re.search(r'\d{4}', line) or "—" in line or "-" in line or (line.isupper() and len(line) > 3):
-                if exp_buffer:
-                    experiences.append(exp_buffer)
-                    exp_buffer = []
-            exp_buffer.append(line)
+            is_bullet = bool(re.match(r'^\s*([•\*\-\–\—\u2022\u25cf\u25cb\u25aa\u25ab]|\d+[\.\)])\s+', clean_l))
+            date_only = is_date_only_line(clean_l)
+            has_job_delimiter = bool(re.search(r'\s+[—–\|\-]\s+', clean_l)) and not is_bullet and not date_only
+
+            if not is_bullet and not date_only and (has_job_delimiter or (clean_l.isupper() and len(clean_l) > 3)):
+                if current_exp_block:
+                    experience_raw_blocks.append(current_exp_block)
+                    current_exp_block = []
+            current_exp_block.append(clean_l)
+
         elif current_section == "education":
-            educations.append(line)
+            date_only = is_date_only_line(clean_l)
+            has_edu_delimiter = bool(re.search(r'\s+[—–\|\-]\s+', clean_l)) and not date_only
+            if not date_only and (has_edu_delimiter or (clean_l.isupper() and len(clean_l) > 3)):
+                if current_edu_block:
+                    education_raw_blocks.append(current_edu_block)
+                    current_edu_block = []
+            current_edu_block.append(clean_l)
+
         elif current_section == "skills":
-            skills_list.append(line)
+            skills_lines.append(clean_l)
 
-    if exp_buffer:
-        experiences.append(exp_buffer)
+    if current_exp_block:
+        experience_raw_blocks.append(current_exp_block)
+    if current_edu_block:
+        education_raw_blocks.append(current_edu_block)
 
+    summary_text = " ".join(sec_summary_lines).strip() or detected_objective
+
+    # Parse Experience Blocks
     parsed_experiences = []
-    for eb in experiences:
-        header = eb[0] if eb else "Empresa"
-        parts = re.split(r'[—\-]', header, maxsplit=1)
-        comp = parts[0].strip() if len(parts) > 0 else "Empresa"
-        pos = parts[1].strip() if len(parts) > 1 else "Especialista"
-        pos = parts[1].strip() if len(parts) > 1 else "Puesto"
-        
-        dates_match = re.search(r'(\w+\s*\d{4}\s*[-—]\s*\w+\s*\d{0,4}|\d{4}\s*[-—]\s*\w+|Presente)', " ".join(eb))
-        dates = dates_match.group(0) if dates_match else "Presente"
-        
-        bullets = [l.lstrip('•-* ').strip() for l in eb[1:] if l.strip()]
-        if not bullets:
-            bullets = ["Desarrollo y gestión de responsabilidades en el área."]
-            bullets = ["Desarrollo de funciones y responsabilidades del cargo."]
-            
+    for block in experience_raw_blocks:
+        if not block:
+            continue
+        first_line = block[0]
+        all_block_text = " ".join(block)
+
+        date_pattern = r'\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic)[a-z]*\.?\s*\d{4}|\d{4})\s*(?:–|-|to|a|al|—)\s*(Presente|Present|Current|Actualidad|En curso|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic)[a-z]*\.?\s*\d{4}|\d{4})'
+        date_match = re.search(date_pattern, all_block_text, re.IGNORECASE)
+
+        start_date = ""
+        end_date = ""
+        if date_match:
+            start_date = date_match.group(1).strip()
+            end_date = date_match.group(2).strip()
+        else:
+            years = re.findall(r'\b(19\d\d|20\d\d)\b', all_block_text)
+            if len(years) >= 2:
+                start_date = years[0]
+                end_date = years[1]
+            elif len(years) == 1:
+                start_date = years[0]
+                end_date = "Presente" if any(w in all_block_text.lower() for w in ["present", "presente", "actualidad", "current"]) else years[0]
+
+        clean_header = re.sub(date_pattern, '', first_line, flags=re.IGNORECASE).strip()
+        clean_header = re.sub(r'[\(\[\{].*?[\)\]\}]', '', clean_header).strip()
+
+        header_parts = re.split(r'\s+[—–\|\-]\s+', clean_header, maxsplit=1)
+        if len(header_parts) == 2:
+            company = header_parts[0].strip()
+            position = header_parts[1].strip()
+        else:
+            at_parts = re.split(r'\s+(?:at|en)\s+', clean_header, flags=re.IGNORECASE, maxsplit=1)
+            if len(at_parts) == 2:
+                position = at_parts[0].strip()
+                company = at_parts[1].strip()
+            else:
+                company = clean_header or "Empresa"
+                position = block[1].strip() if len(block) > 1 and not is_date_only_line(block[1]) and not re.match(r'^\s*[•\*\-\–\—]', block[1]) else "Puesto"
+
+        bullet_lines = []
+        for l in block[1:]:
+            if is_date_only_line(l):
+                continue
+            if l.strip() == position:
+                continue
+            cleaned_bullet = re.sub(r'^\s*([•\*\-\–\—\u2022\u25cf\u25cb\u25aa\u25ab]|\d+[\.\)])\s*', '', l).strip()
+            if cleaned_bullet and len(cleaned_bullet) > 3:
+                bullet_lines.append(cleaned_bullet)
+
+        if not bullet_lines:
+            bullet_lines = ["Responsabilidades y logros principales en el cargo."]
+
         parsed_experiences.append({
-            "company": comp,
-            "position": pos,
-            "start_date": dates.split('-')[0].strip() if '-' in dates else dates,
-            "end_date": dates.split('-')[1].strip() if '-' in dates else "Presente",
-            "description": bullets
+            "company": company,
+            "position": position,
+            "start_date": start_date or "Año",
+            "end_date": end_date or "Presente",
+            "description": bullet_lines,
+            "bullets": bullet_lines
         })
 
-    if not parsed_experiences:
-        parsed_experiences = [
-            {
-                "company": "IT SYSTEMS SOLUTIONS S.A (SOFTVICI)",
-                "position": "Técnico de Soporte IT",
-                "start_date": "Octubre 2025",
-                "end_date": "Presente",
-                "description": ["Administración y monitoreo de endpoints mediante NinjaRMM para asegurar la continuidad operativa.", "Resolución de fallas técnicas de hardware y software de forma remota y presencial.", "Gestión de respaldos y protocolos de seguridad de datos utilizando Acronis Cyber Protect."]
-            },
-            {
-                "company": "ÓRGANO JUDICIAL DE LA REPÚBLICA DE PANAMÁ",
-                "position": "Analista de Compras",
-                "start_date": "Enero 2016",
-                "end_date": "Presente",
-                "description": ["Ejecución y monitoreo de aproximadamente 200 procesos de compra anuales garantizando transparencia y eficiencia.", "Gestión de Actos Públicos y adquisiciones por Convenio Marco.", "Coordinación de requerimientos de usuarios internos y análisis de cotizaciones."]
-            },
-            {
-                "company": "SMART507",
-                "position": "CEO & Técnico Líder",
-                "start_date": "Enero 2000",
-                "end_date": "Presente",
-                "description": ["Dirección de servicios técnicos especializados en diagnóstico y reparación de equipos informáticos.", "Implementación de modelos de servicio enfocados en resolución de problemas de hardware."]
-            },
-            {
-                "company": "WESTWING",
-                "position": "Asociado de Atención al Cliente",
-                "start_date": "Junio 2025",
-                "end_date": "Octubre 2025",
-                "description": ["Soporte multicanal mediante Zendesk y Retool para la resolución de incidencias.", "Gestión de pedidos y consultas técnicas bajo estándares internacionales."]
-            }
-        ]
-
+    # Parse Education Blocks
     parsed_education = []
-    for ed_line in educations:
-        parts = re.split(r'[—\-]', ed_line, maxsplit=1)
-        inst = parts[0].strip() if len(parts) > 0 else "Universidad"
-        deg = parts[1].strip() if len(parts) > 1 else "Grado Asociado"
-        inst = parts[0].strip() if len(parts) > 0 else "Institución Educativa"
-        deg = parts[1].strip() if len(parts) > 1 else "Grado / Carrera"
+    for block in education_raw_blocks:
+        if not block:
+            continue
+        first_line = block[0]
+        all_block_text = " ".join(block)
+
+        ed_years = re.findall(r'\b(19\d\d|20\d\d)\b', all_block_text)
+        start_ed = ed_years[0] if len(ed_years) > 1 else ""
+        end_ed = ed_years[-1] if ed_years else ""
+
+        clean_header = re.sub(r'\b\d{4}\b', '', first_line).strip(' –-—,|')
+        parts = re.split(r'\s+[—–\|\-]\s+', clean_header, maxsplit=1)
+        inst = parts[0].strip() if len(parts) > 0 and parts[0].strip() else "Institución Educativa"
+        deg = parts[1].strip() if len(parts) > 1 and parts[1].strip() else ""
+
+        if not deg and len(block) > 1:
+            for l in block[1:]:
+                if not is_date_only_line(l):
+                    deg = l.strip()
+                    break
+
         parsed_education.append({
             "institution": inst,
-            "degree": deg,
-            "start_date": "",
-            "end_date": ""
+            "degree": deg or "Título / Carrera",
+            "start_date": start_ed,
+            "end_date": end_ed
         })
 
-    if not parsed_education:
-        parsed_education = [
-            {
-                "institution": "University of the People",
-                "degree": "Grado Asociado en Ciencias de la Computación",
-                "start_date": "En curso",
-                "end_date": "Jun 2025"
-            }
-        ]
-
-    raw_skills = " ".join(skills_list).replace('•', ',').replace(':', ',').replace(';', ',')
+    # Parse Skills
+    raw_skills = " ".join(skills_lines).replace('•', ',').replace(';', ',').replace('|', ',')
     parsed_skills = [s.strip() for s in raw_skills.split(',') if len(s.strip()) > 1]
-    if not parsed_skills:
-        parsed_skills = ["NinjaRMM", "Acronis Cyber Protect", "AnyDesk", "Soporte Nivel 1 y 2", "Mantenimiento de Hardware/Software", "Zendesk", "Retool", "nShift", "Whaticket", "Microsoft 365", "Google Workspace", "SAP MM", "Scrum Fundamentals (SFC)", "Actos Públicos", "Convenio Marco", "Análisis de Datos", "SQL", "Java", "Python", "Lógica de programación", "Español (Nativo)", "Inglés (B1)"]
+    seen = set()
+    deduped_skills = [x for x in parsed_skills if not (x.lower() in seen or seen.add(x.lower()))]
 
-    first_pos = parsed_experiences[0]["position"] if parsed_experiences else "Profesional"
-    headline = f"{name} | {first_pos}" if name else first_pos
+    first_pos = parsed_experiences[0]["position"] if parsed_experiences else ""
+    headline = f"{name} | {first_pos}" if name and first_pos else (name or "Profesional")
 
     return {
         "personal_info": {
             "name": name,
             "email": email,
             "phone": phone,
-            "location": location or "Ciudad de Panamá",
-            "linkedin": linkedin or "linkedin.com/in/cperez24",
-            "summary": sec_summary.strip() or "Profesional técnico con más de 10 años de trayectoria en soporte de sistemas, atención al cliente y gestión operativa. Especialista en resolución de incidencias remotas mediante herramientas RMM y gestión de plataformas de soporte multicanal como Zendesk."
             "location": location,
             "linkedin": linkedin,
-            "summary": sec_summary.strip()
+            "summary": summary_text
         },
         "linkedin_profile": {
-            "headline": f"{name} | Técnico de Soporte IT | Analista de Compras | CEO SMART507",
-            "about": sec_summary.strip() or "Profesional enfocado en optimización de procesos tecnológicos y seguridad de datos."
             "headline": headline,
-            "about": sec_summary.strip()
+            "about": summary_text
         },
         "experience": parsed_experiences,
         "education": parsed_education,
-        "skills": parsed_skills
+        "skills": deduped_skills
     }
 
 @app.post("/upload-pdf")
@@ -500,10 +583,6 @@ async def upload_file(file: UploadFile = File(...)):
             status_code=400, 
             detail="Formato no soportado. Por favor sube un PDF o una foto en formato JPG, PNG o WEBP."
         )
-    
-    client = get_gemini_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no está configurada en el servidor.")
         
     try:
         content = await file.read()
@@ -516,7 +595,6 @@ async def upload_file(file: UploadFile = File(...)):
 
         is_image_file = not is_pdf_file
         extracted_text = ""
-        contents_payload = []
         structured_data = None
 
         if is_pdf_file:
@@ -532,19 +610,9 @@ async def upload_file(file: UploadFile = File(...)):
                                 extracted_text += " ".join([w.get('text', '') for w in words if w.get('text')]) + "\n"
             except Exception as pdf_err:
                 print("Error extracting text with pdfplumber:", pdf_err)
-                
-            if extracted_text.strip():
-                contents_payload = [f"{PROMPT_SCHEMA}\n\nTEXTO DEL CURRÍCULUM:\n{extracted_text}"]
-            else:
-                is_image_file = True
-                compressed_bytes = compress_image_for_ai(content)
-                contents_payload = [
-                    types.Part.from_bytes(data=compressed_bytes, mime_type="application/pdf"),
-                    PROMPT_SCHEMA
-                ]
 
         if is_pdf_file and extracted_text.strip():
-            # 1. High-speed extraction with Groq Llama 3.3 70B (ultra-fast, ~1-2s)
+            # 1. High-speed extraction with Groq (ultra-fast, ~1-2s)
             groq_key = os.environ.get("GROQ_API_KEY")
             if groq_key:
                 try:
@@ -585,8 +653,6 @@ async def upload_file(file: UploadFile = File(...)):
                 '.jpeg': 'image/jpeg',
                 '.webp': 'image/webp'
             }
-            mime_type = mime_map.get(ext, 'image/jpeg')
-            compressed_bytes = compress_image_for_ai(content)
             mime_type = mime_map.get(ext, 'image/jpeg') if not is_pdf_file else 'application/pdf'
             compressed_bytes = compress_image_for_ai(content, max_dim=1200, quality=75)
             contents_payload = [
@@ -594,17 +660,6 @@ async def upload_file(file: UploadFile = File(...)):
                 PROMPT_SCHEMA
             ]
 
-        try:
-            response = safe_generate_content(client, contents_payload)
-            response_text = clean_json_response(response.text)
-            structured_data = json.loads(response_text)
-        except Exception as ai_err:
-            print("Gemini API Exception, activating structured fallback parser:", ai_err)
-            if extracted_text and extracted_text.strip():
-                structured_data = parse_extracted_text_fallback(extracted_text)
-            else:
-                structured_data = parse_extracted_text_fallback("Curriculum Vitae")
-            
             try:
                 response = safe_generate_content(client, contents_payload)
                 response_text = clean_json_response(response.text)
@@ -627,6 +682,7 @@ async def upload_file(file: UploadFile = File(...)):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error procesando el archivo: {str(e)}")
+
 
 @app.post("/extract-job-image-text")
 @app.post("/extract-job-image-text/")
