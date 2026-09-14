@@ -447,7 +447,6 @@ export default function ResumeEditor({ data, onChange, t }) {
                         value={bullet}
                         onChange={(e) => handleBulletChange(expIdx, bIdx, e.target.value)}
                         placeholder={t?.bulletPlaceholder || 'Measurable achievement or responsibility...'}
-                        style={{ resize: 'vertical', minHeight: '2.5rem' }}
                       />
                       <button className="btn-icon danger" onClick={() => handleRemoveBullet(expIdx, bIdx)}>
                         <Trash2 size={14} />

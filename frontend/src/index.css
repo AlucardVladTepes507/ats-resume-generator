@@ -1049,7 +1049,7 @@ body {
   display: flex;
   gap: 0.5rem;
 
-  input {
+  input, textarea {
     flex: 1;
     background-color: var(--bg-primary);
     border: 1px solid var(--border-color);
@@ -1057,6 +1057,13 @@ body {
     padding: 0.4rem 0.6rem;
     color: var(--text-primary);
     font-size: 0.8rem;
+    font-family: inherit;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 2.5rem;
+    line-height: 1.4;
   }
 }
 

@@ -103,12 +103,25 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
 
   let y = MARGIN + 6
 
+  const isHarvard   = template === 'harvard'
   const isModern    = template === 'modern' || template === 'modern-photo'
   const isExecutive = template === 'executive-photo'
   const hasPhoto    = (isExecutive || template === 'modern-photo') && personal.photo
 
-  const accentRGB = isModern ? [29, 78, 216] : [15, 23, 42]
-  const accentMutedRGB = isModern ? [147, 197, 253] : [203, 213, 225]
+  // Theme Constants
+  const FONT        = isHarvard ? 'times' : 'helvetica'
+  const BULLET_CHAR = isHarvard ? '\x95' : '-'
+  const SEP_CHAR    = isHarvard ? ' — ' : ' - '
+
+  // Colors
+  const accentRGB   = isModern ? [29, 78, 216] : (isHarvard ? [0, 0, 0] : [15, 23, 42])
+  const accentMuted = isModern ? [147, 197, 253] : (isHarvard ? [0, 0, 0] : [203, 213, 225])
+  
+  const textTitle   = isHarvard ? [0, 0, 0] : [15, 23, 42]
+  const textPrimary = isHarvard ? [0, 0, 0] : [30, 41, 59]
+  const textSub     = isHarvard ? [0, 0, 0] : [71, 85, 105]
+  const textMeta    = isHarvard ? [0, 0, 0] : [100, 116, 139]
+
 
   // â”€â”€ Page break helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // MUST be called BEFORE drawing any block with the pre-measured block height.
@@ -131,12 +144,12 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
   // â”€â”€ Section title (total height â‰ˆ 27pt) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function drawSectionTitle(title) {
     ensureSpace(50) // title height + space for at least one entry
-    doc.setFont('helvetica', 'bold')
+    doc.setFont(FONT, 'bold')
     doc.setFontSize(10.5)
     doc.setTextColor(accentRGB[0], accentRGB[1], accentRGB[2])
     doc.text(title, MARGIN, y)
     y += 4
-    drawDivider(accentMutedRGB)
+    drawDivider(accentMuted)
     y += 11
   }
 
@@ -151,14 +164,14 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
 
       doc.addImage(personal.photo, 'JPEG', MARGIN, y, PHOTO_SZ, PHOTO_SZ)
 
-      doc.setFont('helvetica', 'bold')
+      doc.setFont(FONT, 'bold')
       doc.setFontSize(17)
       doc.setTextColor(accentRGB[0], accentRGB[1], accentRGB[2])
       doc.text(cleanText(personal.name || '').toUpperCase(), TEXT_X, y + 14)
 
-      doc.setFont('helvetica', 'normal')
+      doc.setFont(FONT, 'normal')
       doc.setFontSize(9)
-      doc.setTextColor(71, 85, 105)
+      doc.setTextColor(textSub[0], textSub[1], textSub[2])
       const contactItems = [personal.location, personal.phone, personal.email, personal.linkedin]
         .map(cleanText).filter(Boolean)
       const cLines = doc.splitTextToSize(contactItems.join('   |   '), TEXT_W)
@@ -169,13 +182,13 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
       console.warn('Could not embed photo, using text header:', photoErr)
     }
   } else if (isModern) {
-    doc.setFont('helvetica', 'bold')
+    doc.setFont(FONT, 'bold')
     doc.setFontSize(18)
     doc.setTextColor(29, 78, 216)
     doc.text(cleanText(personal.name || '').toUpperCase(), MARGIN, y + 10)
     y += 18
 
-    doc.setFont('helvetica', 'normal')
+    doc.setFont(FONT, 'normal')
     doc.setFontSize(9.5)
     doc.setTextColor(60, 60, 60)
     const contactParts = [personal.location, personal.phone, personal.email, personal.linkedin]
@@ -185,15 +198,15 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
     y += cLines.length * LINE_SM + 10
   } else {
     // Harvard / Europass / Executive â€” centered classic
-    doc.setFont('helvetica', 'bold')
+    doc.setFont(FONT, 'bold')
     doc.setFontSize(18)
-    doc.setTextColor(15, 23, 42)
+    doc.setTextColor(textTitle[0], textTitle[1], textTitle[2])
     doc.text(cleanText(personal.name || '').toUpperCase(), PAGE_W / 2, y + 8, { align: 'center' })
     y += 18
 
-    doc.setFont('helvetica', 'normal')
+    doc.setFont(FONT, 'normal')
     doc.setFontSize(9.5)
-    doc.setTextColor(51, 65, 85)
+    doc.setTextColor(textSub[0], textSub[1], textSub[2])
     const contactParts = [personal.location, personal.phone, personal.email, personal.linkedin]
       .map(cleanText).filter(Boolean)
     const cLines = doc.splitTextToSize(contactParts.join('   |   '), CONTENT_W)
@@ -202,7 +215,7 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
   }
 
   // Divider after header
-  drawDivider([203, 213, 225])
+  drawDivider(accentMuted)
   y += 12
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -216,9 +229,9 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
     drawSectionTitle(labels.summary)
 
     ensureSpace(summaryBlockH)
-    doc.setFont('helvetica', 'normal')
+    doc.setFont(FONT, 'normal')
     doc.setFontSize(9.5)
-    doc.setTextColor(30, 41, 59)
+    doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2])
     doc.text(summaryLines, MARGIN, y)
     y += summaryBlockH
   }
@@ -234,7 +247,7 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
       const position = cleanText(exp.position || '')
       const start    = cleanText(exp.start_date || '')
       const end      = cleanText(exp.end_date   || '')
-      const dateStr  = [start, end].filter(Boolean).join(' - ')
+      const dateStr  = [start, end].filter(Boolean).join(SEP_CHAR)
 
       const rawBullets = exp.bullets || exp.description || []
       const bulletList = (Array.isArray(rawBullets) ? rawBullets : [rawBullets])
@@ -249,23 +262,23 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
       ensureSpace(Math.min(entryH, 80))
 
       // Company + Position row
-      doc.setFont('helvetica', 'bold')
+      doc.setFont(FONT, 'bold')
       doc.setFontSize(10)
-      doc.setTextColor(15, 23, 42)
+      doc.setTextColor(textTitle[0], textTitle[1], textTitle[2])
       doc.text(company || '-', MARGIN, y)
 
       if (position) {
         const compW = doc.getTextWidth(company || '-')
-        doc.setFont('helvetica', 'normal')
+        doc.setFont(FONT, 'normal')
         doc.setFontSize(10)
-        doc.setTextColor(51, 65, 85)
-        doc.text(` - ${position}`, MARGIN + compW, y)
+        doc.setTextColor(textSub[0], textSub[1], textSub[2])
+        doc.text(`${SEP_CHAR}${position}`, MARGIN + compW, y)
       }
 
       if (dateStr) {
-        doc.setFont('helvetica', 'normal')
+        doc.setFont(FONT, 'normal')
         doc.setFontSize(9)
-        doc.setTextColor(100, 116, 139)
+        doc.setTextColor(textMeta[0], textMeta[1], textMeta[2])
         doc.text(dateStr, MARGIN + CONTENT_W, y, { align: 'right' })
       }
       y += LINE_LG
@@ -274,10 +287,10 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
       for (let i = 0; i < bulletSplits.length; i++) {
         const lines = bulletSplits[i]
         ensureSpace(lines.length * LINE_SM + 2)
-        doc.setFont('helvetica', 'normal')
+        doc.setFont(FONT, 'normal')
         doc.setFontSize(9.2)
-        doc.setTextColor(30, 41, 59)
-        doc.text('-', MARGIN + 2, y)
+        doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2])
+        doc.text(BULLET_CHAR, MARGIN + 2, y)
         doc.text(lines, MARGIN + 14, y)
         y += lines.length * LINE_SM + 2
       }
@@ -298,28 +311,28 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
       const degree      = cleanText(edu.degree      || '')
       const start       = cleanText(edu.start_date  || '')
       const end         = cleanText(edu.end_date || edu.year || '')
-      const dateStr     = [start, end].filter(Boolean).join(' - ')
+      const dateStr     = [start, end].filter(Boolean).join(SEP_CHAR)
       const entryH      = LINE_LG + (degree ? LINE_MD : 0) + 4
 
       ensureSpace(entryH)
 
-      doc.setFont('helvetica', 'bold')
+      doc.setFont(FONT, 'bold')
       doc.setFontSize(10)
-      doc.setTextColor(15, 23, 42)
+      doc.setTextColor(textTitle[0], textTitle[1], textTitle[2])
       doc.text(institution || '-', MARGIN, y)
 
       if (dateStr) {
-        doc.setFont('helvetica', 'normal')
+        doc.setFont(FONT, 'normal')
         doc.setFontSize(9)
-        doc.setTextColor(100, 116, 139)
+        doc.setTextColor(textMeta[0], textMeta[1], textMeta[2])
         doc.text(dateStr, MARGIN + CONTENT_W, y, { align: 'right' })
       }
       y += LINE_LG
 
       if (degree) {
-        doc.setFont('helvetica', 'normal')
+        doc.setFont(FONT, 'normal')
         doc.setFontSize(9.2)
-        doc.setTextColor(51, 65, 85)
+        doc.setTextColor(textSub[0], textSub[1], textSub[2])
         doc.text(degree, MARGIN, y)
         y += LINE_MD
       }
@@ -341,9 +354,9 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
     const skillsH       = skillLines.length * LINE_MD + 4
 
     ensureSpace(skillsH)
-    doc.setFont('helvetica', 'normal')
+    doc.setFont(FONT, 'normal')
     doc.setFontSize(9.5)
-    doc.setTextColor(30, 41, 59)
+    doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2])
     doc.text(skillLines, MARGIN, y)
     y += skillsH
   }
@@ -405,16 +418,16 @@ export function generatePureVectorCoverLetter(resumeData, companyName, positionN
   }
 
   // Header: Name
-  doc.setFont('helvetica', 'bold')
+  doc.setFont(FONT, 'bold')
   doc.setFontSize(16)
-  doc.setTextColor(15, 23, 42)
+  doc.setTextColor(textTitle[0], textTitle[1], textTitle[2])
   doc.text(candidateName.toUpperCase(), MARGIN, y)
   y += 16
 
   // Contact line
-  doc.setFont('helvetica', 'normal')
+  doc.setFont(FONT, 'normal')
   doc.setFontSize(9.5)
-  doc.setTextColor(71, 85, 105)
+  doc.setTextColor(textSub[0], textSub[1], textSub[2])
   const contactParts = [personal.location, personal.phone, personal.email, personal.linkedin]
     .map(cleanText).filter(Boolean)
   if (contactParts.length) {
@@ -430,23 +443,23 @@ export function generatePureVectorCoverLetter(resumeData, companyName, positionN
 
   // Date
   const dateStr = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
-  doc.setFont('helvetica', 'normal')
+  doc.setFont(FONT, 'normal')
   doc.setFontSize(10)
-  doc.setTextColor(51, 65, 85)
+  doc.setTextColor(textSub[0], textSub[1], textSub[2])
   doc.text(dateStr, MARGIN, y)
   y += 20
 
   // Company / Position header
   if (positionName || companyName) {
-    doc.setFont('helvetica', 'bold')
+    doc.setFont(FONT, 'bold')
     doc.setFontSize(10.5)
-    doc.setTextColor(15, 23, 42)
+    doc.setTextColor(textTitle[0], textTitle[1], textTitle[2])
     if (positionName) {
       doc.text(cleanText(positionName), MARGIN, y)
       y += 14
     }
     if (companyName) {
-      doc.setFont('helvetica', 'normal')
+      doc.setFont(FONT, 'normal')
       doc.text(cleanText(companyName), MARGIN, y)
       y += 18
     }
@@ -456,9 +469,9 @@ export function generatePureVectorCoverLetter(resumeData, companyName, positionN
 
   // Body paragraphs â€” split on double newline OR single newline
   const paragraphs = letterText.split(/\n\s*\n|\n/)
-  doc.setFont('helvetica', 'normal')
+  doc.setFont(FONT, 'normal')
   doc.setFontSize(10.5)
-  doc.setTextColor(30, 41, 59)
+  doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2])
 
   for (const para of paragraphs) {
     const trimmed = cleanText(para)
@@ -478,3 +491,4 @@ export function generatePureVectorCoverLetter(resumeData, companyName, positionN
 
   doc.save(`Carta_Presentacion_${safeFileName}.pdf`)
 }
+
