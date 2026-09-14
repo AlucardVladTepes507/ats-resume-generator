@@ -97,16 +97,16 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
   const MARGIN      = 38
   const CONTENT_W   = PAGE_W - MARGIN * 2
   const BOTTOM_SAFE = PAGE_H - MARGIN
-  const LINE_SM     = 10.5
-  const LINE_MD     = 12
-  const LINE_LG     = 13.5
-
-  let y = MARGIN + 6
-
   const isHarvard   = template === 'harvard'
   const isModern    = template === 'modern' || template === 'modern-photo'
   const isExecutive = template === 'executive-photo'
   const hasPhoto    = (isExecutive || template === 'modern-photo') && personal.photo
+
+  const LINE_SM     = isHarvard ? 13 : 10.5
+  const LINE_MD     = isHarvard ? 14.5 : 12
+  const LINE_LG     = isHarvard ? 17 : 13.5
+
+  let y = MARGIN + 6
 
   // Load Merriweather Font for Harvard
   if (isHarvard) {
@@ -136,7 +136,7 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
 
   // Theme Constants
   const FONT        = isHarvard ? 'merriweather' : 'helvetica'
-  const BULLET_CHAR = isHarvard ? '\x95' : '-'
+  const BULLET_CHAR = isHarvard ? '\u2022' : '-'
   const SEP_CHAR    = isHarvard ? ' - ' : ' - '
 
   // Colors
@@ -386,7 +386,7 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
     drawSectionTitle(labels.skills)
 
     const cleanedSkills = skills.map(cleanText).filter(Boolean)
-    const skillsText    = cleanedSkills.join(isHarvard ? ' \x95 ' : '   -   ')
+    const skillsText    = cleanedSkills.join(isHarvard ? ' \u2022 ' : '   -   ')
     const prefix        = isHarvard ? 'Skills: ' : ''
     const skillLines    = doc.splitTextToSize(prefix + skillsText, CONTENT_W)
     const skillsH       = skillLines.length * LINE_MD + 4
