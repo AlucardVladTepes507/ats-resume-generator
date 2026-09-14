@@ -111,7 +111,7 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
   // Theme Constants
   const FONT        = isHarvard ? 'times' : 'helvetica'
   const BULLET_CHAR = isHarvard ? '\x95' : '-'
-  const SEP_CHAR    = isHarvard ? ' — ' : ' - '
+  const SEP_CHAR    = isHarvard ? ' - ' : ' - '
 
   // Colors
   const accentRGB   = isModern ? [29, 78, 216] : (isHarvard ? [0, 0, 0] : [15, 23, 42])
@@ -145,12 +145,12 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
   function drawSectionTitle(title) {
     ensureSpace(50) // title height + space for at least one entry
     doc.setFont(FONT, 'bold')
-    doc.setFontSize(10.5)
+    doc.setFontSize(isHarvard ? 12 : 10.5)
     doc.setTextColor(accentRGB[0], accentRGB[1], accentRGB[2])
     doc.text(title, MARGIN, y)
     y += 4
-    drawDivider(accentMuted)
-    y += 11
+    drawDivider(accentMuted, isHarvard ? 0.5 : 0.75)
+    y += isHarvard ? 8 : 11
   }
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -202,7 +202,7 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
     doc.setFontSize(18)
     doc.setTextColor(textTitle[0], textTitle[1], textTitle[2])
     doc.text(cleanText(personal.name || '').toUpperCase(), PAGE_W / 2, y + 8, { align: 'center' })
-    y += 18
+    y += 14
 
     doc.setFont(FONT, 'normal')
     doc.setFontSize(9.5)
@@ -219,7 +219,7 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
     drawDivider(accentMuted)
     y += 12
   } else {
-    y += 6
+    y += 16
   }
 
 
@@ -360,7 +360,7 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
     drawSectionTitle(labels.skills)
 
     const cleanedSkills = skills.map(cleanText).filter(Boolean)
-    const skillsText    = cleanedSkills.join(isHarvard ? '  \x95  ' : '   -   ')
+    const skillsText    = cleanedSkills.join(isHarvard ? ' \x95 ' : '   -   ')
     const prefix        = isHarvard ? 'Skills: ' : ''
     const skillLines    = doc.splitTextToSize(prefix + skillsText, CONTENT_W)
     const skillsH       = skillLines.length * LINE_MD + 4
