@@ -40,7 +40,7 @@ function cleanText(str) {
  * @param {string} template - 'harvard' | 'modern' | 'europass' | 'executive-photo' | 'modern-photo'
  * @param {string} lang     - 'en' | 'es' | 'pt' | 'fr' | 'de'
  */
-export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
+export async function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
   if (!data) return
 
   const personal    = data.personal_info || {}
@@ -108,8 +108,34 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
   const isExecutive = template === 'executive-photo'
   const hasPhoto    = (isExecutive || template === 'modern-photo') && personal.photo
 
+  // Load Merriweather Font for Harvard
+  if (isHarvard) {
+    try {
+      const fetchFont = async (url) => {
+         const res = await fetch(url)
+         if (!res.ok) throw new Error(`HTTP ${res.status}`)
+         const buffer = await res.arrayBuffer()
+         const bytes = new Uint8Array(buffer)
+         let binary = ''
+         for (let i = 0; i < bytes.byteLength; i++) {
+             binary += String.fromCharCode(bytes[i])
+         }
+         return window.btoa(binary)
+      }
+      const regularB64 = await fetchFont('/fonts/Merriweather-Regular.ttf')
+      doc.addFileToVFS('merriweather-regular.ttf', regularB64)
+      doc.addFont('merriweather-regular.ttf', 'merriweather', 'normal')
+
+      const boldB64 = await fetchFont('/fonts/Merriweather-Bold.ttf')
+      doc.addFileToVFS('merriweather-bold.ttf', boldB64)
+      doc.addFont('merriweather-bold.ttf', 'merriweather', 'bold')
+    } catch (e) {
+      console.warn("Could not load Merriweather, falling back to default:", e)
+    }
+  }
+
   // Theme Constants
-  const FONT        = isHarvard ? 'times' : 'helvetica'
+  const FONT        = isHarvard ? 'merriweather' : 'helvetica'
   const BULLET_CHAR = isHarvard ? '\x95' : '-'
   const SEP_CHAR    = isHarvard ? ' - ' : ' - '
 

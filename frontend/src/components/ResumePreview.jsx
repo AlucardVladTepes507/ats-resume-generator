@@ -39,13 +39,13 @@ export default function ResumePreview({ data, t }) {
     }
   }, [data, template, zoomScale])
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (!data) return
     setIsExporting(true)
     try {
       // Detect the active language: data.language field if set, otherwise fallback to 'es'
       const lang = data?.language || 'es'
-      generatePureVectorPdf(data, template, lang)
+      await generatePureVectorPdf(data, template, lang)
     } catch (err) {
       console.error('Error generating vector PDF:', err)
       alert('Error al generar PDF: ' + err.message)
