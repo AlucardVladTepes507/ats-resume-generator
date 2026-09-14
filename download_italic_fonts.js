@@ -45,3 +45,4 @@ async function downloadFont(weight, isItalic, filename) {
   await downloadFont(700, true, 'frontend/public/fonts/Merriweather-BoldItalic.ttf');
   console.log('Done downloading italic fonts!');
 })();
+
