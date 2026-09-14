@@ -600,6 +600,31 @@ async def upload_file(file: UploadFile = File(...)):
         if is_pdf_file:
             try:
                 with pdfplumber.open(io.BytesIO(content)) as pdf:
+                    # 0. Check if this PDF was generated directly by our ATS Resume Generator app!
+                    meta = getattr(pdf, 'metadata', None) or {}
+                    creator_info = str(meta.get('Creator', '')) + str(meta.get('Author', ''))
+                    if 'ATS Resume Generator' in creator_info or 'smart507' in creator_info:
+                        subject = meta.get('Subject', '')
+                        if subject:
+                            try:
+                                embedded_data = json.loads(subject)
+                                if isinstance(embedded_data, dict) and 'personal_info' in embedded_data:
+                                    if "experience" in embedded_data and isinstance(embedded_data["experience"], list):
+                                        for exp in embedded_data["experience"]:
+                                            desc = exp.get("description") or exp.get("bullets") or []
+                                            if isinstance(desc, str):
+                                                desc = [desc]
+                                            exp["description"] = desc
+                                            exp["bullets"] = desc
+                                    return {
+                                        "status": "success",
+                                        "filename": file.filename,
+                                        "is_image": False,
+                                        "data": embedded_data
+                                    }
+                            except Exception as json_err:
+                                print("Notice: Error parsing embedded app CV JSON:", json_err)
+
                     for page in pdf.pages:
                         text = page.extract_text()
                         if text and text.strip():
@@ -639,7 +664,8 @@ async def upload_file(file: UploadFile = File(...)):
 
         else:
             # Scanned PDF or Image file: requires Vision AI
-            is_image_file = True
+            # Keep is_image_file False for PDFs (only True for actual image uploads: .png, .jpg, .webp)
+            is_image_file = not is_pdf_file
             client = get_gemini_client()
             if not client:
                 raise HTTPException(

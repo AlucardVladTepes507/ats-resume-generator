@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react'
+﻿import React, { useState } from 'react'
 import { Mail, Sparkles, Copy, Check, Download, Edit3 } from 'lucide-react'
-import html2pdf from 'html2pdf.js'
+import { generatePureVectorCoverLetter } from '../utils/pureVectorPdf'
 
 export default function CoverLetterGenerator({ resumeData }) {
   const [companyName, setCompanyName] = useState('')
@@ -11,7 +11,6 @@ export default function CoverLetterGenerator({ resumeData }) {
   const [editedLetter, setEditedLetter] = useState('')
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState(null)
-  const letterRef = useRef(null)
 
   const handleGenerate = async () => {
     setError(null)
@@ -33,7 +32,7 @@ export default function CoverLetterGenerator({ resumeData }) {
 
       const data = await response.json()
       if (!response.ok) {
-        throw new Error(data.detail || 'Error al generar la carta de presentación')
+        throw new Error(data.detail || 'Error al generar la carta de presentaciÃ³n')
       }
 
       setCoverLetterData(data)
@@ -51,38 +50,13 @@ export default function CoverLetterGenerator({ resumeData }) {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const handleDownloadPDF = async () => {
-    if (!letterRef.current) return
-
-    const element = letterRef.current
-    const originalTransform = element.style.transform
-
+  const handleDownloadPDF = () => {
+    if (!editedLetter) return
     try {
-      element.style.transform = 'none'
-      element.style.position = 'relative'
-      await new Promise((resolve) => setTimeout(resolve, 120))
-
-      const opt = {
-        margin: [0.35, 0.35, 0.35, 0.35],
-        filename: `Carta_Presentacion_${(resumeData?.personal_info?.name || 'Candidato').trim().replace(/\s+/g, '_')}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          scrollY: 0,
-          scrollX: 0,
-          windowWidth: 816
-        },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      }
-
-      await html2pdf().set(opt).from(element).save()
+      generatePureVectorCoverLetter(resumeData, companyName, positionName, editedLetter)
     } catch (err) {
-      console.error('Error generating PDF:', err)
-    } finally {
-      element.style.transform = originalTransform
+      console.error('Error generating cover letter PDF:', err)
+      alert('Error al generar PDF: ' + err.message)
     }
   }
 
@@ -91,7 +65,7 @@ export default function CoverLetterGenerator({ resumeData }) {
       <div className="analyzer-header">
         <Mail size={22} className="analyzer-icon" />
         <div>
-          <h3>Generador de Carta de Presentación con IA</h3>
+          <h3>Generador de Carta de PresentaciÃ³n con IA</h3>
           <p>Redacta una carta formal, personalizada y persuasiva adaptada al puesto y empresa a la que aplicas.</p>
         </div>
       </div>
@@ -110,13 +84,13 @@ export default function CoverLetterGenerator({ resumeData }) {
           <label>Nombre del Puesto / Cargo</label>
           <input
             type="text"
-            placeholder="Ej. Técnico de Soporte IT, Analista de Datos..."
+            placeholder="Ej. TÃ©cnico de Soporte IT, Analista de Datos..."
             value={positionName}
             onChange={(e) => setPositionName(e.target.value)}
           />
         </div>
         <div className="form-group full-width">
-          <label>Descripción / Requisitos del Puesto (Opcional)</label>
+          <label>DescripciÃ³n / Requisitos del Puesto (Opcional)</label>
           <textarea
             rows={3}
             placeholder="Pega detalles clave de la vacante para personalizar los argumentos de tu carta..."
@@ -132,7 +106,7 @@ export default function CoverLetterGenerator({ resumeData }) {
         disabled={isGenerating}
       >
         <Sparkles size={16} />
-        <span>{isGenerating ? 'Redactando Carta de Presentación...' : 'Generar Carta con IA'}</span>
+        <span>{isGenerating ? 'Redactando Carta de PresentaciÃ³n...' : 'Generar Carta con IA'}</span>
       </button>
 
       {error && <div className="error-banner">{error}</div>}
@@ -142,11 +116,11 @@ export default function CoverLetterGenerator({ resumeData }) {
           <div className="cover-actions-bar">
             <button className="btn-secondary" onClick={handleCopy}>
               {copied ? <Check size={16} color="#10b981" /> : <Copy size={16} />}
-              <span>{copied ? '¡Copiado!' : 'Copiar Texto'}</span>
+              <span>{copied ? 'Â¡Copiado!' : 'Copiar Texto'}</span>
             </button>
             <button className="btn-primary" onClick={handleDownloadPDF}>
               <Download size={16} />
-              <span>Descargar PDF</span>
+              <span>Descargar PDF ATS</span>
             </button>
           </div>
 
@@ -157,27 +131,6 @@ export default function CoverLetterGenerator({ resumeData }) {
               value={editedLetter}
               onChange={(e) => setEditedLetter(e.target.value)}
             />
-          </div>
-
-          {/* Hidden/Formatted Printable Sheet for PDF Export */}
-          <div className="preview-sheet-wrapper cover-pdf-wrapper">
-            <div className="preview-sheet cover-sheet" ref={letterRef}>
-              <div className="harvard-header">
-                <h1 className="harvard-name">{resumeData?.personal_info?.name || 'NOMBRE COMPLETO'}</h1>
-                <div className="harvard-contact">
-                  {resumeData?.personal_info?.email} | {resumeData?.personal_info?.phone} | {resumeData?.personal_info?.location}
-                </div>
-              </div>
-              <div className="harvard-section-divider"></div>
-              {coverLetterData.subject && (
-                <p className="cover-subject"><strong>Asunto:</strong> {coverLetterData.subject}</p>
-              )}
-              <div className="cover-body-text">
-                {editedLetter.split('\n').map((paragraph, pIdx) => (
-                  <p key={pIdx}>{paragraph}</p>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       )}

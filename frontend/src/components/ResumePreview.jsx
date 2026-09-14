@@ -5,7 +5,7 @@ import ExecutivePhotoTemplate from './templates/ExecutivePhotoTemplate'
 import ModernPhotoTemplate from './templates/ModernPhotoTemplate'
 import EuropassTemplate from './templates/EuropassTemplate'
 import { Download, Layout, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
-import html2pdf from 'html2pdf.js'
+import { generatePureVectorPdf } from '../utils/pureVectorPdf'
 
 export default function ResumePreview({ data, t }) {
   const [template, setTemplate] = useState('harvard') // 'harvard' | 'modern' | 'europass' | 'executive-photo'
@@ -39,47 +39,17 @@ export default function ResumePreview({ data, t }) {
     }
   }, [data, template, zoomScale])
 
-  const handleDownloadPDF = async () => {
-    if (!resumeRef.current) return
+  const handleDownloadPDF = () => {
+    if (!data) return
     setIsExporting(true)
-
-    const element = resumeRef.current
-    const originalTransform = element.style.transform
-    const originalPosition = element.style.position
-
     try {
-      // Temporarily reset transform for clean html2canvas capture
-      element.style.transform = 'none'
-      element.style.position = 'relative'
-
-      // Wait a frame for browser layout calculation
-      await new Promise((resolve) => setTimeout(resolve, 120))
-
-      const fileName = `${(data?.personal_info?.name || 'Curriculum').trim().replace(/\s+/g, '_')}_ATS.pdf`
-
-      const opt = {
-        margin: [0.35, 0.35, 0.35, 0.35],
-        filename: fileName,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          scrollY: 0,
-          scrollX: 0,
-          windowWidth: 816
-        },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      }
-
-      await html2pdf().set(opt).from(element).save()
+      // Detect the active language: data.language field if set, otherwise fallback to 'es'
+      const lang = data?.language || 'es'
+      generatePureVectorPdf(data, template, lang)
     } catch (err) {
-      console.error('Error generating PDF:', err)
+      console.error('Error generating vector PDF:', err)
+      alert('Error al generar PDF: ' + err.message)
     } finally {
-      // Restore original zoom transform
-      element.style.transform = originalTransform
-      element.style.position = originalPosition
       setIsExporting(false)
     }
   }

@@ -274,10 +274,10 @@ function App() {
               onClick={toggleTheme}
               title={
                 themeMode === 'auto'
-                  ? 'Modo Automático'
+                  ? (t.themeAuto || 'Auto')
                   : themeMode === 'dark'
-                  ? 'Modo Oscuro'
-                  : 'Modo Claro'
+                  ? (t.themeDark || 'Dark')
+                  : (t.themeLight || 'Light')
               }
             >
               {themeMode === 'auto' && <SunMoon size={17} />}
@@ -482,15 +482,15 @@ function App() {
               >
                 <Sparkles size={18} />
                 <span>
-                  {viewMode === 'grammar' && '✍️ Ortografía IA'}
-                  {viewMode === 'keywords' && '🏷️ Palabras Clave'}
-                  {viewMode === 'certs' && '🎓 Certificaciones Sugeridas'}
-                  {viewMode === 'linkedin' && '💼 Perfil LinkedIn'}
-                  {viewMode === 'cover-letter' && '✉️ Carta Presentación'}
-                  {viewMode === 'salary' && '💵 Estimador Salarial'}
-                  {viewMode === 'outreach' && '💬 Mensajes Contacto'}
-                  {viewMode === 'interview' && '❓ Entrevista STAR'}
-                  {!['grammar', 'keywords', 'certs', 'linkedin', 'cover-letter', 'salary', 'outreach', 'interview'].includes(viewMode) && '✨ Herramientas IA'}
+                  {viewMode === 'grammar' && (t.toolGrammar || '✍️ Ortografía IA')}
+                  {viewMode === 'keywords' && (t.toolKeywords || '🏷️ Palabras Clave')}
+                  {viewMode === 'certs' && (t.toolCerts || '🎓 Certificaciones Sugeridas')}
+                  {viewMode === 'linkedin' && (t.toolLinkedin || '💼 Perfil LinkedIn')}
+                  {viewMode === 'cover-letter' && (t.toolCoverLetter || '✉️ Carta Presentación')}
+                  {viewMode === 'salary' && (t.toolSalary || '💵 Estimador Salarial')}
+                  {viewMode === 'outreach' && (t.toolOutreach || '💬 Mensajes Contacto')}
+                  {viewMode === 'interview' && (t.toolInterview || '❓ Entrevista STAR')}
+                  {!['grammar', 'keywords', 'certs', 'linkedin', 'cover-letter', 'salary', 'outreach', 'interview'].includes(viewMode) && (t.navModeTools || '✨ Herramientas IA')}
                 </span>
                 <ChevronDown size={16} className={`chevron-icon ${isDropdownOpen ? 'open' : ''}`} />
               </button>
@@ -502,56 +502,56 @@ function App() {
                     onClick={() => { setViewMode('grammar'); setIsDropdownOpen(false); }}
                   >
                     <SpellCheck size={16} />
-                    <span>✍️ Ortografía & Gramática IA</span>
+                    <span>{t.toolGrammar || '✍️ Ortografía & Gramática IA'}</span>
                   </button>
                   <button
                     className={`dropdown-item ${viewMode === 'keywords' ? 'active' : ''}`}
                     onClick={() => { setViewMode('keywords'); setIsDropdownOpen(false); }}
                   >
                     <Tag size={16} />
-                    <span>🏷️ Palabras Clave de Industria</span>
+                    <span>{t.toolKeywords || '🏷️ Palabras Clave de Industria'}</span>
                   </button>
                   <button
                     className={`dropdown-item ${viewMode === 'certs' ? 'active' : ''}`}
                     onClick={() => { setViewMode('certs'); setIsDropdownOpen(false); }}
                   >
                     <Award size={16} />
-                    <span>🎓 Certificaciones Sugeridas</span>
+                    <span>{t.toolCerts || '🎓 Certificaciones Sugeridas'}</span>
                   </button>
                   <button
                     className={`dropdown-item ${viewMode === 'linkedin' ? 'active' : ''}`}
                     onClick={() => { setViewMode('linkedin'); setIsDropdownOpen(false); }}
                   >
                     <Share2 size={16} />
-                    <span>💼 Perfil de LinkedIn</span>
+                    <span>{t.toolLinkedin || '💼 Perfil de LinkedIn'}</span>
                   </button>
                   <button
                     className={`dropdown-item ${viewMode === 'cover-letter' ? 'active' : ''}`}
                     onClick={() => { setViewMode('cover-letter'); setIsDropdownOpen(false); }}
                   >
                     <Mail size={16} />
-                    <span>✉️ Carta de Presentación</span>
+                    <span>{t.toolCoverLetter || '✉️ Carta de Presentación'}</span>
                   </button>
                   <button
                     className={`dropdown-item ${viewMode === 'salary' ? 'active' : ''}`}
                     onClick={() => { setViewMode('salary'); setIsDropdownOpen(false); }}
                   >
                     <DollarSign size={16} />
-                    <span>💵 Estimador Salarial</span>
+                    <span>{t.toolSalary || '💵 Estimador Salarial'}</span>
                   </button>
                   <button
                     className={`dropdown-item ${viewMode === 'outreach' ? 'active' : ''}`}
                     onClick={() => { setViewMode('outreach'); setIsDropdownOpen(false); }}
                   >
                     <MessageSquare size={16} />
-                    <span>💬 Mensajes de Contacto</span>
+                    <span>{t.toolOutreach || '💬 Mensajes de Contacto'}</span>
                   </button>
                   <button
                     className={`dropdown-item ${viewMode === 'interview' ? 'active' : ''}`}
                     onClick={() => { setViewMode('interview'); setIsDropdownOpen(false); }}
                   >
                     <HelpCircle size={16} />
-                    <span>❓ Entrevista STAR</span>
+                    <span>{t.toolInterview || '❓ Entrevista STAR'}</span>
                   </button>
                 </div>
               )}
@@ -561,12 +561,26 @@ function App() {
           {/* Handwritten / Image Warning Notice */}
           {isImageUpload && viewMode === 'editor' && (
             <div className="image-warning-banner">
-              <div className="warning-content">
-                <AlertTriangle size={24} className="warning-icon" />
-                <div>
-                  <strong>{t.imageWarningTitle}</strong>
-                  <p>{t.imageWarningText}</p>
+              <div className="warning-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <AlertTriangle size={24} className="warning-icon" style={{ flexShrink: 0 }} />
+                  <div>
+                    <strong>{t.imageWarningTitle}</strong>
+                    <p>{t.imageWarningText}</p>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  className="btn-icon"
+                  onClick={() => {
+                    setIsImageUpload(false)
+                    try { localStorage.setItem('ats_resume_is_image', JSON.stringify(false)) } catch (e) {}
+                  }}
+                  title={t.cancelBtn || 'Close'}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit', padding: '4px', display: 'flex', alignItems: 'center' }}
+                >
+                  <X size={18} />
+                </button>
               </div>
             </div>
           )}
@@ -581,14 +595,14 @@ function App() {
                   onClick={() => setMobileTab('editor')}
                 >
                   <Edit3 size={18} />
-                  <span>1. Editar Datos</span>
+                  <span>{t.mobileEditBtn || '1. Editar Datos'}</span>
                 </button>
                 <button
                   className={`mobile-toggle-btn ${mobileTab === 'preview' ? 'active' : ''}`}
                   onClick={() => setMobileTab('preview')}
                 >
                   <Eye size={18} />
-                  <span>2. Vista Previa ATS</span>
+                  <span>{t.mobilePreviewBtn || '2. Vista Previa ATS'}</span>
                 </button>
               </div>
 
