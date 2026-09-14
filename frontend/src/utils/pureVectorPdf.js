@@ -94,17 +94,20 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
   const doc         = new jsPDF({ unit: 'pt', format: 'letter', compress: true })
   const PAGE_W      = 612
   const PAGE_H      = 792
-  const MARGIN      = 38
+  // Use 54pt margin (0.75 inch) for a more elegant, narrow text column matching HTML preview
+  const MARGIN      = 54
   const CONTENT_W   = PAGE_W - MARGIN * 2
   const BOTTOM_SAFE = PAGE_H - MARGIN
+
   const isHarvard   = template === 'harvard'
   const isModern    = template === 'modern' || template === 'modern-photo'
   const isExecutive = template === 'executive-photo'
   const hasPhoto    = (isExecutive || template === 'modern-photo') && personal.photo
 
-  const LINE_SM     = isHarvard ? 13 : 10.5
-  const LINE_MD     = isHarvard ? 14.5 : 12
-  const LINE_LG     = isHarvard ? 17 : 13.5
+  // Adjusted line heights to match HTML proportionality
+  const LINE_SM     = isHarvard ? 12.5 : 10.5
+  const LINE_MD     = isHarvard ? 13.5 : 12
+  const LINE_LG     = isHarvard ? 16 : 13.5
 
   let y = MARGIN + 6
 
@@ -129,6 +132,14 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
       const boldB64 = await fetchFont('/fonts/Merriweather-Bold.ttf')
       doc.addFileToVFS('merriweather-bold.ttf', boldB64)
       doc.addFont('merriweather-bold.ttf', 'merriweather', 'bold')
+
+      const italicB64 = await fetchFont('/fonts/Merriweather-Italic.ttf')
+      doc.addFileToVFS('merriweather-italic.ttf', italicB64)
+      doc.addFont('merriweather-italic.ttf', 'merriweather', 'italic')
+
+      const boldItalicB64 = await fetchFont('/fonts/Merriweather-BoldItalic.ttf')
+      doc.addFileToVFS('merriweather-bolditalic.ttf', boldItalicB64)
+      doc.addFont('merriweather-bolditalic.ttf', 'merriweather', 'bolditalic')
     } catch (e) {
       console.warn("Could not load Merriweather, falling back to default:", e)
     }
@@ -171,12 +182,13 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
   function drawSectionTitle(title) {
     ensureSpace(50) // title height + space for at least one entry
     doc.setFont(FONT, 'bold')
-    doc.setFontSize(isHarvard ? 12 : 10.5)
+    // Size 11 matches HTML 0.9rem much closer than 12
+    doc.setFontSize(isHarvard ? 11 : 10.5)
     doc.setTextColor(accentRGB[0], accentRGB[1], accentRGB[2])
     doc.text(title, MARGIN, y)
-    y += isHarvard ? 7 : 4
-    drawDivider(accentMuted, isHarvard ? 0.5 : 0.75)
-    y += isHarvard ? 14 : 11
+    y += isHarvard ? 4 : 4
+    drawDivider(accentMuted, isHarvard ? 0.75 : 0.75)
+    y += isHarvard ? 12 : 11
   }
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
