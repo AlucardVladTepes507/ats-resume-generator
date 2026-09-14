@@ -215,8 +215,13 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
   }
 
   // Divider after header
-  drawDivider(accentMuted)
-  y += 12
+  if (!isHarvard) {
+    drawDivider(accentMuted)
+    y += 12
+  } else {
+    y += 6
+  }
+
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // 2. PROFESSIONAL SUMMARY
@@ -276,7 +281,7 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
       }
 
       if (dateStr) {
-        doc.setFont(FONT, 'normal')
+        doc.setFont(FONT, isHarvard ? 'italic' : 'normal')
         doc.setFontSize(9)
         doc.setTextColor(textMeta[0], textMeta[1], textMeta[2])
         doc.text(dateStr, MARGIN + CONTENT_W, y, { align: 'right' })
@@ -312,7 +317,7 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
       const start       = cleanText(edu.start_date  || '')
       const end         = cleanText(edu.end_date || edu.year || '')
       const dateStr     = [start, end].filter(Boolean).join(SEP_CHAR)
-      const entryH      = LINE_LG + (degree ? LINE_MD : 0) + 4
+      const entryH      = LINE_LG + (!isHarvard && degree ? LINE_MD : 0) + 4
 
       ensureSpace(entryH)
 
@@ -321,22 +326,28 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
       doc.setTextColor(textTitle[0], textTitle[1], textTitle[2])
       doc.text(institution || '-', MARGIN, y)
 
-      if (dateStr) {
+      if (degree) {
+        const instW = doc.getTextWidth(institution || '-')
         doc.setFont(FONT, 'normal')
+        
+        if (isHarvard) {
+          doc.setFontSize(10)
+          doc.setTextColor(textSub[0], textSub[1], textSub[2])
+          doc.text(`${SEP_CHAR}${degree}`, MARGIN + instW, y)
+        } else {
+          doc.setFontSize(9.2)
+          doc.setTextColor(textSub[0], textSub[1], textSub[2])
+          doc.text(degree, MARGIN, y + LINE_MD)
+        }
+      }
+
+      if (dateStr) {
+        doc.setFont(FONT, isHarvard ? 'italic' : 'normal')
         doc.setFontSize(9)
         doc.setTextColor(textMeta[0], textMeta[1], textMeta[2])
         doc.text(dateStr, MARGIN + CONTENT_W, y, { align: 'right' })
       }
-      y += LINE_LG
-
-      if (degree) {
-        doc.setFont(FONT, 'normal')
-        doc.setFontSize(9.2)
-        doc.setTextColor(textSub[0], textSub[1], textSub[2])
-        doc.text(degree, MARGIN, y)
-        y += LINE_MD
-      }
-
+      y += LINE_LG + (!isHarvard && degree ? LINE_MD : 0)
       y += 4
     }
     y += 2
@@ -349,8 +360,9 @@ export function generatePureVectorPdf(data, template = 'harvard', lang = 'es') {
     drawSectionTitle(labels.skills)
 
     const cleanedSkills = skills.map(cleanText).filter(Boolean)
-    const skillsText    = cleanedSkills.join('   -   ')
-    const skillLines    = doc.splitTextToSize(skillsText, CONTENT_W)
+    const skillsText    = cleanedSkills.join(isHarvard ? '  \x95  ' : '   -   ')
+    const prefix        = isHarvard ? 'Skills: ' : ''
+    const skillLines    = doc.splitTextToSize(prefix + skillsText, CONTENT_W)
     const skillsH       = skillLines.length * LINE_MD + 4
 
     ensureSpace(skillsH)
