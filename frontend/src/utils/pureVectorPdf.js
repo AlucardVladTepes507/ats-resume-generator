@@ -174,9 +174,9 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
     doc.setFontSize(isHarvard ? 12 : 10.5)
     doc.setTextColor(accentRGB[0], accentRGB[1], accentRGB[2])
     doc.text(title, MARGIN, y)
-    y += 4
+    y += isHarvard ? 7 : 4
     drawDivider(accentMuted, isHarvard ? 0.5 : 0.75)
-    y += isHarvard ? 8 : 11
+    y += isHarvard ? 14 : 11
   }
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
