@@ -1434,6 +1434,7 @@ body {
 .harvard-skills-list {
   font-size: 0.84rem;
   line-height: 1.4;
+  text-align: justify;
 }
 
 /* ATS TEMPLATE 2: MODERN CLEAN */
