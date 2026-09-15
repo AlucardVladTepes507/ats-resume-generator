@@ -175,6 +175,34 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
     return false
   }
 
+  // ── Justified text renderer ─────────────────────────────────────────────────
+  // Renders a text block with full justification (like Word's Ctrl+J).
+  // Non-last lines have word spacing distributed so text touches both margins.
+  // The last line (or single-line blocks) stays left-aligned — standard typographic rule.
+  // Uses our custom lineH value so y tracking stays exact.
+  function drawJustified(text, x, maxW, lineH, bottomPad) {
+    const lines = doc.splitTextToSize(text, maxW)
+    for (let li = 0; li < lines.length; li++) {
+      const lineText  = lines[li]
+      const isLast    = li === lines.length - 1
+      const words     = lineText.trim().split(/\s+/)
+      if (!isLast && words.length > 1) {
+        const totalWordW = words.reduce((s, w) => s + doc.getTextWidth(w), 0)
+        const gap        = (maxW - totalWordW) / (words.length - 1)
+        let xCur = x
+        for (const word of words) {
+          doc.text(word, xCur, y)
+          xCur += doc.getTextWidth(word) + gap
+        }
+      } else {
+        doc.text(lineText, x, y)
+      }
+      y += lineH
+    }
+    if (bottomPad) y += bottomPad
+    return lines.length
+  }
+
   // â”€â”€ Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function drawDivider(rgb, weight) {
     doc.setDrawColor(rgb[0], rgb[1], rgb[2])
@@ -279,8 +307,7 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
     doc.setFont(FONT, 'normal')
     doc.setFontSize(9.5)
     doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2])
-    doc.text(summaryLines, MARGIN, y)
-    y += summaryBlockH
+    drawJustified(summaryText, MARGIN, CONTENT_W, LINE_MD, 8)
   }
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -331,15 +358,15 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
       y += LINE_LG
 
       // Bullets
-      for (let i = 0; i < bulletSplits.length; i++) {
+      for (let i = 0; i < bulletList.length; i++) {
+        const rawText = bulletList[i]
         const lines = bulletSplits[i]
         ensureSpace(lines.length * LINE_SM + 2)
         doc.setFont(FONT, 'normal')
         doc.setFontSize(9.2)
         doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2])
         doc.text(BULLET_CHAR, MARGIN + 2, y)
-        doc.text(lines, MARGIN + 14, y)
-        y += lines.length * LINE_SM + 2
+        drawJustified(rawText, MARGIN + 14, CONTENT_W - 16, LINE_SM, 2)
       }
 
       y += 6
@@ -411,8 +438,7 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
     doc.setFont(FONT, 'normal')
     doc.setFontSize(9.5)
     doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2])
-    doc.text(skillLines, MARGIN, y)
-    y += skillsH
+    drawJustified(prefix + skillsText, MARGIN, CONTENT_W, LINE_MD, 4)
   }
 
   // ── Auto-remove blank last page ─────────────────────────────────────────────
