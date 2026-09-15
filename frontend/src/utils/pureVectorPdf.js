@@ -94,8 +94,8 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
   const doc         = new jsPDF({ unit: 'pt', format: 'letter', compress: true })
   const PAGE_W      = 612
   const PAGE_H      = 792
-  // Use 54pt margin (0.75 inch) for a more elegant, narrow text column matching HTML preview
-  const MARGIN      = 54
+  // 43pt = 0.6in — matches the HTML preview-sheet padding (0.6in), so PDF wraps text identically
+  const MARGIN      = 43
   const CONTENT_W   = PAGE_W - MARGIN * 2
   const BOTTOM_SAFE = PAGE_H - MARGIN
 
