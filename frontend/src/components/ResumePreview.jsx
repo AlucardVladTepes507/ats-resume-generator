@@ -14,21 +14,36 @@ export default function ResumePreview({ data, t }) {
   const [autoFit, setAutoFit] = useState(true)
   const [sheetHeight, setSheetHeight] = useState(1056)
   const resumeRef = useRef(null)
+  const wrapperRef = useRef(null)
 
-  // Automatically fit the exact 816px Letter paper sheet to the mobile screen width
+  // FIX 1: Use ResizeObserver on the actual wrapper element for correct scaling on mobile.
+  // Previously used window.innerWidth which didn't account for the real container width.
   useEffect(() => {
-    const handleResize = () => {
-      if (autoFit && window.innerWidth <= 850) {
-        const availableWidth = Math.min(window.innerWidth - 24, 800)
-        setZoomScale(availableWidth / 816)
-      } else if (autoFit) {
+    if (!autoFit) return
+
+    const applyScale = (containerWidth) => {
+      if (containerWidth > 0 && containerWidth < 850) {
+        // Subtract padding (16px each side) from the real container width
+        const usableWidth = containerWidth - 32
+        setZoomScale(Math.min(usableWidth / 816, 1))
+      } else {
         setZoomScale(1)
       }
     }
 
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        applyScale(entry.contentRect.width)
+      }
+    })
+
+    if (wrapperRef.current) {
+      observer.observe(wrapperRef.current)
+      // Run immediately on mount
+      applyScale(wrapperRef.current.getBoundingClientRect().width)
+    }
+
+    return () => observer.disconnect()
   }, [autoFit])
 
   // Dynamic sheet height calculation
@@ -114,7 +129,7 @@ export default function ResumePreview({ data, t }) {
       </div>
 
       {/* Printable Sheet Wrapper */}
-      <div className="preview-sheet-wrapper">
+      <div className="preview-sheet-wrapper" ref={wrapperRef}>
         <div
           className="mobile-sheet-scaler"
           style={{

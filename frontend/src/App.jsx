@@ -370,6 +370,10 @@ function App() {
       {!resumeData ? (
         <div className="upload-section">
           <div className="landing-header">
+            <div className="hero-badge">
+              <Sparkles size={14} />
+              <span>{t.heroBadge}</span>
+            </div>
 
             <h2 className="landing-hero-title">
               {t.heroTitlePrefix}<span className="text-gradient">{t.heroTitleHighlight}</span>
