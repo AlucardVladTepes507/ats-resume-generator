@@ -1302,17 +1302,16 @@ body {
     border-radius: 0.5rem;
   }
 
-  .preview-sheet {
-    width: 100% !important;
-    min-width: auto !important;
-    max-width: none !important;
-  }
+  /* IMPORTANT: Do NOT override preview-sheet width here.
+     The sheet must always render at 816px so the template layout is correct.
+     The mobile-sheet-scaler wrapper + scale() transform handles visual shrinking. */
 
   .mobile-sheet-scaler {
-    width: 100% !important;
+    /* Width and height are set by JS (inline style) based on zoomScale */
     position: relative;
     margin: 0 auto !important;
     display: block;
+    overflow: hidden;
   }
 }
 
@@ -1732,14 +1731,9 @@ body {
     -webkit-overflow-scrolling: touch;
   }
 
-  .preview-sheet {
-    transform-origin: top center;
-    margin: 0 auto;
-    width: 210mm;
-    max-width: 100%;
-    padding: 12mm 10mm;
-    min-height: auto;
-  }
+  /* IMPORTANT: preview-sheet must stay at 816px (set in base CSS).
+     The mobile-sheet-scaler + scale() JS transform handles visual fit.
+     Do NOT override width here — it causes the template to reflow at wrong width. */
 }
 
 @media (max-width: 480px) {
