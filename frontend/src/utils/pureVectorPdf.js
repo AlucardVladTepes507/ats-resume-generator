@@ -359,14 +359,14 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
 
       // Bullets
       for (let i = 0; i < bulletList.length; i++) {
-        const rawText = bulletList[i]
         const lines = bulletSplits[i]
         ensureSpace(lines.length * LINE_SM + 2)
         doc.setFont(FONT, 'normal')
         doc.setFontSize(9.2)
         doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2])
         doc.text(BULLET_CHAR, MARGIN + 2, y)
-        drawJustified(rawText, MARGIN + 14, CONTENT_W - 16, LINE_SM, 2)
+        doc.text(lines, MARGIN + 14, y)
+        y += lines.length * LINE_SM + 2
       }
 
       y += 6
