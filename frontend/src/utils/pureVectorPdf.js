@@ -21,10 +21,12 @@ function cleanText(str) {
   return String(str)
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
-    .replace(/[\u2013\u2014]/g, ' - ')
-    .replace(/[\u00A0\u00AD]/g, ' ')
-    .replace(/[\u2022\u25CF\u25AA\u25AB\u2023\u2043]/g, '-')
-    .replace(/[^\x20-\x7E\r\n\t]/g, (ch) => {
+    .replace(/\u00AD/g, '')          // soft hyphen → remove
+    .replace(/\u00A0/g, ' ')         // non-breaking space → normal space
+    .replace(/[\u25CF\u25AA\u25AB\u2023\u2043]/g, '\u2022') // other bullets → •
+    // NOTE: Do NOT strip \u2022 (bullet •) or \u2013/\u2014 (en-dash/em-dash) —
+    // those are valid Unicode characters that Merriweather TTF renders correctly.
+    .replace(/[^\x20-\x7E\u00C0-\u024F\u2013\u2014\u2022\r\n\t]/g, (ch) => {
       const decomposed = ch.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       return /^[\x20-\x7E]$/.test(decomposed) ? decomposed : ' '
     })
@@ -104,10 +106,11 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
   const isExecutive = template === 'executive-photo'
   const hasPhoto    = (isExecutive || template === 'modern-photo') && personal.photo
 
-  // Adjusted line heights to match HTML proportionality
-  const LINE_SM     = isHarvard ? 12.5 : 10.5
-  const LINE_MD     = isHarvard ? 13.5 : 12
-  const LINE_LG     = isHarvard ? 16 : 13.5
+  // Line heights tuned to match the HTML Merriweather CSS line-height visually.
+  // The HTML uses ~1.6 line-height on 9.5pt font = ~15.2pt effective line height.
+  const LINE_SM     = isHarvard ? 14.5 : 10.5
+  const LINE_MD     = isHarvard ? 15.5 : 12
+  const LINE_LG     = isHarvard ? 18   : 13.5
 
   let y = MARGIN + 6
 
@@ -148,7 +151,8 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
   // Theme Constants
   const FONT        = isHarvard ? 'merriweather' : 'helvetica'
   const BULLET_CHAR = isHarvard ? '\u2022' : '-'
-  const SEP_CHAR    = isHarvard ? ' - ' : ' - '
+  // FIX: Use em-dash (—) for Harvard to match the HTML preview, not a plain hyphen
+  const SEP_CHAR    = isHarvard ? ' \u2014 ' : ' - '
 
   // Colors
   const accentRGB   = isModern ? [29, 78, 216] : (isHarvard ? [0, 0, 0] : [15, 23, 42])
@@ -409,6 +413,17 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
     doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2])
     doc.text(skillLines, MARGIN, y)
     y += skillsH
+  }
+
+  // ── Auto-remove blank last page ─────────────────────────────────────────────
+  // If content triggered a new page but nothing (or almost nothing) was written
+  // on it, delete it so the PDF never ends with a blank page.
+  const totalPages = doc.getNumberOfPages()
+  if (totalPages > 1) {
+    // If current y position is within 60pt of the top margin, the last page is essentially blank
+    if (y <= MARGIN + 60) {
+      doc.deletePage(totalPages)
+    }
   }
 
   // ── PDF Metadata ────────────────────────────────────────────────────────────
