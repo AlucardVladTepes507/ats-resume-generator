@@ -853,6 +853,9 @@ async def auto_optimize_resume(payload: AutoOptimizeResumeRequest):
         keywords_str = ", ".join(payload.missing_keywords or [])
         job_str = (payload.job_description or "")[:3000]
 
+        # Strip photo/heavy data to prevent prompt size explosion
+        safe_resume = sanitize_resume_data_for_prompt(payload.resume_data)
+
         prompt = f"""
 Eres un redactor experto de CVs de alto nivel para sistemas de selección ATS.
 Tu objetivo es optimizar el currículum provisto agregando de forma natural e inteligente las competencias y palabras clave faltantes de la vacante, sin inventar datos falsos de empresas o fechas.
@@ -864,7 +867,7 @@ Oferta laboral de referencia:
 {job_str}
 
 CV Actual en formato JSON:
-{json.dumps(payload.resume_data, ensure_ascii=False)}
+{json.dumps(safe_resume, ensure_ascii=False)}
 
 INSTRUCCIONES:
 1. Mejora el perfil/resumen profesional (`personal_info.summary`) para alinearlo con el puesto y las palabras clave.

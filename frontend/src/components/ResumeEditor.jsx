@@ -421,19 +421,6 @@ export default function ResumeEditor({ data, onChange, t }) {
                         onChange={(e) => handleExperienceChange(expIdx, 'end_date', e.target.value)}
                         placeholder={t?.datePlaceholder || 'Mes Año'}
                       />
-                      <button
-                        type="button"
-                        className={`btn-current-toggle ${isCurrentJob(exp.end_date) ? 'active' : ''}`}
-                        onClick={() => {
-                          const isCurrent = isCurrentJob(exp.end_date)
-                          handleExperienceChange(expIdx, 'end_date', isCurrent ? '' : (t?.presentText || 'Presente'))
-                        }}
-                        title={t?.currentJobBtn || 'Trabajo actual'}
-                      >
-                        <Briefcase size={13} />
-                        <span>{t?.presentText || 'Presente'}</span>
-                        {isCurrentJob(exp.end_date) && <Check size={13} className="check-badge" />}
-                      </button>
                     </div>
                   </div>
                 </div>
