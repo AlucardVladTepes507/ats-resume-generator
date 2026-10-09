@@ -7,23 +7,22 @@ import EuropassTemplate from './templates/EuropassTemplate'
 import { Download, Layout, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
 import { generatePureVectorPdf } from '../utils/pureVectorPdf'
 
+const PAGE_HEIGHT_PX = 1056 // US Letter at 96dpi
+
 export default function ResumePreview({ data, t }) {
-  const [template, setTemplate] = useState('harvard') // 'harvard' | 'modern' | 'europass' | 'executive-photo'
+  const [template, setTemplate] = useState('harvard')
   const [isExporting, setIsExporting] = useState(false)
   const [zoomScale, setZoomScale] = useState(1)
   const [autoFit, setAutoFit] = useState(true)
-  const [sheetHeight, setSheetHeight] = useState(1056)
+  const [sheetHeight, setSheetHeight] = useState(PAGE_HEIGHT_PX)
   const resumeRef = useRef(null)
   const wrapperRef = useRef(null)
 
-  // FIX 1: Use ResizeObserver on the actual wrapper element for correct scaling on mobile.
-  // Previously used window.innerWidth which didn't account for the real container width.
   useEffect(() => {
     if (!autoFit) return
 
     const applyScale = (containerWidth) => {
       if (containerWidth > 0 && containerWidth < 850) {
-        // Subtract padding (16px each side) from the real container width
         const usableWidth = containerWidth - 32
         setZoomScale(Math.min(usableWidth / 816, 1))
       } else {
@@ -39,18 +38,16 @@ export default function ResumePreview({ data, t }) {
 
     if (wrapperRef.current) {
       observer.observe(wrapperRef.current)
-      // Run immediately on mount
       applyScale(wrapperRef.current.getBoundingClientRect().width)
     }
 
     return () => observer.disconnect()
   }, [autoFit])
 
-  // Dynamic sheet height calculation
   useEffect(() => {
     if (resumeRef.current) {
       const actualHeight = resumeRef.current.scrollHeight
-      setSheetHeight(Math.max(actualHeight, 1056))
+      setSheetHeight(Math.max(actualHeight, PAGE_HEIGHT_PX))
     }
   }, [data, template, zoomScale])
 
@@ -58,7 +55,6 @@ export default function ResumePreview({ data, t }) {
     if (!data) return
     setIsExporting(true)
     try {
-      // Detect the active language: data.language field if set, otherwise fallback to 'es'
       const lang = data?.language || 'es'
       await generatePureVectorPdf(data, template, lang)
     } catch (err) {
@@ -67,6 +63,16 @@ export default function ResumePreview({ data, t }) {
     } finally {
       setIsExporting(false)
     }
+  }
+
+  // Calculate page break positions (only when content overflows page 1)
+  const pageBreakLines = []
+  const totalPages = Math.ceil(sheetHeight / PAGE_HEIGHT_PX)
+  for (let page = 2; page <= totalPages; page++) {
+    pageBreakLines.push({
+      page,
+      topPx: (page - 1) * PAGE_HEIGHT_PX * zoomScale,
+    })
   }
 
   return (
@@ -141,6 +147,7 @@ export default function ResumePreview({ data, t }) {
             display: 'block'
           }}
         >
+          {/* Resume content */}
           <div
             className="preview-sheet"
             ref={resumeRef}
@@ -149,7 +156,7 @@ export default function ResumePreview({ data, t }) {
               width: '816px',
               minWidth: '816px',
               maxWidth: '816px',
-              minHeight: '1056px',
+              minHeight: `${PAGE_HEIGHT_PX}px`,
               position: 'absolute',
               top: 0,
               left: 0,
@@ -163,8 +170,23 @@ export default function ResumePreview({ data, t }) {
             {template === 'executive-photo' && <ExecutivePhotoTemplate data={data} />}
             {template === 'modern-photo' && <ModernPhotoTemplate data={data} />}
           </div>
+
+          {/* Page break indicator lines (visual only, not in PDF) */}
+          {pageBreakLines.map(({ page, topPx }) => (
+            <div
+              key={page}
+              className="page-break-indicator"
+              style={{ top: `${topPx}px` }}
+              aria-hidden="true"
+            >
+              <span className="page-break-label">
+                — Página {page} —
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
   )
 }
+

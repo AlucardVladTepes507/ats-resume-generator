@@ -4230,3 +4230,40 @@ body {
   justify-content: center;
   margin-top: 0.25rem;
 }
+
+
+/* ─── PAGE BREAK INDICATOR (Vista Previa – no aparece en PDF) ────────────── */
+.page-break-indicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 2px dashed rgba(239, 68, 68, 0.65);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.page-break-label {
+  position: relative;
+  top: -11px;
+  background: rgba(239, 68, 68, 0.85);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 1px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.2);
+  user-select: none;
+}
+
+[data-theme="light"] .page-break-indicator {
+  border-top-color: rgba(220, 38, 38, 0.55);
+}
+[data-theme="light"] .page-break-label {
+  background: rgba(220, 38, 38, 0.8);
+}
