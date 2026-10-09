@@ -499,27 +499,12 @@ export default function ResumeEditor({ data, onChange, t }) {
                   </div>
                   <div className="form-group">
                     <label>{t?.endYearLabel || 'Año Fin'}</label>
-                    <div className="date-input-with-action">
-                      <input
-                        type="text"
-                        value={edu.end_date || ''}
-                        onChange={(e) => handleEducationChange(eduIdx, 'end_date', e.target.value)}
-                        placeholder={t?.yearPlaceholder || 'Año'}
-                      />
-                      <button
-                        type="button"
-                        className={`btn-current-toggle ${isCurrentlyStudying(edu.end_date) ? 'active' : ''}`}
-                        onClick={() => {
-                          const isCurrent = isCurrentlyStudying(edu.end_date)
-                          handleEducationChange(eduIdx, 'end_date', isCurrent ? '' : (t?.presentText || 'Presente'))
-                        }}
-                        title={t?.currentStudyBtn || 'Actualmente cursando'}
-                      >
-                        <GraduationCap size={13} />
-                        <span>{t?.currentStudyBtn || 'Actualmente cursando'}</span>
-                        {isCurrentlyStudying(edu.end_date) && <Check size={13} className="check-badge" />}
-                      </button>
-                    </div>
+                    <input
+                      type="text"
+                      value={edu.end_date || ''}
+                      onChange={(e) => handleEducationChange(eduIdx, 'end_date', e.target.value)}
+                      placeholder={t?.yearPlaceholder || 'Año'}
+                    />
                   </div>
                 </div>
               </div>
