@@ -4043,3 +4043,190 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E") !important;
   border: 1px solid rgba(0, 0, 0, 0.05) !important;
 }
+
+
+/* ─── COVER LETTER GENERATOR – JOB INPUT SECTION ─────────────────────────── */
+.job-input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 0.5rem;
+}
+
+.job-input-section-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Mode tabs */
+.job-mode-tabs {
+  display: flex;
+  gap: 0.4rem;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.job-mode-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.6rem;
+  border: none;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.job-mode-tab.active {
+  background: var(--bg-card);
+  color: var(--accent-primary);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+
+.job-mode-tab:hover:not(.active) {
+  color: var(--text-primary);
+}
+
+/* Text textarea */
+.job-input-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 100px;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+.job-input-textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+/* URL input */
+.job-url-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.job-url-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.job-url-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.7rem 0.9rem 0.7rem 2.5rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+.job-url-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+/* Image dropzone */
+.job-image-dropzone {
+  border: 2px dashed var(--border-color);
+  border-radius: 12px;
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: var(--bg-secondary);
+  padding: 1.2rem;
+}
+.job-image-dropzone:hover:not(.has-file) {
+  border-color: var(--accent-primary);
+  background: var(--bg-card);
+}
+.job-image-dropzone.has-file {
+  cursor: default;
+  border-style: solid;
+  border-color: var(--accent-primary);
+}
+
+.job-image-dropzone-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+.job-image-dropzone-placeholder svg { color: var(--text-muted); }
+.job-image-dropzone-placeholder p {
+  font-size: 0.85rem;
+  margin: 0;
+  color: var(--text-secondary);
+}
+.job-image-dropzone-placeholder span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.job-image-file-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--accent-primary);
+  font-size: 0.88rem;
+  font-weight: 500;
+  width: 100%;
+}
+.job-image-filename {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+.job-image-clear-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  transition: color 0.2s;
+}
+.job-image-clear-btn:hover { color: var(--danger-color); }
+
+/* Spinner icon */
+.spin-icon {
+  animation: spinIcon 1s linear infinite;
+}
+@keyframes spinIcon {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Generate button spacing */
+.generate-letter-btn {
+  width: 100%;
+  justify-content: center;
+  margin-top: 0.25rem;
+}

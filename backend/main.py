@@ -216,6 +216,8 @@ class CoverLetterRequest(BaseModel):
     job_description: Optional[str] = ""
     company_name: Optional[str] = ""
     position_name: Optional[str] = ""
+    image_base64: Optional[str] = None
+    job_url: Optional[str] = ""
 
 class TranslateResumeRequest(BaseModel):
     resume_data: Dict[str, Any]
@@ -927,16 +929,66 @@ Devuelve un JSON estricto con 3 opciones mejoradas (Corta/Directa, Basada en Log
 @app.post("/generate-cover-letter/")
 async def generate_cover_letter(payload: CoverLetterRequest):
     try:
+        job_input = (payload.job_description or "").strip()
+        url_input = (payload.job_url or "").strip()
+
+        # 1. If a job image/screenshot was provided, extract text via Gemini Vision
+        if payload.image_base64:
+            try:
+                encoded = payload.image_base64.split(",", 1)[-1] if "," in payload.image_base64 else payload.image_base64
+                img_bytes = base64.b64decode(encoded)
+                compressed_bytes = compress_image_for_ai(img_bytes)
+                client = get_gemini_client()
+                if client:
+                    ocr_prompt = "Analiza la imagen provista. Si NO es una oferta de empleo, responde: ERROR_NOT_JOB_VACANCY. Si SÍ es una vacante, transcribe todo el texto del anuncio (empresa, cargo, requisitos, funciones)."
+                    contents_payload = [
+                        types.Part.from_bytes(data=compressed_bytes, mime_type="image/jpeg"),
+                        ocr_prompt
+                    ]
+                    ocr_resp = safe_generate_content(client, contents_payload)
+                    ocr_text = ocr_resp.text.strip()
+                    if "ERROR_NOT_JOB_VACANCY" not in ocr_text and len(ocr_text) > 20:
+                        job_input = (job_input + "\n\n" + ocr_text).strip()
+            except Exception as img_err:
+                print("Cover letter image OCR notice:", img_err)
+
+        # 2. If a URL was provided, scrape the page content
+        if url_input and (url_input.startswith("http://") or url_input.startswith("https://")):
+            try:
+                import urllib.request
+                req = urllib.request.Request(url_input, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+                html = urllib.request.urlopen(req, timeout=8).read().decode('utf-8', errors='ignore')
+                if BeautifulSoup:
+                    soup = BeautifulSoup(html, 'html.parser')
+                    for tag in soup(["script", "style", "nav", "footer"]):
+                        tag.extract()
+                    extracted_text = soup.get_text(separator=' ')
+                else:
+                    clean = re.sub(r'<script.*?>.*?</script>', '', html, flags=re.DOTALL | re.IGNORECASE)
+                    clean = re.sub(r'<style.*?>.*?</style>', '', clean, flags=re.DOTALL | re.IGNORECASE)
+                    extracted_text = re.sub(r'<[^>]+>', ' ', clean)
+                lines = (line.strip() for line in extracted_text.splitlines())
+                chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+                scraped = '\n'.join(chunk for chunk in chunks if chunk)[:4500]
+                if scraped:
+                    job_input = (job_input + "\n\n" + scraped).strip()
+            except Exception as url_err:
+                print("Cover letter URL fetch notice:", url_err)
+
+        # Sanitize resume (remove photo to avoid prompt overflow)
+        safe_resume = sanitize_resume_data_for_prompt(payload.resume_data)
+
         prompt = f"""
 Eres un redactor profesional de cartas de presentación ejecutivas en español.
 Genera una carta de presentación altamente persuasiva, profesional y personalizada basada en el CV del candidato.
 
 Empresa objetivo: {payload.company_name or "Empresa Reclutadora"}
 Puesto objetivo: {payload.position_name or "la posición vacante"}
-Descripción del empleo (si aplica): {payload.job_description or "General"}
+Descripción / Requisitos del empleo:
+{job_input or "No se proporcionaron detalles específicos de la vacante. Usa el perfil del candidato para crear la mejor carta posible."}
 
 CV del candidato:
-{json.dumps(payload.resume_data, ensure_ascii=False)}
+{json.dumps(safe_resume, ensure_ascii=False)}
 
 Devuelve un JSON estricto:
 {{
@@ -949,6 +1001,8 @@ Devuelve un JSON estricto:
         return json.loads(cleaned)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al generar la carta de presentación: {str(e)}")
+
+
 
 @app.post("/translate-resume")
 @app.post("/translate-resume/")
