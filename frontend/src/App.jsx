@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle, Share2, DollarSign, Award, SpellCheck, Tag, ChevronDown, FilePlus, Sun, Moon, SunMoon, Globe, Settings, X } from 'lucide-react'
+import { UploadCloud, AlertCircle, ArrowLeft, FileCheck, FileText, Image as ImageIcon, Eye, Edit3, AlertTriangle, Coffee, Target, Mail, Sparkles, Lightbulb, MessageSquare, HelpCircle, Share2, DollarSign, Award, SpellCheck, Tag, ChevronDown, FilePlus, Sun, Moon, SunMoon, Globe, Settings, X, Shield } from 'lucide-react'
 import ResumeEditor from './components/ResumeEditor'
 import ResumePreview from './components/ResumePreview'
 import AtsMatchAnalyzer from './components/AtsMatchAnalyzer'
@@ -14,6 +14,9 @@ import GrammarChecker from './components/GrammarChecker'
 import IndustryKeywords from './components/IndustryKeywords'
 import FeedbackModal from './components/FeedbackModal'
 import ContactModal from './components/ContactModal'
+import PrivacyPolicyModal from './components/PrivacyPolicyModal'
+import TermsModal from './components/TermsModal'
+import CookieConsentBanner from './components/CookieConsentBanner'
 import { translations, detectBrowserLanguage } from './i18n'
 import './index.css'
 
@@ -104,6 +107,8 @@ function App() {
   const [viewMode, setViewMode] = useState('editor') // 'editor' | 'analyzer' | 'cover-letter' | 'linkedin' | 'salary' | 'certs' | 'outreach' | 'interview' | 'grammar' | 'keywords'
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
   const [isContactOpen, setIsContactOpen] = useState(false)
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false)
+  const [isTermsOpen, setIsTermsOpen] = useState(false)
   const fileInputRef = useRef(null)
 
   // Automatically save current resumeData changes to localStorage
@@ -693,6 +698,14 @@ function App() {
       {/* Modals */}
       <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} t={t} />
       <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} t={t} />
+      <PrivacyPolicyModal isOpen={isPrivacyOpen} onClose={() => setIsPrivacyOpen(false)} />
+      <TermsModal isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
+
+      {/* Cookie / Privacy consent banner (shown on first visit) */}
+      <CookieConsentBanner
+        onOpenPrivacy={() => setIsPrivacyOpen(true)}
+        onOpenTerms={() => setIsTermsOpen(true)}
+      />
 
       {/* Floating Ko-Fi Coffee FAB Button (Bottom Right) */}
       <a
@@ -724,6 +737,16 @@ function App() {
           <button className="footer-link-btn" onClick={() => setIsContactOpen(true)}>
             <Mail size={16} />
             <span>{t.footerContact}</span>
+          </button>
+
+          <button className="footer-link-btn" onClick={() => setIsPrivacyOpen(true)}>
+            <Shield size={16} />
+            <span>Privacidad</span>
+          </button>
+
+          <button className="footer-link-btn" onClick={() => setIsTermsOpen(true)}>
+            <FileText size={16} />
+            <span>Términos</span>
           </button>
 
           <a
