@@ -20,7 +20,7 @@ import CookieConsentBanner from './components/CookieConsentBanner'
 import { translations, detectBrowserLanguage } from './i18n'
 import './index.css'
 
-import { getApiUrl } from './config'
+import { apiFetch, readJson } from './utils/api'
 
 function App() {
   const [file, setFile] = useState(null)
@@ -112,10 +112,18 @@ function App() {
   const fileInputRef = useRef(null)
 
   // Automatically save current resumeData changes to localStorage
+  // Wrapped in try/catch: with a large embedded photo the quota (~5-10MB) is
+  // exceeded and an uncaught QuotaExceededError inside an effect blanks the app.
   useEffect(() => {
-    if (resumeData) {
+    if (!resumeData) return
+    try {
       localStorage.setItem('ats_resume_current_data', JSON.stringify(resumeData))
       localStorage.setItem('ats_resume_is_image', JSON.stringify(isImageUpload))
+    } catch (e) {
+      console.warn('No se pudo guardar el CV en el navegador (almacenamiento lleno):', e)
+      try {
+        localStorage.removeItem('ats_resume_current_data')
+      } catch { /* storage unavailable */ }
     }
   }, [resumeData, isImageUpload])
 
@@ -195,27 +203,35 @@ function App() {
   }
 
   const handleFile = async (selectedFile) => {
-    setIsLoading(true)
     setError(null)
+
+    // Validate before uploading: the backend has a 10MB limit and only accepts
+    // images/PDF, so sending anything else just wastes a 30s cold start.
+    const MAX_BYTES = 10 * 1024 * 1024
+    const isPdf = selectedFile.type === 'application/pdf' || /\.pdf$/i.test(selectedFile.name)
+    if (!isPdf && !selectedFile.type.startsWith('image/')) {
+      setError('Formato no soportado. Sube una imagen (JPG, PNG, WEBP) o un PDF.')
+      return
+    }
+    if (selectedFile.size > MAX_BYTES) {
+      setError('El archivo es demasiado grande. El tamaño máximo es 10 MB.')
+      return
+    }
+
+    setIsLoading(true)
     const formData = new FormData()
     formData.append('file', selectedFile)
-
-    const API_BASE = getApiUrl()
 
     try {
       localStorage.removeItem('ats_resume_current_data')
       localStorage.removeItem('ats_resume_is_image')
 
-      const response = await fetch(`${API_BASE}/upload-file`, {
+      const response = await apiFetch('/upload-file', {
         method: 'POST',
         body: formData,
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Error al procesar el archivo')
-      }
+      const data = await readJson(response, 'Error al procesar el archivo')
 
       setResumeData(data.data)
       setIsImageUpload(data.is_image || false)

@@ -72,9 +72,9 @@ export default function ModernPhotoTemplate({ data }) {
                 </div>
                 <span className="mod-job-dates">{exp.start_date} – {exp.end_date}</span>
               </div>
-              {Array.isArray(exp.description) && (
+              {Array.isArray(exp.bullets || exp.description) && (
                 <ul className="mod-bullet-list">
-                  {exp.description.map((bullet, bIdx) => (
+                  {(exp.bullets || exp.description).map((bullet, bIdx) => (
                     <li key={bIdx}>{bullet}</li>
                   ))}
                 </ul>
@@ -95,7 +95,7 @@ export default function ModernPhotoTemplate({ data }) {
                   <strong className="mod-job-title">{edu.degree}</strong>
                   <span className="mod-company-name"> — {edu.institution}</span>
                 </div>
-                <span className="mod-job-dates">{edu.start_date} – {edu.end_date}</span>
+                <span className="mod-job-dates">{[edu.start_date || edu.year, edu.end_date].filter(Boolean).join(' – ')}</span>
               </div>
             </div>
           ))}

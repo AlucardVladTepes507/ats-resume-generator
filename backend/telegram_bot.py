@@ -14,7 +14,29 @@ load_dotenv(dotenv_path=ENV_PATH, override=True)
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
-SSL_CTX = ssl._create_unverified_context()
+# Verified TLS context: the previous `ssl._create_unverified_context()` disabled
+# certificate validation for every Telegram and Groq call.
+SSL_CTX = ssl.create_default_context()
+
+
+def get_allowed_chat_ids() -> set:
+    """Allowlist of Telegram chat IDs allowed to use the bot.
+
+    Without it, ANY Telegram user who found the bot could issue commands and
+    spend the owner's AI credits. Configure TELEGRAM_ALLOWED_CHAT_IDS as a
+    comma-separated list of numeric chat IDs; an empty list denies everyone.
+    """
+    raw = os.environ.get("TELEGRAM_ALLOWED_CHAT_IDS", "")
+    allowed = set()
+    for chunk in raw.split(","):
+        chunk = chunk.strip()
+        if chunk.lstrip("-").isdigit():
+            allowed.add(int(chunk))
+    return allowed
+
+
+def is_allowed_chat(chat_id) -> bool:
+    return int(chat_id) in get_allowed_chat_ids()
 
 def telegram_api(method: str, params: dict = None) -> dict:
     token = os.environ.get("TELEGRAM_BOT_TOKEN") or TELEGRAM_BOT_TOKEN
@@ -103,6 +125,14 @@ def process_command(chat_id: int, user_text: str):
     send_telegram_message(chat_id, ai_response)
 
 def start_bot_polling():
+    token = os.environ.get("TELEGRAM_BOT_TOKEN") or TELEGRAM_BOT_TOKEN
+    if not token:
+        print("Telegram bot no iniciado: falta TELEGRAM_BOT_TOKEN.")
+        return
+    if not get_allowed_chat_ids():
+        print("Telegram bot no iniciado: define TELEGRAM_ALLOWED_CHAT_IDS para autorizar tu chat.")
+        return
+
     print("Telegram Bot Polling iniciado...")
     offset = 0
     while True:
@@ -114,6 +144,9 @@ def start_bot_polling():
                     message = update.get("message")
                     if message and "text" in message:
                         chat_id = message["chat"]["id"]
+                        if not is_allowed_chat(chat_id):
+                            print(f"Mensaje ignorado de chat no autorizado: {chat_id}")
+                            continue
                         user_text = message["text"]
                         print(f"Mensaje recibido de {chat_id}: {user_text}")
                         process_command(chat_id, user_text)

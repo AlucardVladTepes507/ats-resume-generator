@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Mail, Sparkles, Copy, Check, Download, Edit3, Link2, Image as ImageIcon, FileText, AlertCircle, X, Loader } from 'lucide-react'
 import { generatePureVectorCoverLetter } from '../utils/pureVectorPdf'
-import { getApiUrl } from '../config'
+import { sanitizeResumeData } from '../config'
+import { postJson } from '../utils/api'
 
 const JOB_INPUT_MODES = [
   { id: 'text',  label: 'Pegar texto',   icon: FileText },
@@ -10,8 +11,6 @@ const JOB_INPUT_MODES = [
 ]
 
 export default function CoverLetterGenerator({ resumeData }) {
-  const API_URL = getApiUrl()
-
   // Pre-fill from CV data
   const defaultPosition = resumeData?.experience?.[0]?.position || ''
 
@@ -67,7 +66,7 @@ export default function CoverLetterGenerator({ resumeData }) {
 
     try {
       const body = {
-        resume_data:   resumeData,
+        resume_data:   sanitizeResumeData(resumeData),
         company_name:  companyName,
         position_name: positionName,
         job_description: jobMode === 'text' ? jobText : '',
@@ -75,14 +74,7 @@ export default function CoverLetterGenerator({ resumeData }) {
         image_base64:    jobMode === 'image' && jobImageB64 ? jobImageB64 : null,
       }
 
-      const response = await fetch(`${API_URL}/generate-cover-letter`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(body),
-      })
-
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.detail || 'Error al generar la carta de presentación')
+      const data = await postJson('/generate-cover-letter', body, 'Error al generar la carta de presentación')
 
       setCoverLetterData(data)
       setEditedLetter(data.cover_letter || '')
@@ -102,10 +94,11 @@ export default function CoverLetterGenerator({ resumeData }) {
   const handleDownloadPDF = () => {
     if (!editedLetter) return
     try {
-      generatePureVectorCoverLetter(resumeData, companyName, positionName, editedLetter)
+      setError(null)
+      generatePureVectorCoverLetter(resumeData, companyName, positionName, editedLetter, resumeData?.language || 'es')
     } catch (err) {
       console.error('Error generating cover letter PDF:', err)
-      alert('Error al generar PDF: ' + err.message)
+      setError('Error al generar PDF: ' + err.message)
     }
   }
 

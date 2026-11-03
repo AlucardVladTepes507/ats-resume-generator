@@ -62,9 +62,9 @@ export default function HarvardTemplate({ data }) {
                   {exp.start_date} {exp.start_date && exp.end_date ? '–' : ''} {exp.end_date}
                 </div>
               </div>
-              {Array.isArray(exp.description) && exp.description.length > 0 && (
+              {Array.isArray(exp.bullets || exp.description) && (exp.bullets || exp.description).length > 0 && (
                 <ul className="harvard-bullets">
-                  {exp.description.map((bullet, bIdx) => (
+                  {(exp.bullets || exp.description).map((bullet, bIdx) => (
                     <li key={bIdx}>{bullet}</li>
                   ))}
                 </ul>
@@ -87,7 +87,7 @@ export default function HarvardTemplate({ data }) {
                   {edu.degree && <span className="harvard-degree"> — {edu.degree}</span>}
                 </div>
                 <div className="harvard-dates">
-                  {edu.start_date} {edu.start_date && edu.end_date ? '–' : ''} {edu.end_date}
+                  {[edu.start_date || edu.year, edu.end_date].filter(Boolean).join(' – ')}
                 </div>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Tag, Sparkles, Plus, Check } from 'lucide-react'
-import { getApiUrl } from '../config'
+import { postJson } from '../utils/api'
 
 const INDUSTRIES = [
   { id: 'ti', name: '💻 Tecnología & TI (Soporte, Dev, Cloud, Datos)' },
@@ -24,26 +24,11 @@ export default function IndustryKeywords({ resumeData, onUpdateResumeData }) {
     setError(null)
     setIsLoading(true)
 
-    const API_BASE = getApiUrl()
-
     try {
-      const response = await fetch(`${API_BASE}/get-industry-keywords`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          industry: selectedIndustry,
-          target_role: targetRole
-        })
-      })
-
-      if (response.status === 404) {
-        throw new Error(`Error 404 al conectar con ${API_BASE}/get-industry-keywords. La ruta no fue encontrada en el servidor actual.`)
-      }
-
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.detail || 'Error al obtener palabras clave')
-      }
+      const data = await postJson('/get-industry-keywords', {
+        industry: selectedIndustry,
+        target_role: targetRole
+      }, 'Error al obtener palabras clave')
 
       setResult(data)
     } catch (err) {

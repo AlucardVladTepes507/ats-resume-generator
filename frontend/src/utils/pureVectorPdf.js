@@ -12,6 +12,17 @@
 import { jsPDF } from 'jspdf'
 
 /**
+ * Detects the real image format inside a data URL.
+ * Without this, a PNG/WebP photo was handed to jsPDF as 'JPEG' and came out corrupted.
+ */
+function getImageFormat(dataUrl) {
+  const match = /^data:image\/(png|jpe?g|webp)/i.exec(String(dataUrl || ''))
+  if (!match) return 'JPEG'
+  const fmt = match[1].toLowerCase()
+  return fmt === 'jpg' ? 'JPEG' : fmt.toUpperCase()
+}
+
+/**
  * Sanitizes text for standard PDF font compatibility (Helvetica).
  * Strips diacritics, smart quotes, emojis, and non-ASCII characters
  * so jsPDF can render them without corrupt glyphs or encoding errors.
@@ -232,7 +243,7 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
       const TEXT_X   = MARGIN + PHOTO_SZ + 14
       const TEXT_W   = CONTENT_W - PHOTO_SZ - 14
 
-      doc.addImage(personal.photo, 'JPEG', MARGIN, y, PHOTO_SZ, PHOTO_SZ)
+      doc.addImage(personal.photo, getImageFormat(personal.photo), MARGIN, y, PHOTO_SZ, PHOTO_SZ)
 
       doc.setFont(FONT, 'bold')
       doc.setFontSize(17)
@@ -483,8 +494,14 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
  * @param {string} positionName  - Target role/position
  * @param {string} letterText    - Full cover letter body text
  */
-export function generatePureVectorCoverLetter(resumeData, companyName, positionName, letterText) {
+export function generatePureVectorCoverLetter(resumeData, companyName, positionName, letterText, lang = 'es') {
   if (!letterText) return
+
+  // Theme constants (module-scope values are NOT visible here — this function has its own doc)
+  const FONT        = 'helvetica'
+  const textTitle   = [15, 23, 42]
+  const textPrimary = [30, 41, 59]
+  const textSub     = [71, 85, 105]
 
   const personal      = resumeData?.personal_info || {}
   const candidateName = cleanText(personal.name || 'Candidato')
@@ -533,7 +550,8 @@ export function generatePureVectorCoverLetter(resumeData, companyName, positionN
   y += 22
 
   // Date
-  const dateStr = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
+  const LOCALES = { en: 'en-US', es: 'es-ES', pt: 'pt-PT', fr: 'fr-FR', de: 'de-DE' }
+  const dateStr = new Date().toLocaleDateString(LOCALES[lang] || 'es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
   doc.setFont(FONT, 'normal')
   doc.setFontSize(10)
   doc.setTextColor(textSub[0], textSub[1], textSub[2])
@@ -580,6 +598,6 @@ export function generatePureVectorCoverLetter(resumeData, companyName, positionN
     creator: 'ATS Resume Generator',
   })
 
-  doc.save(`Carta_Presentacion_${safeFileName}.pdf`)
+  doc.save(`Cover_Letter_${safeFileName}.pdf`)
 }
 

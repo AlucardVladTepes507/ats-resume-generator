@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Share2, Sparkles, Copy, Check } from 'lucide-react'
-import { getApiUrl, sanitizeResumeData } from '../config'
+import { sanitizeResumeData } from '../config'
+import { postJson } from '../utils/api'
 
 export default function LinkedInBioOptimizer({ resumeData }) {
   const [targetPosition, setTargetPosition] = useState('')
@@ -13,26 +14,11 @@ export default function LinkedInBioOptimizer({ resumeData }) {
     setError(null)
     setIsGenerating(true)
 
-    const API_BASE = getApiUrl()
-
     try {
-      const response = await fetch(`${API_BASE}/generate-linkedin-profile`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resume_data: sanitizeResumeData(resumeData),
-          target_position: targetPosition
-        })
-      })
-
-      if (response.status === 404) {
-        throw new Error(`Error 404 al conectar con ${API_BASE}/generate-linkedin-profile. La ruta no fue encontrada en el servidor actual.`)
-      }
-
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.detail || 'Error al generar perfil de LinkedIn')
-      }
+      const data = await postJson('/generate-linkedin-profile', {
+        resume_data: sanitizeResumeData(resumeData),
+        target_position: targetPosition
+      }, 'Error al generar perfil de LinkedIn')
 
       setResult(data)
     } catch (err) {

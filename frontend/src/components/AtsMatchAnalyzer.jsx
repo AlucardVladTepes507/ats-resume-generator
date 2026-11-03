@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react'
 import { Target, CheckCircle2, AlertTriangle, Sparkles, Lightbulb, Image as ImageIcon, X, Upload, Clipboard } from 'lucide-react'
 import AiOrbLoader from './AiOrbLoader'
+import { sanitizeResumeData } from '../config'
+import { apiFetch, readJson, postJson } from '../utils/api'
 
 export default function AtsMatchAnalyzer({ resumeData, setResumeData, setViewMode }) {
   const [jobDescription, setJobDescription] = useState('')
@@ -20,23 +22,12 @@ export default function AtsMatchAnalyzer({ resumeData, setResumeData, setViewMod
     setError(null)
     setOptimizeSuccess(false)
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
     try {
-      const response = await fetch(`${API_URL}/auto-optimize-resume`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resume_data: resumeData,
-          job_description: jobDescription,
-          missing_keywords: result.missing_keywords || []
-        })
-      })
-
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.detail || 'Error al auto-optimizar el CV')
-      }
+      const data = await postJson('/auto-optimize-resume', {
+        resume_data: sanitizeResumeData(resumeData),
+        job_description: jobDescription,
+        missing_keywords: result.missing_keywords || []
+      }, 'Error al auto-optimizar el CV')
 
       if (data.optimized_resume && setResumeData) {
         setResumeData(data.optimized_resume)
@@ -63,21 +54,14 @@ export default function AtsMatchAnalyzer({ resumeData, setResumeData, setViewMod
       const base64Data = e.target.result
       setImageBase64(base64Data)
 
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
       try {
-        const response = await fetch(`${API_URL}/extract-job-image-text`, {
+        const response = await apiFetch('/extract-job-image-text', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ image_base64: base64Data })
         })
 
-        const data = await response.json()
-        if (!response.ok) {
-          setImageBase64(null)
-          setImageName('')
-          if (fileInputRef.current) fileInputRef.current.value = ''
-          throw new Error(data.detail || 'La imagen subida no corresponde a una oferta de empleo válida.')
-        }
+        const data = await readJson(response, 'La imagen subida no corresponde a una oferta de empleo válida.')
         if (data.extracted_text) {
           setJobDescription((prev) => (prev ? prev + '\n\n' + data.extracted_text : data.extracted_text))
         }
@@ -161,23 +145,12 @@ export default function AtsMatchAnalyzer({ resumeData, setResumeData, setViewMod
     setError(null)
     setIsAnalyzing(true)
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
     try {
-      const response = await fetch(`${API_URL}/analyze-job-match`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resume_data: resumeData,
-          job_description: jobDescription,
-          image_base64: imageBase64
-        })
-      })
-
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.detail || 'Error al analizar la oferta de empleo')
-      }
+      const data = await postJson('/analyze-job-match', {
+        resume_data: sanitizeResumeData(resumeData),
+        job_description: jobDescription,
+        image_base64: imageBase64
+      }, 'Error al analizar la oferta de empleo')
 
       setResult(data)
     } catch (err) {

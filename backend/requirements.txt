@@ -5,3 +5,7 @@ pdfplumber>=0.11.0
 python-dotenv>=1.0.1
 python-multipart>=0.0.9
 beautifulsoup4>=4.12.0
+# Imported directly by main.py (image compression and URL fetching). They used to
+# arrive only as transitive dependencies, which a clean install cannot guarantee.
+Pillow>=10.3.0
+requests>=2.31.0

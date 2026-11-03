@@ -1,35 +1,28 @@
 import React, { useState } from 'react'
 import { Plus, Trash2, User, Briefcase, GraduationCap, Wrench, Globe, Loader2 } from 'lucide-react'
-import { getApiUrl } from '../config'
+import { postJson } from '../utils/api'
+import { compressImage, ALLOWED_IMAGE_TYPES, MAX_PHOTO_BYTES } from '../utils/image'
 
 export default function ResumeEditor({ data, onChange, t }) {
   const [activeTab, setActiveTab] = useState('personal')
   const [isTranslating, setIsTranslating] = useState(false)
   const [newSkillInput, setNewSkillInput] = useState('')
+  const [error, setError] = useState(null)
 
   // Translation Handler
   const handleTranslate = async (targetLang) => {
     setIsTranslating(true)
-    const API_BASE = getApiUrl()
+    setError(null)
 
     try {
-      const response = await fetch(`${API_BASE}/translate-resume`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resume_data: data,
-          target_language: targetLang
-        })
-      })
-
-      const result = await response.json()
-      if (!response.ok) {
-        throw new Error(result.detail || 'Error al traducir el CV')
-      }
+      const result = await postJson('/translate-resume', {
+        resume_data: data,
+        target_language: targetLang
+      }, 'Error al traducir el CV')
 
       onChange(result)
     } catch (err) {
-      alert(`Error traduciendo: ${err.message}`)
+      setError(`Error traduciendo: ${err.message}`)
     } finally {
       setIsTranslating(false)
     }
@@ -83,7 +76,7 @@ export default function ResumeEditor({ data, onChange, t }) {
   }
 
   const handleRemoveExperience = (index) => {
-    const newExp = data.experience.filter((_, i) => i !== index)
+    const newExp = (data.experience || []).filter((_, i) => i !== index)
     onChange({ ...data, experience: newExp })
   }
 
@@ -142,7 +135,7 @@ export default function ResumeEditor({ data, onChange, t }) {
   }
 
   const handleRemoveEducation = (index) => {
-    const newEdu = data.education.filter((_, i) => i !== index)
+    const newEdu = (data.education || []).filter((_, i) => i !== index)
     onChange({ ...data, education: newEdu })
   }
 
@@ -154,18 +147,35 @@ export default function ResumeEditor({ data, onChange, t }) {
   }
 
   const handleRemoveSkill = (index) => {
-    const newSkills = data.skills.filter((_, i) => i !== index)
+    const newSkills = (data.skills || []).filter((_, i) => i !== index)
     onChange({ ...data, skills: newSkills })
   }
 
-  const handlePhotoUpload = (e) => {
+  const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = (uploadEvent) => {
-      handlePersonalInfoChange('photo', uploadEvent.target.result)
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setError('Formato de foto no soportado. Usa JPG, PNG o WEBP.')
+      e.target.value = ''
+      return
     }
-    reader.readAsDataURL(file)
+    if (file.size > MAX_PHOTO_BYTES) {
+      setError('La foto es demasiado grande (máximo 8 MB).')
+      e.target.value = ''
+      return
+    }
+
+    try {
+      setError(null)
+      // Downscale + re-encode: keeps localStorage, the PDF and the AI prompts small.
+      const photo = await compressImage(file, 500, 0.85)
+      handlePersonalInfoChange('photo', photo)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      e.target.value = ''
+    }
   }
 
   return (
@@ -222,6 +232,12 @@ export default function ResumeEditor({ data, onChange, t }) {
           </div>
         </div>
       </div>
+
+      {error && (
+        <div className="editor-error-banner">
+          {error}
+        </div>
+      )}
 
       {/* Tab Navigation */}
       <div className="editor-tabs">
@@ -282,7 +298,7 @@ export default function ResumeEditor({ data, onChange, t }) {
                 <div className="photo-actions">
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     id="profile-photo-input"
                     onChange={handlePhotoUpload}
                     style={{ display: 'none' }}

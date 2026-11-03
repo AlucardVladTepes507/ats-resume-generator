@@ -15,6 +15,7 @@ export default function ResumePreview({ data, t }) {
   const [zoomScale, setZoomScale] = useState(1)
   const [autoFit, setAutoFit] = useState(true)
   const [sheetHeight, setSheetHeight] = useState(PAGE_HEIGHT_PX)
+  const [exportError, setExportError] = useState(null)
   const resumeRef = useRef(null)
   const wrapperRef = useRef(null)
 
@@ -54,12 +55,13 @@ export default function ResumePreview({ data, t }) {
   const handleDownloadPDF = async () => {
     if (!data) return
     setIsExporting(true)
+    setExportError(null)
     try {
       const lang = data?.language || 'es'
       await generatePureVectorPdf(data, template, lang)
     } catch (err) {
       console.error('Error generating vector PDF:', err)
-      alert('Error al generar PDF: ' + err.message)
+      setExportError('Error al generar PDF: ' + err.message)
     } finally {
       setIsExporting(false)
     }
@@ -79,6 +81,7 @@ export default function ResumePreview({ data, t }) {
     <div className="preview-container">
       {/* Control Bar */}
       <div className="preview-toolbar">
+        {exportError && <div className="editor-error-banner">{exportError}</div>}
         <div className="template-selector">
           <Layout size={18} className="template-icon" />
           <select

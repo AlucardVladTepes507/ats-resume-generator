@@ -58,9 +58,9 @@ export default function ModernTemplate({ data }) {
                   {exp.start_date} {exp.start_date && exp.end_date ? '–' : ''} {exp.end_date}
                 </span>
               </div>
-              {Array.isArray(exp.description) && exp.description.length > 0 && (
+              {Array.isArray(exp.bullets || exp.description) && (exp.bullets || exp.description).length > 0 && (
                 <ul className="modern-bullets">
-                  {exp.description.map((bullet, bIdx) => (
+                  {(exp.bullets || exp.description).map((bullet, bIdx) => (
                     <li key={bIdx}>{bullet}</li>
                   ))}
                 </ul>
@@ -82,7 +82,7 @@ export default function ModernTemplate({ data }) {
                   <div className="modern-institution">{edu.institution}</div>
                 </div>
                 <span className="modern-badge">
-                  {edu.start_date} {edu.start_date && edu.end_date ? '–' : ''} {edu.end_date}
+                  {[edu.start_date || edu.year, edu.end_date].filter(Boolean).join(' – ')}
                 </span>
               </div>
             </div>

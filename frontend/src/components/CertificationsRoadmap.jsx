@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Award, Sparkles, Clock, TrendingUp, CheckCircle2 } from 'lucide-react'
-import { getApiUrl, sanitizeResumeData } from '../config'
+import { sanitizeResumeData } from '../config'
+import { postJson } from '../utils/api'
 
 export default function CertificationsRoadmap({ resumeData }) {
   const [targetPosition, setTargetPosition] = useState('')
@@ -12,26 +13,11 @@ export default function CertificationsRoadmap({ resumeData }) {
     setError(null)
     setIsGenerating(true)
 
-    const API_BASE = getApiUrl()
-
     try {
-      const response = await fetch(`${API_BASE}/recommend-certifications`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resume_data: sanitizeResumeData(resumeData),
-          target_position: targetPosition
-        })
-      })
-
-      if (response.status === 404) {
-        throw new Error(`Error 404 al conectar con ${API_BASE}/recommend-certifications. La ruta no fue encontrada en el servidor actual.`)
-      }
-
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.detail || 'Error al recomendar certificaciones')
-      }
+      const data = await postJson('/recommend-certifications', {
+        resume_data: sanitizeResumeData(resumeData),
+        target_position: targetPosition
+      }, 'Error al recomendar certificaciones')
 
       setResult(data)
     } catch (err) {

@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { MessageSquare, Sparkles, Copy, Check, Mail, Send } from 'lucide-react'
+import { sanitizeResumeData } from '../config'
+import { postJson } from '../utils/api'
 
 export default function OutreachMessageGenerator({ resumeData }) {
   const [companyName, setCompanyName] = useState('')
@@ -15,25 +17,14 @@ export default function OutreachMessageGenerator({ resumeData }) {
     setError(null)
     setIsGenerating(true)
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
     try {
-      const response = await fetch(`${API_URL}/generate-outreach-message`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resume_data: resumeData,
-          company_name: companyName,
-          position_name: positionName,
-          recruiter_name: recruiterName,
-          job_description: jobDescription
-        })
-      })
-
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.detail || 'Error al generar mensajes de contacto')
-      }
+      const data = await postJson('/generate-outreach-message', {
+        resume_data: sanitizeResumeData(resumeData),
+        company_name: companyName,
+        position_name: positionName,
+        recruiter_name: recruiterName,
+        job_description: jobDescription
+      }, 'Error al generar mensajes de contacto')
 
       setResult(data)
     } catch (err) {

@@ -1,5 +1,6 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 import uvicorn
@@ -9,6 +10,7 @@ import os
 import json
 import time
 import re
+import threading
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -40,7 +42,8 @@ def compress_image_for_ai(image_bytes: bytes, max_dim: int = 1200, quality: int 
             img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
             
         output = io.BytesIO()
-        img.save(output, format='JPEG', quality=82, optimize=True)
+        # Single save: writing twice into the same BytesIO concatenated two JPEG
+        # streams and produced oversized/corrupt payloads for the vision models.
         img.save(output, format='JPEG', quality=quality, optimize=True)
         return output.getvalue()
     except Exception as err:
@@ -81,6 +84,8 @@ def safe_generate_content(primary_client, contents):
                     contents=contents
                 )
                 return response
+            except HTTPException:
+                raise
             except Exception as e:
                 err_str = str(e)
                 last_error = e
@@ -102,6 +107,74 @@ def safe_generate_content(primary_client, contents):
         raise HTTPException(status_code=400, detail="No se pudo procesar el documento con la IA. Por favor, reintenta en unos momentos.")
 
 import requests
+import ipaddress
+import socket
+from urllib.parse import urljoin, urlparse
+
+MAX_FETCH_BYTES = 2 * 1024 * 1024
+MAX_URL_REDIRECTS = 3
+
+
+def _is_public_host(hostname: str) -> bool:
+    """True only when every resolved address is a public internet address."""
+    try:
+        infos = socket.getaddrinfo(hostname, None)
+    except Exception:
+        return False
+    if not infos:
+        return False
+    for info in infos:
+        raw = str(info[4][0]).split('%')[0]
+        try:
+            ip = ipaddress.ip_address(raw)
+        except ValueError:
+            return False
+        if (ip.is_private or ip.is_loopback or ip.is_link_local
+                or ip.is_reserved or ip.is_multicast or ip.is_unspecified):
+            return False
+    return True
+
+
+def fetch_url_text(url: str, timeout: int = 8) -> str:
+    """Fetches a user-supplied URL with SSRF protections.
+
+    Only http/https, never private/loopback/link-local targets (cloud metadata,
+    internal Render services), redirects re-validated hop by hop, hard 2MB cap.
+    """
+    current = (url or '').strip()
+    for _ in range(MAX_URL_REDIRECTS + 1):
+        parsed = urlparse(current)
+        if parsed.scheme not in ('http', 'https') or not parsed.hostname:
+            raise ValueError('URL no válida: solo se admiten enlaces http(s) públicos.')
+        if not _is_public_host(parsed.hostname):
+            raise ValueError('La URL apunta a una dirección de red no permitida.')
+
+        response = requests.get(
+            current,
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'},
+            timeout=timeout,
+            allow_redirects=False,
+            stream=True,
+        )
+        try:
+            location = response.headers.get('location')
+            if response.is_redirect and location:
+                current = urljoin(current, location)
+                continue
+
+            content = response.raw.read(MAX_FETCH_BYTES + 1, decode_content=True)
+            encoding = response.encoding or 'utf-8'
+        finally:
+            response.close()
+
+        if len(content) > MAX_FETCH_BYTES:
+            content = content[:MAX_FETCH_BYTES]
+        try:
+            return content.decode(encoding, errors='ignore')
+        except LookupError:
+            return content.decode('utf-8', errors='ignore')
+
+    raise ValueError('La URL redirige demasiadas veces.')
 
 def call_groq_api(prompt: str, json_mode: bool = True) -> str:
     load_dotenv(dotenv_path=ENV_PATH, override=True)
@@ -135,6 +208,8 @@ def call_groq_api(prompt: str, json_mode: bool = True) -> str:
                 return resp.json()["choices"][0]["message"]["content"]
             else:
                 last_err = Exception(f"Groq {mod} status {resp.status_code}: {resp.text[:100]}")
+        except HTTPException:
+            raise
         except Exception as e:
             last_err = e
             continue
@@ -173,15 +248,76 @@ def get_gemini_client():
 
 app = FastAPI(title="ATS Resume Generator API")
 
+# CORS: an explicit allowlist. `allow_origins=["*"]` combined with
+# `allow_credentials=True` made Starlette echo ANY origin back (verified live),
+# letting third-party sites consume the API (and the AI credits) freely.
+DEFAULT_ALLOWED_ORIGINS = [
+    "https://cv.smart507.com",
+    "https://www.cv.smart507.com",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",
+]
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get("ALLOWED_ORIGINS", ",".join(DEFAULT_ALLOWED_ORIGINS)).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Accept", "Authorization"],
 )
 
-import threading
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+RATE_LIMIT_MAX_REQUESTS = int(os.environ.get("RATE_LIMIT_MAX_REQUESTS", "40"))
+RATE_LIMIT_WINDOW_SECONDS = 60
+
+_rate_limit_hits: Dict[str, List[float]] = {}
+_rate_limit_lock = threading.Lock()
+
+
+def _client_ip(request) -> str:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+@app.middleware("http")
+async def security_guards(request, call_next):
+    """Rejects oversized bodies early and applies a simple per-IP rate limit."""
+    declared = request.headers.get("content-length")
+    if declared and declared.isdigit() and int(declared) > MAX_UPLOAD_BYTES:
+        return JSONResponse(
+            status_code=413,
+            content={"detail": "El archivo supera el tamaño máximo permitido (10 MB)."},
+        )
+
+    if request.method == "OPTIONS":
+        return await call_next(request)
+
+    ip = _client_ip(request)
+    now = time.time()
+    with _rate_limit_lock:
+        hits = [t for t in _rate_limit_hits.get(ip, []) if now - t < RATE_LIMIT_WINDOW_SECONDS]
+        if len(hits) >= RATE_LIMIT_MAX_REQUESTS:
+            _rate_limit_hits[ip] = hits
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Demasiadas solicitudes. Espera un momento e inténtalo de nuevo."},
+            )
+        hits.append(now)
+        _rate_limit_hits[ip] = hits
+        if len(_rate_limit_hits) > 5000:
+            _rate_limit_hits.clear()
+            _rate_limit_hits[ip] = hits
+
+    return await call_next(request)
+
 from telegram_bot import start_bot_polling
 
 @app.on_event("startup")
@@ -189,6 +325,8 @@ def start_telegram_bot():
     try:
         threading.Thread(target=start_bot_polling, daemon=True).start()
         print("Telegram bot background thread launched successfully!")
+    except HTTPException:
+        raise
     except Exception as e:
         print("Failed to launch Telegram bot thread:", e)
 
@@ -247,9 +385,7 @@ Devuelve ÚNICAMENTE el JSON estricto:
         "summary": ""
     },
     "linkedin_profile": {
-        "headline": "Titular de LinkedIn optimizado con palabras clave (máx 220 caract.)",
-        "about": "Sección 'Acerca de' narrativa en primera persona, perspicaz y profesional"
-        "headline": "Titular de LinkedIn optimizado con palabras clave del candidato",
+        "headline": "Titular de LinkedIn optimizado con palabras clave del candidato (máx 220 caract.)",
         "about": "Sección 'Acerca de' narrativa en primera persona basada en el perfil del candidato"
     },
     "experience": [
@@ -258,8 +394,7 @@ Devuelve ÚNICAMENTE el JSON estricto:
             "position": "",
             "start_date": "",
             "end_date": "",
-            "description": ["bullet 1 mejorado", "bullet 2 mejorado"]
-            "description": ["bullet 1", "bullet 2"]
+            "description": ["logro o responsabilidad 1", "logro o responsabilidad 2"]
         }
     ],
     "education": [
@@ -588,6 +723,15 @@ async def upload_file(file: UploadFile = File(...)):
         
     try:
         content = await file.read()
+
+        if len(content) > MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail="El archivo supera el tamaño máximo permitido (10 MB)."
+            )
+
+        if not content:
+            raise HTTPException(status_code=400, detail="El archivo está vacío.")
         
         is_pdf_file = (
             content.startswith(b'%PDF-') or 
@@ -718,7 +862,8 @@ async def upload_file(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error procesando el archivo: {str(e)}")
+        print("Error procesando el archivo (interno):", type(e).__name__, e)
+        raise HTTPException(status_code=500, detail="Error procesando el archivo. Inténtalo de nuevo en unos segundos.")
 
 
 @app.post("/extract-job-image-text")
@@ -753,7 +898,8 @@ async def extract_job_image_text(payload: JobImageExtractRequest):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al extraer texto de la imagen de vacante: {str(e)}")
+        print("Error al extraer texto de la imagen de vacante (interno):", type(e).__name__, e)
+        raise HTTPException(status_code=500, detail="Error al extraer texto de la imagen de vacante. Inténtalo de nuevo en unos segundos.")
 
 @app.post("/analyze-job-match")
 @app.post("/analyze-job-match/")
@@ -786,9 +932,7 @@ async def analyze_job_match(payload: JobMatchRequest):
         # If input looks like a URL, try fetching its content
         if job_input.startswith("http://") or job_input.startswith("https://"):
             try:
-                import urllib.request
-                req = urllib.request.Request(job_input, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-                html = urllib.request.urlopen(req, timeout=8).read().decode('utf-8', errors='ignore')
+                html = fetch_url_text(job_input)
                 if BeautifulSoup:
                     soup = BeautifulSoup(html, 'html.parser')
                     for script_or_style in soup(["script", "style", "nav", "footer"]):
@@ -843,10 +987,12 @@ Devuelve un JSON estricto:
 
         return parsed_res
 
+    except HTTPException:
+        raise
     except Exception as e:
         if isinstance(e, HTTPException):
             raise
-        raise HTTPException(status_code=500, detail=f"Error al analizar vacante: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error al analizar vacante. Inténtalo de nuevo en unos segundos.")
 
 @app.post("/auto-optimize-resume")
 @app.post("/auto-optimize-resume/")
@@ -894,10 +1040,12 @@ JSON Estricto del CV Optimizado:
 
         return {"optimized_resume": updated_resume}
 
+    except HTTPException:
+        raise
     except Exception as e:
         if isinstance(e, HTTPException):
             raise
-        raise HTTPException(status_code=500, detail=f"Error al auto-optimizar CV: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error al auto-optimizar CV. Inténtalo de nuevo en unos segundos.")
 
 @app.post("/enhance-bullet")
 @app.post("/enhance-bullet/")
@@ -922,8 +1070,11 @@ Devuelve un JSON estricto con 3 opciones mejoradas (Corta/Directa, Basada en Log
         raw_text = safe_generate_text(prompt, json_mode=True)
         cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al mejorar la viñeta: {str(e)}")
+        print("Error al mejorar la viñeta (interno):", type(e).__name__, e)
+        raise HTTPException(status_code=500, detail="Error al mejorar la viñeta. Inténtalo de nuevo en unos segundos.")
 
 @app.post("/generate-cover-letter")
 @app.post("/generate-cover-letter/")
@@ -955,9 +1106,7 @@ async def generate_cover_letter(payload: CoverLetterRequest):
         # 2. If a URL was provided, scrape the page content
         if url_input and (url_input.startswith("http://") or url_input.startswith("https://")):
             try:
-                import urllib.request
-                req = urllib.request.Request(url_input, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-                html = urllib.request.urlopen(req, timeout=8).read().decode('utf-8', errors='ignore')
+                html = fetch_url_text(url_input)
                 if BeautifulSoup:
                     soup = BeautifulSoup(html, 'html.parser')
                     for tag in soup(["script", "style", "nav", "footer"]):
@@ -999,8 +1148,11 @@ Devuelve un JSON estricto:
         raw_text = safe_generate_text(prompt, json_mode=True)
         cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al generar la carta de presentación: {str(e)}")
+        print("Error al generar la carta de presentación (interno):", type(e).__name__, e)
+        raise HTTPException(status_code=500, detail="Error al generar la carta de presentación. Inténtalo de nuevo en unos segundos.")
 
 
 
@@ -1029,8 +1181,11 @@ Devuelve ÚNICAMENTE el JSON traducido estricto.
         raw_text = safe_generate_text(prompt, json_mode=True)
         cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al traducir el CV: {str(e)}")
+        print("Error al traducir el CV (interno):", type(e).__name__, e)
+        raise HTTPException(status_code=500, detail="Error al traducir el CV. Inténtalo de nuevo en unos segundos.")
 
 class OutreachMessageRequest(BaseModel):
     resume_data: Dict[str, Any]
@@ -1066,8 +1221,11 @@ Devuelve un JSON estricto con un mensaje para LinkedIn InMail/DM (corto y direct
         raw_text = safe_generate_text(prompt, json_mode=True)
         cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al generar mensajes de contacto: {str(e)}")
+        print("Error al generar mensajes de contacto (interno):", type(e).__name__, e)
+        raise HTTPException(status_code=500, detail="Error al generar mensajes de contacto. Inténtalo de nuevo en unos segundos.")
 
 @app.post("/generate-interview-questions")
 @app.post("/generate-interview-questions/")
@@ -1096,8 +1254,11 @@ Devuelve un JSON estricto con 5 preguntas clave de entrevista (conductuales, té
         raw_text = safe_generate_text(prompt, json_mode=True)
         cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al generar preguntas de entrevista: {str(e)}")
+        print("Error al generar preguntas de entrevista (interno):", type(e).__name__, e)
+        raise HTTPException(status_code=500, detail="Error al generar preguntas de entrevista. Inténtalo de nuevo en unos segundos.")
 
 class LinkedInProfileRequest(BaseModel):
     resume_data: Dict[str, Any]
@@ -1135,8 +1296,11 @@ Devuelve un JSON estricto:
         raw_text = safe_generate_text(prompt, json_mode=True)
         cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al generar perfil de LinkedIn: {str(e)}")
+        print("Error al generar perfil de LinkedIn (interno):", type(e).__name__, e)
+        raise HTTPException(status_code=500, detail="Error al generar perfil de LinkedIn. Inténtalo de nuevo en unos segundos.")
 
 @app.post("/estimate-salary")
 @app.post("/estimate-salary/")
@@ -1164,8 +1328,11 @@ Devuelve un JSON estricto:
         raw_text = safe_generate_text(prompt, json_mode=True)
         cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al estimar salario: {str(e)}")
+        print("Error al estimar salario (interno):", type(e).__name__, e)
+        raise HTTPException(status_code=500, detail="Error al estimar salario. Inténtalo de nuevo en unos segundos.")
 
 @app.post("/recommend-certifications")
 @app.post("/recommend-certifications/")
@@ -1197,8 +1364,11 @@ Devuelve un JSON estricto con 3 certificaciones reconocidas mundialmente:
         raw_text = safe_generate_text(prompt, json_mode=True)
         cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al recomendar certificaciones: {str(e)}")
+        print("Error al recomendar certificaciones (interno):", type(e).__name__, e)
+        raise HTTPException(status_code=500, detail="Error al recomendar certificaciones. Inténtalo de nuevo en unos segundos.")
 
 class GrammarCheckRequest(BaseModel):
     resume_data: Dict[str, Any]
@@ -1236,8 +1406,11 @@ Devuelve un JSON estricto:
         raw_text = safe_generate_text(prompt, json_mode=True)
         cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al verificar ortografía: {str(e)}")
+        print("Error al verificar ortografía (interno):", type(e).__name__, e)
+        raise HTTPException(status_code=500, detail="Error al verificar ortografía. Inténtalo de nuevo en unos segundos.")
 
 @app.post("/get-industry-keywords")
 @app.post("/get-industry-keywords/")
@@ -1262,8 +1435,11 @@ Devuelve un JSON estricto:
         raw_text = safe_generate_text(prompt, json_mode=True)
         cleaned = clean_json_response(raw_text)
         return json.loads(cleaned)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al obtener palabras clave de industria: {str(e)}")
+        print("Error al obtener palabras clave de industria (interno):", type(e).__name__, e)
+        raise HTTPException(status_code=500, detail="Error al obtener palabras clave de industria. Inténtalo de nuevo en unos segundos.")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

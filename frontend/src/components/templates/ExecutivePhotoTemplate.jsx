@@ -82,9 +82,9 @@ export default function ExecutivePhotoTemplate({ data }) {
                   {exp.start_date} – {exp.end_date}
                 </span>
               </div>
-              {Array.isArray(exp.description) && (
+              {Array.isArray(exp.bullets || exp.description) && (
                 <ul className="exec-bullets">
-                  {exp.description.map((bullet, bIdx) => (
+                  {(exp.bullets || exp.description).map((bullet, bIdx) => (
                     <li key={bIdx}>{bullet}</li>
                   ))}
                 </ul>
@@ -105,7 +105,7 @@ export default function ExecutivePhotoTemplate({ data }) {
                   <strong className="exec-role">{edu.degree}</strong>
                   <span className="exec-company"> — {edu.institution}</span>
                 </div>
-                <span className="exec-dates">{edu.start_date} – {edu.end_date}</span>
+                <span className="exec-dates">{[edu.start_date || edu.year, edu.end_date].filter(Boolean).join(' – ')}</span>
               </div>
             </div>
           ))}

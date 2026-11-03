@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { CheckCircle2, Sparkles, AlertCircle, SpellCheck, ArrowRight } from 'lucide-react'
-import { getApiUrl, sanitizeResumeData } from '../config'
+import { sanitizeResumeData } from '../config'
+import { postJson } from '../utils/api'
 
 export default function GrammarChecker({ resumeData, onUpdateResumeData }) {
   const [isScanning, setIsScanning] = useState(false)
@@ -13,23 +14,8 @@ export default function GrammarChecker({ resumeData, onUpdateResumeData }) {
     setIsScanning(true)
     setIsApplied(false)
 
-    const API_BASE = getApiUrl()
-
     try {
-      const response = await fetch(`${API_BASE}/check-grammar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resume_data: sanitizeResumeData(resumeData) })
-      })
-
-      if (response.status === 404) {
-        throw new Error(`Error 404 al conectar con ${API_BASE}/check-grammar. La ruta no fue encontrada en el servidor actual.`)
-      }
-
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.detail || 'Error al escanear la ortografía')
-      }
+      const data = await postJson('/check-grammar', { resume_data: sanitizeResumeData(resumeData) }, 'Error al escanear la ortografía')
 
       setResult(data)
     } catch (err) {

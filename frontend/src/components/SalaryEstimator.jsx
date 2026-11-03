@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { DollarSign, Sparkles, TrendingUp, Lightbulb, ShieldCheck } from 'lucide-react'
-import { getApiUrl, sanitizeResumeData } from '../config'
+import { sanitizeResumeData } from '../config'
+import { postJson } from '../utils/api'
 
 export default function SalaryEstimator({ resumeData }) {
   const [targetCountry, setTargetCountry] = useState('EE.UU. & Canadá')
@@ -12,26 +13,11 @@ export default function SalaryEstimator({ resumeData }) {
     setError(null)
     setIsEstimating(true)
 
-    const API_BASE = getApiUrl()
-
     try {
-      const response = await fetch(`${API_BASE}/estimate-salary`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resume_data: sanitizeResumeData(resumeData),
-          target_country: targetCountry
-        })
-      })
-
-      if (response.status === 404) {
-        throw new Error(`Error 404 al conectar con ${API_BASE}/estimate-salary. La ruta no fue encontrada en el servidor actual.`)
-      }
-
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.detail || 'Error al estimar el rango salarial')
-      }
+      const data = await postJson('/estimate-salary', {
+        resume_data: sanitizeResumeData(resumeData),
+        target_country: targetCountry
+      }, 'Error al estimar el rango salarial')
 
       setResult(data)
     } catch (err) {

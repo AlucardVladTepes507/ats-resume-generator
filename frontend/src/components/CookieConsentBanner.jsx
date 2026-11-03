@@ -23,7 +23,11 @@ export default function CookieConsentBanner({ onOpenPrivacy, onOpenTerms }) {
   }
 
   const handleDecline = () => {
-    // Allow use without accepting, just hide the banner
+    // Allow use without accepting, but remember the choice so the banner
+    // doesn't reappear on every page load.
+    try {
+      localStorage.setItem(CONSENT_KEY, 'declined')
+    } catch {}
     setVisible(false)
   }
 

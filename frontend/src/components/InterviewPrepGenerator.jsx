@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { HelpCircle, Sparkles, Target, CheckCircle2, Lightbulb } from 'lucide-react'
+import { sanitizeResumeData } from '../config'
+import { postJson } from '../utils/api'
 
 export default function InterviewPrepGenerator({ resumeData }) {
   const [jobDescription, setJobDescription] = useState('')
@@ -15,22 +17,11 @@ export default function InterviewPrepGenerator({ resumeData }) {
     setError(null)
     setIsGenerating(true)
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
     try {
-      const response = await fetch(`${API_URL}/generate-interview-questions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resume_data: resumeData,
-          job_description: jobDescription
-        })
-      })
-
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.detail || 'Error al generar preguntas de entrevista')
-      }
+      const data = await postJson('/generate-interview-questions', {
+        resume_data: sanitizeResumeData(resumeData),
+        job_description: jobDescription
+      }, 'Error al generar preguntas de entrevista')
 
       setResult(data)
     } catch (err) {
