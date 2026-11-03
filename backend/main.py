@@ -318,18 +318,6 @@ async def security_guards(request, call_next):
 
     return await call_next(request)
 
-from telegram_bot import start_bot_polling
-
-@app.on_event("startup")
-def start_telegram_bot():
-    try:
-        threading.Thread(target=start_bot_polling, daemon=True).start()
-        print("Telegram bot background thread launched successfully!")
-    except HTTPException:
-        raise
-    except Exception as e:
-        print("Failed to launch Telegram bot thread:", e)
-
 import base64
 
 class JobImageExtractRequest(BaseModel):
