@@ -12,6 +12,43 @@
 import { jsPDF } from 'jspdf'
 
 /**
+ * Fetches the bundled Merriweather TTFs and registers them on the document.
+ * Returns true when the font is usable, false when we must fall back to Helvetica.
+ */
+async function attachMerriweather(doc) {
+  try {
+    const fetchFont = async (url) => {
+      const res = await fetch(url)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const buffer = await res.arrayBuffer()
+      const bytes = new Uint8Array(buffer)
+      let binary = ''
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i])
+      }
+      return window.btoa(binary)
+    }
+
+    const faces = [
+      ['Regular', 'normal'],
+      ['Bold', 'bold'],
+      ['Italic', 'italic'],
+      ['BoldItalic', 'bolditalic'],
+    ]
+
+    for (const [file, style] of faces) {
+      const b64 = await fetchFont(`/fonts/Merriweather-${file}.ttf`)
+      doc.addFileToVFS(`merriweather-${style}.ttf`, b64)
+      doc.addFont(`merriweather-${style}.ttf`, 'merriweather', style)
+    }
+    return true
+  } catch (e) {
+    console.warn('Could not load Merriweather, falling back to default:', e)
+    return false
+  }
+}
+
+/**
  * Detects the real image format inside a data URL.
  * Without this, a PNG/WebP photo was handed to jsPDF as 'JPEG' and came out corrupted.
  */
@@ -126,41 +163,10 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
   let y = MARGIN + 6
 
   // Load Merriweather Font for Harvard
-  if (isHarvard) {
-    try {
-      const fetchFont = async (url) => {
-         const res = await fetch(url)
-         if (!res.ok) throw new Error(`HTTP ${res.status}`)
-         const buffer = await res.arrayBuffer()
-         const bytes = new Uint8Array(buffer)
-         let binary = ''
-         for (let i = 0; i < bytes.byteLength; i++) {
-             binary += String.fromCharCode(bytes[i])
-         }
-         return window.btoa(binary)
-      }
-      const regularB64 = await fetchFont('/fonts/Merriweather-Regular.ttf')
-      doc.addFileToVFS('merriweather-regular.ttf', regularB64)
-      doc.addFont('merriweather-regular.ttf', 'merriweather', 'normal')
-
-      const boldB64 = await fetchFont('/fonts/Merriweather-Bold.ttf')
-      doc.addFileToVFS('merriweather-bold.ttf', boldB64)
-      doc.addFont('merriweather-bold.ttf', 'merriweather', 'bold')
-
-      const italicB64 = await fetchFont('/fonts/Merriweather-Italic.ttf')
-      doc.addFileToVFS('merriweather-italic.ttf', italicB64)
-      doc.addFont('merriweather-italic.ttf', 'merriweather', 'italic')
-
-      const boldItalicB64 = await fetchFont('/fonts/Merriweather-BoldItalic.ttf')
-      doc.addFileToVFS('merriweather-bolditalic.ttf', boldItalicB64)
-      doc.addFont('merriweather-bolditalic.ttf', 'merriweather', 'bolditalic')
-    } catch (e) {
-      console.warn("Could not load Merriweather, falling back to default:", e)
-    }
-  }
+  const merriweatherReady = isHarvard ? await attachMerriweather(doc) : false
 
   // Theme Constants
-  const FONT        = isHarvard ? 'merriweather' : 'helvetica'
+  const FONT        = merriweatherReady ? 'merriweather' : 'helvetica'
   const BULLET_CHAR = isHarvard ? '\u2022' : '-'
   // FIX: Use em-dash (—) for Harvard to match the HTML preview, not a plain hyphen
   const SEP_CHAR    = isHarvard ? ' \u2014 ' : ' - '
@@ -494,20 +500,22 @@ export async function generatePureVectorPdf(data, template = 'harvard', lang = '
  * @param {string} positionName  - Target role/position
  * @param {string} letterText    - Full cover letter body text
  */
-export function generatePureVectorCoverLetter(resumeData, companyName, positionName, letterText, lang = 'es') {
+export async function generatePureVectorCoverLetter(resumeData, companyName, positionName, letterText, lang = 'es') {
   if (!letterText) return
-
-  // Theme constants (module-scope values are NOT visible here — this function has its own doc)
-  const FONT        = 'helvetica'
-  const textTitle   = [15, 23, 42]
-  const textPrimary = [30, 41, 59]
-  const textSub     = [71, 85, 105]
 
   const personal      = resumeData?.personal_info || {}
   const candidateName = cleanText(personal.name || 'Candidato')
   const safeFileName  = candidateName.replace(/\s+/g, '_').replace(/[^A-Za-z0-9_-]/g, '') || 'CoverLetter'
 
   const doc         = new jsPDF({ unit: 'pt', format: 'letter', compress: true })
+
+  // Same typeface as the resume so both documents match
+  const merriweatherReady = await attachMerriweather(doc)
+  const FONT        = merriweatherReady ? 'merriweather' : 'helvetica'
+  const textTitle   = merriweatherReady ? [0, 0, 0] : [15, 23, 42]
+  const textPrimary = merriweatherReady ? [0, 0, 0] : [30, 41, 59]
+  const textSub     = merriweatherReady ? [0, 0, 0] : [71, 85, 105]
+
   const PAGE_W      = 612
   const PAGE_H      = 792
   const MARGIN      = 48

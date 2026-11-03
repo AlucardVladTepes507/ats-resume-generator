@@ -91,14 +91,14 @@ export default function CoverLetterGenerator({ resumeData }) {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (!editedLetter) return
     try {
       setError(null)
-      generatePureVectorCoverLetter(resumeData, companyName, positionName, editedLetter, resumeData?.language || 'es')
+      await generatePureVectorCoverLetter(resumeData, companyName, positionName, editedLetter, resumeData?.language || 'es')
     } catch (err) {
       console.error('Error generating cover letter PDF:', err)
-      setError('Error al generar PDF: ' + err.message)
+      setError('Error al generar PDF: ' + (err?.message || String(err)))
     }
   }
 
